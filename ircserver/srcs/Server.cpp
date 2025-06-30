@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/06/27 13:25:40 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/06/30 15:51:40 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,33 @@ void Server::serverSocketCreate() {
 	if (this->serverSocketFd == -1) {
 		throw std::runtime_error("failed to create socket");
 	}
+
 	int en = 1;
+	// Set the socket option (SO_REUSEADDR) to reuse the address
+	if (setsockopt(this->serverSocketFd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1) {
+		throw std::runtime_error("failed to set option <SO_REUSEADDR> on socket");
+	}
+	// Set the socket option (O_NONBLOCK) for non-blocking socket
+	if (fcntl(this->serverSocketFd, F_SETFL, O_NONBLOCK) == -1) {
+		throw std::runtime_error("failed to set option <SO_NONBLOCK> on socket");
+	}
+	// Bind the socket to the address
+	if (bind(this->serverSocketFd, (struct sockaddr *)&address, sizeof(address)) == -1) {
+		throw std::runtime_error("failed to bind socket");
+	}
+	// Listen for incoming connections and make the socket a passive socket
+	if (listen(this->serverSocketFd, SOMAXCONN) == -1) {
+		throw std::runtime_error("listen() failed");
+	}
+
+	// Add the server socket to the pollfd
+	newPoll.fd = this->serverSocketFd;
+	// Set the event to POLLIN for reading data
+	newPoll.events = POLLIN;
+	// Set the revents to 0
+	newPoll.revents = 0;
+	// Add the server socket to the pollFds container
+	this->pollFds.push_back(newPoll);
 }
 
 void Server::signalHandler(int signum) {

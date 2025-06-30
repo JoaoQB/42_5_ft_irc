@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/06/27 13:21:31 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/06/30 15:23:02 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,12 @@
 # include <unistd.h> // close()
 # include <arpa/inet.h> // inet_ntoa()
 # include <poll.h> // poll()
-#include <csignal> // signal()
+# include <csignal> // signal()
 
-#define RED "\e[1;31m" // red color
-#define WHI "\e[0;37m" // white color
-#define GRE "\e[1;32m" // green color
-#define YEL "\e[1;33m" // yellow color
+#define RED "\033[1;31m" // red color
+#define WHI "\033[0;37m" // white color
+#define GRE "\033[1;32m" // green color
+#define YEL "\033[1;33m" // yellow color
 
 class Server {
 	public:

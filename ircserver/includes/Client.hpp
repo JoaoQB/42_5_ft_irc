@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/06/27 13:08:14 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/06/30 15:23:23 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 
 class Client {
 	public:
-		Client(){};
+		Client();
 		int getFd();
 
 		void setFd(int fd);
