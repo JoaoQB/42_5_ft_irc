@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/03 12:51:25 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/03 15:47:08 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,12 @@
 
 class Server {
 	public:
+		typedef std::vector<struct pollfd>::iterator pollIterator;
+		typedef std::vector<Client>::iterator clientIterator;
+
+		static const int BUFFER_SIZE = 1024;
+		static const int DEFAULT_PORT = 4444;
+
 		Server();
 
 		void serverInit();
@@ -47,9 +53,11 @@ class Server {
 		void clearClients(int fd);
 
 	private:
-		int serverPort;
 		int serverSocketFd;
+		int serverPort;
+
 		static bool signal;
+
 		std::vector<Client> clients;
 		std::vector<struct pollfd> pollFds;
 };

@@ -9,7 +9,8 @@ Functions like `bind()`, `connect()`, and `accept()` expect a pointer of type `s
 Therefore, when working with IPv4 (`sockaddr_in`), you need to **cast** it to the generic form:
 
 ```cpp
-(struct sockaddr *)&addr
+(struct sockaddr *)&addr;
+reinterpret_cast<struct sockaddr*>(&address);
 ```
 
 This casting allows the socket APIs to use a **common interface**, regardless of whether you're using:
@@ -17,6 +18,13 @@ This casting allows the socket APIs to use a **common interface**, regardless of
   * IPv4 (`sockaddr_in`)
   * IPv6 (`sockaddr_in6`)
   * Unix domain sockets (`sockaddr_un`)
+
+Also in c++ we can omit the struct and just do:
+
+```cpp
+(sockaddr *)&addr;
+reinterpret_cast<sockaddr*>(&address);
+```
 
 ## Sockaddr_in
 
