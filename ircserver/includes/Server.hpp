@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/06/30 15:23:02 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/03 12:51:25 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include "./Client.hpp"
 # include <iostream>
 # include <string>
+# include <cstring>
 # include <vector>
 # include <sys/socket.h> // socket()
 # include <sys/types.h> // socket type definitions
@@ -38,7 +39,7 @@ class Server {
 		void serverInit();
 		void serverSocketCreate();
 		void acceptNewClient();
-		void recieveNewData(int fd);
+		void receiveNewData(int fd);
 
 		static void signalHandler(int signum);
 

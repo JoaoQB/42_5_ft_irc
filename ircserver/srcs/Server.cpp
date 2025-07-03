@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/06/30 15:51:40 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/03 15:15:24 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,28 @@ void Server::serverInit() {
 
 	std::cout << GRE << "Server <" << this->serverSocketFd << "> Connected" << WHI << std::endl;
 	std::cout << "Waiting to accept a connection...\n";
+
+	// Run Server until a signal is received
+	while (Server::signal == false) {
+		// Wait for an event
+		if ((poll(&this->pollFds[0], this->pollFds.size(), -1) == -1) &&
+			Server::signal == false) {
+			throw std::runtime_error("poll() failed");
+		}
+		// Check all fd's
+		std::vector<struct pollfd>::iterator it = this->pollFds.begin();
+		for ( ; it != this->pollFds.end(); ++it) {
+			// Check if there's data to read
+			if (it->revents & POLLIN) {
+				if (it->fd == this->serverSocketFd) {
+					acceptNewClient();
+				} else {
+					receiveNewData(it->fd);
+				}
+			}
+		}
+	}
+	closeFds();
 }
 
 void Server::serverSocketCreate() {
@@ -71,6 +93,59 @@ void Server::serverSocketCreate() {
 	this->pollFds.push_back(newPoll);
 }
 
+void Server::acceptNewClient() {
+	Client	client;
+	struct sockaddr_in clientAddress;
+	struct pollfd newPoll;
+	socklen_t len = sizeof(clientAddress);
+
+	int incomingFd = accept(this->serverSocketFd, (sockaddr *)&(clientAddress), &len);
+	if (incomingFd == -1) {
+		std::cout << "accept() failed" << std::endl;
+		return;
+	}
+	// Set the socket option (O_NONBLOCK) for non-blocking socket
+	if (fcntl(incomingFd, F_SETFL, O_NONBLOCK) == -1) {
+		std::cout << "fcntl() failed" << std::endl;
+		return;
+	}
+
+	newPoll.fd = incomingFd;
+	newPoll.events = POLLIN;
+	newPoll.revents = 0;
+
+	client.setFd(incomingFd);
+	// Convert the ip address to string and set it
+	client.setIpAddress(inet_ntoa(clientAddress.sin_addr));
+	clients.push_back(client);
+	this->pollFds.push_back(newPoll);
+
+	std::cout << GRE << "Client <" << incomingFd << "> Connected" << WHI << std::endl;
+}
+
+void Server::receiveNewData(int fd) {
+	// Buffer for incoming data
+	char buffer[1024];
+	// Clear buffer
+	memset(buffer, 0, sizeof(buffer));
+
+	// Read N bytes into BUF from socket FD, i.e. receive data
+	ssize_t bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+
+	// Check if client is disconnected
+	if (bytes <= 0) {
+		std::cout << RED << "Client <" << fd << "> Disconnected" << WHI << std::endl;
+		clearClients(fd);
+		close(fd);
+	} else {
+		buffer[bytes] = '\0';
+		std::cout << YEL << "Client <" << fd << "> Data: " << WHI << buffer;
+		// TODO! Add code to process the received data:
+		// parse, check, authenticate, handle the command, etc...
+	}
+
+}
+
 void Server::signalHandler(int signum) {
 	(void)signum;
 	std::cout << std::endl << "Signal Received!" << std::endl;
@@ -91,15 +166,17 @@ void Server::closeFds() {
 }
 
 void Server::clearClients(int fd) {
-	for (std::vector<struct pollfd>::iterator it = this->pollFds.begin() ; it != this->pollFds.end() ; ++it) {
-		if (it->fd == fd) {
-			pollFds.erase(it);
+	std::vector<struct pollfd>::iterator pIt = this->pollFds.begin();
+	for ( ; pIt != this->pollFds.end() ; ++pIt) {
+		if (pIt->fd == fd) {
+			pollFds.erase(pIt);
 			break ;
 		}
 	}
-	for (std::vector<Client>::iterator it = this->clients.begin() ; it != this->clients.end() ; ++it) {
-		if (it->getFd() == fd) {
-			clients.erase(it);
+	std::vector<Client>::iterator cIt = this->clients.begin();
+	for ( ; cIt != this->clients.end() ; ++cIt) {
+		if (cIt->getFd() == fd) {
+			clients.erase(cIt);
 			break;
 		}
 	}

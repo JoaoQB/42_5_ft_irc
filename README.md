@@ -43,19 +43,19 @@ struct in_addr {
 }
 ```
 
-`sin_family`:
+* `sin_family`:
 An integer representing the address family. For IPv4 this is typically set to `AF_INET`.
 
-`sin_port`:
+* `sin_port`:
 A 16-bit integer representing the port number.
 This value is stored in network byte order (big-endian).
 Therefore we use `htons()` function to convert a 16-bit unsigned short integer from host byte order to network byte order.
 
-`sin_addr`:
+* `sin_addr`:
 A structure `in_addr` containing the **IPv4** address. This struct typically has a single member, representing the IPv45 address in network byte order.
 `INADDR_ANY` represents "any" IP address, meaning the socket will be bound to all available network interfaces on the host (localhost, Ethernet, Wi-Fi, etc).
 
-`sin_zero`:
+* `sin_zero`:
 This field is byte padding to make the structure the same size as `struct sockaddr`, for compatibility reasons. Itś tipically unused and filled with zeros.
 
 ## Pollfd
@@ -71,14 +71,16 @@ struct pollfd {
 };
 ```
 
-`fd`:
+* `fd`:
 The file descriptor to be monitored.
 
-`events`:
+* `events`:
 A bitmask specifieds the events to monitor. Common events like `POLLIN` or `POLLHUP`.
+Types of events poller cares about.
 
-`revents`:
+* `revents`:
 A bitmask indicating which events that occurred for the given fd. This member is tipically filled in by the `poll()` function upon return and indicates the events that triggered the poll.
+Types of events that actually occurred.
 
 ### I/O events
 
@@ -158,14 +160,14 @@ int socket(int domain, int type, int protocol);
 
 This function is a system call used to create a new socket of a specific type (such as stream or datagram) and returns a file descriptor that can be used to refer to that socket in subsequent system calls.
 
-`domain`:
+* `domain`:
 Specifies the comunication domain or address family.
 
-`type`:
+* `type`:
 Specifies the type of communication semantics for the socket.
 Common valus include `SOCK_STREAM` for **TCP** sockets and `SOCK_DGRAM` for **UDP** sockets.
 
-`protocol`:
+* `protocol`:
 Specifies the specific protocol to be used with the socket.
 For most socket types this argument is set to 0, indicating the system should choose an appropriate protocol based on the specified domain and type.
 
@@ -183,22 +185,22 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
 This function is used to set options on a socket.
 It allows us to configure various socket-level options to control the behavior of the socket. In this case it is being used to set `SO_REUSEADDR` option.
 
-`level`:
+* `level`:
 Used to indicate the protocol level at which the option resides.
 For socket-level options, setting the `level`to `SOL_SOCKET`tells the function that the option being set is a socket-level option and should be applied to the socket itself.
 Other values correspond to specific protocol families such as `IPPROTO_TCP` for **TCP-specific** options or `IPPROTO_IP` for **IP-specific** options.
 
-`optname`:
+* `optname`:
 Sets the `SO_REUSEADDR` option allowing for the immediate reuse of local addresses and ports. This is useful when a server needs to bind to the same address and port it was previously using, without waiting for the default `TIME_WAIT` state to expire.
 In **TCP** when a server stops running the port and address are typically reserved for a duration called the `TIME_WAIT` state, which lasts for twice the **Maximum Segment Lifetime** (`2MSL`) - often 1 MSL = 2 minutes.
 During this time delayed packets related to the previous connection are managed.
 However using `SO_REUSEADDR` enables the socket to bypass this reservation period and reuse the port and address right away.
 
-`optval`:
+* `optval`:
 This parameter is a pointer to the value that needs to be set for the option.
 In our case it refers to a pointer to the `en` variable.
 
-`optlen`:
+* `optlen`:
 Represents the size of the option value in bytes.
 Setting the `en` value to 1 indicates the option is enabled.
 
@@ -213,10 +215,10 @@ int fcntl(int fd, int cmd, ... /* arg */ );
 This function performs various control operation on the file descriptor.
 In our code it is being used to set the `O_NONBLOCK` flag on the server socket file descriptor.
 
-`fd`:
+* `fd`:
 The file descriptor on which to operate.
 
-`cmd`:
+* `cmd`:
 The operation to perform.
 In our case it's `F_SETFL`, indicating that we want to set the file status flags.
 
@@ -228,7 +230,7 @@ This provides a flexible and efficient mechanism for handling I/O operations asy
 **EXAMPLE**
 
 Let's imagine we are using **blocking operations**. We have a server running and a client is connected to it using the **Netcat(nc)** tool.
-Netcat is often is used to manually send and recieve data over network sockets.
+Netcat is often is used to manually send and receive data over network sockets.
 
 If we type some characters into the netcat terminal on the client side but don't press Enter(send), this characters are buffered locally on the client but not sent to the server.
 Meanwhile the server is performing a blocking read operation on that client's socket.
@@ -289,5 +291,120 @@ Typically, we create an address structure specific to the address family—like 
 
 To accept incoming connections, we first need to make the socket passive. But before diving into that, let's clarify the difference between passive and active sockets in the context of network communication.
 
-### Passive vs Active sockets
+---
+
+### Passive vs. Active Sockets
+
+#### Passive Socket – IRC Server
+
+A passive socket on an IRC server is the **listening socket** that waits for incoming client connections. It listens on a specified port, and when a connection request arrives from a client, it uses `accept()` to establish the connection. This creates a new **active socket** dedicated to communicating with that specific client.
+
+The server manages multiple active sockets simultaneously, allowing it to receive commands, handle private and channel messages, and broadcast data to relevant clients in real time.
+
+#### Active Socket – IRC Client
+
+An active socket on the client side is the **initiator of the connection**. The IRC client creates a socket and calls `connect()` to establish a session with the server. Once connected, the active socket becomes the channel for all communication: sending commands (like `NICK`, `JOIN`, `PRIVMSG`) and receiving responses or messages from the server.
+
+The client uses this socket to handle user input, exchange data, and maintain real-time interaction with the IRC server and other users.
+
+---
+
+To make the socket passive, we use the `listen()` system call.
+
+```cpp
+int listen(int sockfd, int backlog);
+```
+
+After binding a socket with `bind()`, we use the `listen()` function to configure it as a **passive socket**, allowing it to accept incoming connection requests. This is a critical step in server-side socket programming.
+
+* `sockfd`:
+The file descriptor of the socket, previously created and bound to an address and port.
+
+* `backlog`:
+Specifies the maximum number of pending connections that the operating system can queue while the server is busy handling active connections.
+
+Once `listen()` is called, we prepare the socket for polling by filling a `struct pollfd` with the server socket's file descriptor, setting the `events` field to `POLLIN` (to indicate readiness for reading new connections), and pushing it to our `fds` vector. This makes the server ready to monitor and accept incoming client connections.
+
+## Monitoring Socket Activity with poll()
+
+```cpp
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+```
+
+* `fds`:
+An array of struct pollfd structures, each representing an fd to be monitored.
+
+* `nfds`:
+The number of elements in the fds array.
+
+* `timeout`:
+The maximum time to wait for an event to occur, in milliseconds.
+`-1` means wait indefinitely, 0 means return immediately and a positive value specifies a timeout period.
+
+
+The `Poll()` function is crucial for event-driven programming situations like network servers.
+It is a system call used to monitor multiple file descriptors, checking whether I/O operations — such as reading or writing — are possible on any of them.
+This allows a program to efficiently wait for activity across many connections without blocking on a single file descriptor.
+
+The `poll()` function monitors multiple file descriptors for changes in their readiness status. It blocks execution until one of the following conditions is met:
+
+* An event occurs on one or more of the monitored file descriptors (e.g., data is available to read, a socket is ready to write, or a connection is incoming).
+* The specified timeout period expires.
+* An error occurs during the call.
+
+When an event is detected, `poll()` returns the number of file descriptors on which events occurred. If no events occur before the timeout expires, it returns `0`. If an error is encountered, `poll()` returns `-1`, and the error code is stored in `errno`.
+
+Designed for efficiency, `poll()` enables scalable I/O handling without relying on busy-waiting. It minimizes CPU usage by allowing the process to sleep until something meaningful happens on the monitored descriptors.
+
+## Accepting New Clients
+
+When an event occurs on the server socket—indicating an incoming connection—the server calls the `accept()` function to handle it. This call blocks until a client connects, at which point it returns a new file descriptor dedicated to communicating with that client.
+
+Before calling `accept()`, we prepare a `struct sockaddr_in` to store the client’s address information and a `struct pollfd` to register the new connection for event monitoring.
+
+```cpp
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+```
+
+* `sockfd`:
+The file descriptor of the server socket that is listening for incomming connections.
+
+* `addr`:
+A pointer to a `struct sockaddr` where the address of the connecting client will be stored.
+This allows the server to identify the IP address and port number of the client that initiated the connection.
+
+* `addrlen`:
+A pointer to a `socklen_t` variable that specifies the size of the `addr` structure. Upon return, it will be updated with the actual size of the address stored in `addr`.
+
+
+If `accept()` succeeds, it returns a new file descriptor representing the client socket. This descriptor is used exclusively for communication with the connected client.
+
+Although the server and client sockets are distinct, certain properties—such as the local address, port, and protocol—may be inherited from the server socket, depending on the operating system and network stack behavior.
+
+To maintain consistent non-blocking behavior, it's recommended to explicitly set the new client socket to non-blocking mode using `fcntl()` with the same `O_NONBLOCK` flag used for the server socket. This ensures that all I/O operations on the client socket remain non-blocking, as required in event-driven server architectures.
+
+## Receiving Data from a Connected Client
+
+```cpp
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+```
+
+* `sockfd`:
+The file descriptor of the socket from which to receive data.
+
+* `buf`:
+A pointer to the buffer where the received data will be stored.
+
+* `len`:
+The maximum number of bytes to receive and store in the buffer
+
+* `flags`:
+The `flags` parameter in `recv()` allows fine-grained control over how data is received. It can modify the behavior of the operation using options such as:
+
+	* `MSG_WAITALL`: Waits until the full requested data is received.
+	* `MSG_DONTWAIT`: Enables non-blocking mode for this call, regardless of socket settings.
+	* `MSG_PEEK`: Reads data without removing it from the queue.
+	* `MSG_TRUNC`: Returns the actual length of the received datagram, even if it was truncated.
+
+By choosing the appropriate flags, you can adapt the receive behavior to match your application’s performance and responsiveness requirements.
 
