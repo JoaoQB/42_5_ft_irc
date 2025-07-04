@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/03 15:47:08 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/04 08:15:12 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <arpa/inet.h> // inet_ntoa()
 # include <poll.h> // poll()
 # include <csignal> // signal()
+# include <cstdlib> // atoi
 
 #define RED "\033[1;31m" // red color
 #define WHI "\033[0;37m" // white color
@@ -38,11 +39,10 @@ class Server {
 		typedef std::vector<Client>::iterator clientIterator;
 
 		static const int BUFFER_SIZE = 1024;
-		static const int DEFAULT_PORT = 4444;
 
 		Server();
 
-		void serverInit();
+		void serverInit(const std::string& port, const std::string& password);
 		void serverSocketCreate();
 		void acceptNewClient();
 		void receiveNewData(int fd);
@@ -55,6 +55,7 @@ class Server {
 	private:
 		int serverSocketFd;
 		int serverPort;
+		std::string serverPassword;
 
 		static bool signal;
 

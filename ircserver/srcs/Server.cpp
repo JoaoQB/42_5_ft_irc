@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/03 15:46:59 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/04 08:30:16 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,19 @@
 bool Server::signal = false;
 
 Server::Server()
-	: serverSocketFd(-1) {
+	: serverSocketFd(-1)
+	, serverPort(-1)
+	, serverPassword()
+	, clients()
+	, pollFds() {
 }
 
-void Server::serverInit() {
-	serverPort = DEFAULT_PORT;
+void Server::serverInit(const std::string& port, const std::string& password) {
+	//TODO parse input
+	const int serverPort = std::atoi(port.c_str());
+	this->serverPort = serverPort;
+	serverPassword = password;
+
 	serverSocketCreate();
 
 	std::cout << GRE << "Server <" << serverSocketFd << "> Connected" << WHI << std::endl;
@@ -33,14 +41,14 @@ void Server::serverInit() {
 			throw std::runtime_error("poll() failed");
 		}
 
-		// Check all fd's
-		for (pollIterator it = pollFds.begin() ; it != pollFds.end(); ++it) {
+		// Use index loop instead of iterators, because of erase/push_back
+		for (size_t i = 0 ; i < pollFds.size() ; ++i) {
 			// Check if there's data to read
-			if (it->revents & POLLIN) {
-				if (it->fd == serverSocketFd) {
+			if (pollFds[i].revents & POLLIN) {
+				if (pollFds[i].fd == serverSocketFd) {
 					acceptNewClient();
 				} else {
-					receiveNewData(it->fd);
+					receiveNewData(pollFds[i].fd);
 				}
 			}
 		}
