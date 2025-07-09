@@ -6,11 +6,11 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 12:21:39 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/04 08:11:33 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/09 09:43:42 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/Client.hpp"
+#include "../includes/User.hpp"
 #include "../includes/Server.hpp"
 
 // int main(int argc, char** argv) {

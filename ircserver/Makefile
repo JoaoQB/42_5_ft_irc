@@ -6,7 +6,7 @@
 #    By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/06/27 10:56:09 by jqueijo-          #+#    #+#              #
-#    Updated: 2025/06/27 10:57:29 by jqueijo-         ###   ########.fr        #
+#    Updated: 2025/07/09 09:42:34 by jqueijo-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,7 +17,7 @@ OBJ_DIR = ./objs
 
 SRCS = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/Server.cpp \
-	$(SRC_DIR)/Client.cpp
+	$(SRC_DIR)/User.cpp
 
 OBJS = $(addprefix $(OBJ_DIR)/, $(notdir $(SRCS:.cpp=.o)))
 DEPS = $(addprefix $(OBJ_DIR)/, $(notdir $(SRCS:.cpp=.d)))

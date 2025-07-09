@@ -6,14 +6,14 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/04 08:15:12 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/09 09:45:33 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include "./Client.hpp"
+# include "./User.hpp"
 # include <iostream>
 # include <string>
 # include <cstring>
@@ -36,7 +36,7 @@
 class Server {
 	public:
 		typedef std::vector<struct pollfd>::iterator pollIterator;
-		typedef std::vector<Client>::iterator clientIterator;
+		typedef std::vector<User>::iterator UserIterator;
 
 		static const int BUFFER_SIZE = 1024;
 
@@ -44,13 +44,13 @@ class Server {
 
 		void serverInit(const std::string& port, const std::string& password);
 		void serverSocketCreate();
-		void acceptNewClient();
+		void acceptNewUser();
 		void receiveNewData(int fd);
 
 		static void signalHandler(int signum);
 
 		void closeFds();
-		void clearClients(int fd);
+		void clearUsers(int fd);
 
 	private:
 		int serverSocketFd;
@@ -59,7 +59,7 @@ class Server {
 
 		static bool signal;
 
-		std::vector<Client> clients;
+		std::vector<User> users;
 		std::vector<struct pollfd> pollFds;
 };
 

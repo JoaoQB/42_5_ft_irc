@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/04 08:30:16 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/09 09:46:33 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ Server::Server()
 	: serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
-	, clients()
+	, users()
 	, pollFds() {
 }
 
@@ -46,7 +46,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 			// Check if there's data to read
 			if (pollFds[i].revents & POLLIN) {
 				if (pollFds[i].fd == serverSocketFd) {
-					acceptNewClient();
+					acceptNewUser();
 				} else {
 					receiveNewData(pollFds[i].fd);
 				}
@@ -101,13 +101,13 @@ void Server::serverSocketCreate() {
 	pollFds.push_back(newPoll);
 }
 
-void Server::acceptNewClient() {
-	Client	client;
-	struct sockaddr_in clientAddress;
+void Server::acceptNewUser() {
+	User	User;
+	struct sockaddr_in UserAddress;
 	struct pollfd newPoll;
-	socklen_t len = sizeof(clientAddress);
+	socklen_t len = sizeof(UserAddress);
 
-	int incomingFd = accept(serverSocketFd, reinterpret_cast<sockaddr*>(&clientAddress), &len);
+	int incomingFd = accept(serverSocketFd, reinterpret_cast<sockaddr*>(&UserAddress), &len);
 	if (incomingFd == -1) {
 		std::cerr << "accept() failed" << std::endl;
 		return;
@@ -122,13 +122,13 @@ void Server::acceptNewClient() {
 	newPoll.events = POLLIN;
 	newPoll.revents = 0;
 
-	client.setFd(incomingFd);
+	User.setFd(incomingFd);
 	// Convert the ip address to string and set it
-	client.setIpAddress(inet_ntoa(clientAddress.sin_addr));
-	clients.push_back(client);
+	User.setIpAddress(inet_ntoa(UserAddress.sin_addr));
+	users.push_back(User);
 	pollFds.push_back(newPoll);
 
-	std::cout << GRE << "Client <" << incomingFd << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "User <" << incomingFd << "> Connected" << WHI << std::endl;
 }
 
 void Server::receiveNewData(int fd) {
@@ -140,14 +140,14 @@ void Server::receiveNewData(int fd) {
 	// Read N bytes into BUF from socket FD, i.e. receive data
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 
-	// Check if client is disconnected
+	// Check if User is disconnected
 	if (bytes <= 0) {
-		std::cout << RED << "Client <" << fd << "> Disconnected" << WHI << std::endl;
-		clearClients(fd);
+		std::cout << RED << "User <" << fd << "> Disconnected" << WHI << std::endl;
+		clearUsers(fd);
 		close(fd);
 	} else {
 		buffer[bytes] = '\0';
-		std::cout << YEL << "Client <" << fd << "> Data: " << WHI << buffer;
+		std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
 		// TODO! Add code to process the received data:
 		// parse, check, authenticate, handle the command, etc...
 	}
@@ -161,9 +161,9 @@ void Server::signalHandler(int signum) {
 }
 
 void Server::closeFds() {
-	// Close all clients
-	for (clientIterator it = clients.begin() ; it != clients.end() ; ++it) {
-		std::cout << RED << "Client <" << it->getFd() << "> Disconnected" << WHI << "\n";
+	// Close all Users
+	for (UserIterator it = users.begin() ; it != users.end() ; ++it) {
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHI << "\n";
 		close(it->getFd());
 	}
 	// Close server socket
@@ -173,16 +173,16 @@ void Server::closeFds() {
 	}
 }
 
-void Server::clearClients(int fd) {
+void Server::clearUsers(int fd) {
 	for (pollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
 		if (pIt->fd == fd) {
 			pollFds.erase(pIt);
 			break ;
 		}
 	}
-	for (clientIterator cIt = clients.begin() ; cIt != clients.end() ; ++cIt) {
+	for (UserIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
 		if (cIt->getFd() == fd) {
-			clients.erase(cIt);
+			users.erase(cIt);
 			break;
 		}
 	}

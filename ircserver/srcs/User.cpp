@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Client.cpp                                         :+:      :+:    :+:   */
+/*   User.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,19 +10,19 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/Client.hpp"
+#include "../includes/User.hpp"
 
-Client::Client() {
+User::User() {
 }
 
-int Client::getFd() {
+int User::getFd() {
 	return this->fd;
 }
 
-void Client::setFd(int fd) {
+void User::setFd(int fd) {
 	this->fd = fd;
 }
 
-void Client::setIpAddress(std::string ipAddress) {
+void User::setIpAddress(std::string ipAddress) {
 	this->ipAddress = ipAddress;
 }
