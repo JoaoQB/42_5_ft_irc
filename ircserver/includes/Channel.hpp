@@ -1,31 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   User.hpp                                           :+:      :+:    :+:   */
+/*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 13:40:19 by jqueijo-         ###   ########.fr       */
+/*   Created: 2025/07/09 10:46:42 by jqueijo-          #+#    #+#             */
+/*   Updated: 2025/07/09 13:39:37 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef USER_HPP
-# define USER_HPP
+#ifndef CHANNEL_HPP
+# define CHANNEL_HPP
 
 # include "./Common.hpp"
 
-class User {
-	public:
-		User();
-
-		int getFd();
-
-		void setFd(int fd);
-		void setIpAddress(std::string ipAddress);
+class Channel {
 	private:
-		int fd;
-		std::string ipAddress;
+		std::string name;
+		std::string password;
+		std::string topic;
+		bool hasPassword;
+		bool isInviteOnly;
+		int channelLimit;
+		std::vector<User> channelUsers;
+
+		Channel();
+
+	public:
+		Channel(const std::string& channelName);
+		Channel(const std::string& channelName, const std::string& key);
 };
 
 #endif
