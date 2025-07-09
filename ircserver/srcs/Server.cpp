@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 09:46:33 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/09 12:29:05 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,8 @@ Server::Server()
 	, serverPort(-1)
 	, serverPassword()
 	, users()
-	, pollFds() {
+	, pollFds()
+	, channels() {
 }
 
 void Server::serverInit(const std::string& port, const std::string& password) {

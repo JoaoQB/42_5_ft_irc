@@ -6,15 +6,14 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 09:44:39 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/09 13:40:19 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef USER_HPP
 # define USER_HPP
 
-# include <iostream>
-# include <string>
+# include "./Common.hpp"
 
 class User {
 	public:
