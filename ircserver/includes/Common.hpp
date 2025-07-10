@@ -6,12 +6,12 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 13:39:56 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/10 10:34:54 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef HEADERS_HPP
-# define HEADERS_HPP
+#ifndef COMMON_HPP
+# define COMMON_HPP
 
 class User;
 class Server;
@@ -40,7 +40,24 @@ class Channel;
 #define GRE "\033[1;32m" // green color
 #define YEL "\033[1;33m" // yellow color
 
+enum CommandType {
+	CMD_PASS,
+	CMD_NICK,
+	CMD_USER,
+	CMD_JOIN,
+	CMD_PRIVMSG,
+	CMD_KICK,
+	CMD_INVITE,
+	CMD_TOPIC,
+	CMD_MODE,
+	CMD_PART,
+	CMD_QUIT,
+	CMD_UNKNOWN
+};
+
 typedef std::vector<struct pollfd>::iterator pollIterator;
 typedef std::vector<User>::iterator UserIterator;
+typedef std::map<std::string, CommandType> CommandMap;
+typedef CommandMap::const_iterator CommandMapConstIterator;
 
 #endif

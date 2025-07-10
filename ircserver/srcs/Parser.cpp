@@ -6,13 +6,43 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 14:41:01 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/10 10:52:06 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Parser.hpp"
 
 Parser::Parser() {
+}
+
+std::string Parser::extractCommand(const std::string& rawMessage) {
+	std::string::size_type firstSpace = rawMessage.find(' ');
+	if (firstSpace == std::string::npos) {
+		return rawMessage;
+	}
+	return rawMessage.substr(0, firstSpace);
+}
+
+CommandType Parser::getCommandType(const std::string& command) {
+	static CommandMap commands;
+	if (commands.empty()) {
+		commands["PASS"] = CMD_PASS;
+		commands["NICK"] = CMD_NICK;
+		commands["USER"] = CMD_USER;
+		commands["JOIN"] = CMD_JOIN;
+		commands["PRIVMSG"] = CMD_PRIVMSG;
+		commands["KICK"] = CMD_KICK;
+		commands["INVITE"] = CMD_INVITE;
+		commands["TOPIC"] = CMD_TOPIC;
+		commands["MODE"] = CMD_MODE;
+		commands["PART"] = CMD_PART;
+		commands["QUIT"] = CMD_QUIT;
+	}
+
+	CommandMapConstIterator it = commands.find(command);
+	CommandType cmd = it != commands.end() ? it->second : CMD_UNKNOWN;
+
+	return cmd;
 }
 
 bool Parser::isNicknameForbiddenChar(char c) {
@@ -51,7 +81,7 @@ bool Parser::containsNicknameForbiddenChars(const std::string& input) {
 /	or prefix listed in the IRCv3 multi-prefix Extension (already listed above).
 / They SHOULD NOT contain any dot character ('.', 0x2E).
 */
-bool Parser::validateNickname(const std::string& nickname) const {
+bool Parser::validateNickname(const std::string& nickname) {
 	if (nickname.empty()) {
 		return false;
 	}
@@ -90,7 +120,7 @@ bool Parser::containsChannelForbiddenChars(const std::string& input) {
 /	control G / BELL ('^G', 0x07),
 /	comma (',', 0x2C) (which is used as a list item separator by the protocol).
 */
-bool Parser::validateChannelName(const std::string& channelName) const {
+bool Parser::validateChannelName(const std::string& channelName) {
 	if (channelName.empty()) {
 		return false;
 	}

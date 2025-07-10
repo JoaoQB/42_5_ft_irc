@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 14:39:54 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/10 10:23:26 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 
 class Parser {
 	private:
+		Parser();
 		static bool isNicknameForbiddenFirstChar(char c);
 		static bool isNicknameForbiddenChar(char c);
 		static bool containsNicknameForbiddenChars(const std::string& input);
@@ -31,11 +32,14 @@ class Parser {
 		);
 
 	public:
-		Parser();
 
-		bool validateNickname(const std::string& nickname) const;
+		static std::string extractCommand(const std::string& rawMessage);
 
-		bool validateChannelName(const std::string& channelName) const;
+		static CommandType getCommandType(const std::string& command);
+
+		static bool validateChannelName(const std::string& channelName);
+
+		static bool validateNickname(const std::string& nickname);
 
 		std::map<std::string, std::string> divideJoinCommand(
 			const std::string& channelNames,

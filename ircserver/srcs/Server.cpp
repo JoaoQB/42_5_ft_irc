@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 12:29:05 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/10 10:52:47 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,6 +149,7 @@ void Server::receiveNewData(int fd) {
 	} else {
 		buffer[bytes] = '\0';
 		std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
+		handleRawMessage(buffer);
 		// TODO! Add code to process the received data:
 		// parse, check, authenticate, handle the command, etc...
 	}
@@ -186,5 +187,39 @@ void Server::clearUsers(int fd) {
 			users.erase(cIt);
 			break;
 		}
+	}
+}
+
+//TODO Command Handlers
+void Server::handleRawMessage(const char *buffer) {
+	std::string rawMessage(buffer);
+	std::string command = Parser::extractCommand(rawMessage);
+	CommandType cmd = Parser::getCommandType(command);
+
+	switch (cmd) {
+		case CMD_PASS:
+			break;
+		case CMD_NICK:
+			break;
+		case CMD_USER:
+			break;
+		case CMD_JOIN:
+			break;
+		case CMD_PRIVMSG:
+			break;
+		case CMD_KICK:
+			break;
+		case CMD_INVITE:
+			break;
+		case CMD_TOPIC:
+			break;
+		case CMD_MODE:
+			break;
+		case CMD_PART:
+			break;
+		case CMD_QUIT:
+			break;
+		default:
+			break;
 	}
 }

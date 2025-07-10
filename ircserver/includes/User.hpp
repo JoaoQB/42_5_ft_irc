@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 13:40:19 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/10 09:39:25 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,10 @@ class User {
 	private:
 		int fd;
 		std::string ipAddress;
+		std::string realname;
+		std::string username;
+		std::string nickname;
+		std::string password;
 };
 
 #endif
