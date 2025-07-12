@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:52:06 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/11 15:53:10 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ Parser::Parser() {
 }
 
 std::string Parser::extractCommand(const std::string& rawMessage) {
-	std::string::size_type firstSpace = rawMessage.find(' ');
+	stringSizeT firstSpace = rawMessage.find(' ');
 	if (firstSpace == std::string::npos) {
 		return rawMessage;
 	}
@@ -133,15 +133,14 @@ bool Parser::validateChannelName(const std::string& channelName) {
 	return true;
 }
 
-// TODO Confirm it's working
 std::list<std::string> Parser::splitStringToList(
 	const std::string& values,
 	const std::string& delimiter
 ) {
 	std::list<std::string> result;
-	std::string::size_type start = 0;
-	std::string::size_type end;
-	std::string::size_type delimiterLength = 1;
+	stringSizeT start = 0;
+	stringSizeT end;
+	stringSizeT delimiterLength = 1;
 
 	while ((end = values.find(delimiter, start)) != std::string::npos) {
 		if (end > start) {
@@ -157,14 +156,45 @@ std::list<std::string> Parser::splitStringToList(
 	return result;
 }
 
-// TODO comfirm it's working
-std::map<std::string, std::string> Parser::divideJoinCommand(
+stringMap Parser::mapJoinCommand(
 	const std::string& channelNames,
 	const std::string& channelKeys
 ) {
-	std::map<std::string, std::string> channelKeyMap;
+	std::cout << "[DEBUG] Raw channelNames: '" << channelNames << "'" << std::endl;
+	std::cout << "[DEBUG] Raw channelKeys:  '" << channelKeys << "'" << std::endl;
+	stringMap channelKeyMap;
+
 	std::list<std::string> channels = splitStringToList(channelNames, ",");
-	std::list<std::string> keys = splitStringToList(channelKeys, ",");
+	std::list<std::string> keys;
+	if (!channelKeys.empty()) {
+		keys = splitStringToList(channelKeys, ",");
+	}
+
+	std::cout << "[DEBUG] Parsed channel list:" << std::endl;
+	for (std::list<std::string>::const_iterator it = channels.begin(); it != channels.end(); ++it)
+		std::cout << " - " << *it << std::endl;
+
+	std::cout << "[DEBUG] Parsed key list:" << std::endl;
+	for (std::list<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
+		std::cout << " - " << *it << std::endl;
+
+	std::list<std::string>::iterator chanIt = channels.begin();
+	std::list<std::string>::iterator keyIt = keys.begin();
+
+	for ( ; chanIt != channels.end(); ++chanIt) {
+		std::string key;
+		if (keyIt != keys.end()) {
+			key = *keyIt;
+			++keyIt;
+		} else {
+			key = "";
+		}
+		channelKeyMap[*chanIt] = key;
+	}
 
 	return channelKeyMap;
+}
+
+void Parser::ft_error(const std::string& errorMessage) {
+	std::cerr << "Error: " << errorMessage << std::endl;
 }

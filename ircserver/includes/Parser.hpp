@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:23:26 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/11 15:20:10 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ class Parser {
 		static bool isChannelForbiddenChar(char c);
 		static bool containsChannelForbiddenChars(const std::string& input);
 
-		std::list<std::string> splitStringToList(
+		static std::list<std::string> splitStringToList(
 			const std::string& values,
 			const std::string& delimiter
 		);
@@ -41,10 +41,13 @@ class Parser {
 
 		static bool validateNickname(const std::string& nickname);
 
-		std::map<std::string, std::string> divideJoinCommand(
+		static stringMap mapJoinCommand(
 			const std::string& channelNames,
 			const std::string& channelKeys
 		);
+
+		// TODO Add error number and accurate message
+		static void ft_error(const std::string& errorMessage);
 };
 
 #endif

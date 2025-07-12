@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:52:47 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/12 11:43:42 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,7 @@ void Server::receiveNewData(int fd) {
 	} else {
 		buffer[bytes] = '\0';
 		std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
-		handleRawMessage(buffer);
+		handleRawMessage(fd, buffer);
 		// TODO! Add code to process the received data:
 		// parse, check, authenticate, handle the command, etc...
 	}
@@ -190,10 +190,60 @@ void Server::clearUsers(int fd) {
 	}
 }
 
+void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
+	// Account for space after 'JOIN'
+	const stringSizeT commandPrefixLength = 5;
+	if (rawMessage.length() <= commandPrefixLength) {
+		Parser::ft_error("empty JOIN command");
+		return;
+	}
+
+	stringSizeT keyStart = rawMessage.find(' ', commandPrefixLength);
+	std::string channelNames = (keyStart != std::string::npos)
+		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
+		: rawMessage.substr(commandPrefixLength);
+
+	std::string channelKeys;
+	if (keyStart != std::string::npos) {
+		stringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
+		if (keyStartTrimmed != std::string::npos) {
+			stringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
+			channelKeys = (keyEnd != std::string::npos)
+				? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
+				: rawMessage.substr(keyStartTrimmed);
+		}
+	}
+
+	stringMap channelsWithKeys = Parser::mapJoinCommand(channelNames, channelKeys);
+	for (stringMapConstIterator it = channelsWithKeys.begin();
+		it != channelsWithKeys.end();
+		++it
+	) {
+		const std::string& name = it->first;
+		const std::string& key = it->second;
+		if (!Parser::validateChannelName(name)) {
+			Parser::ft_error("invalid Channel name");
+			std::cout << "DEBUG! name: " << name << "\nkey: " << key << "\n";
+			std::cout << "DEBUG! user FD: " << fd << "\n";
+			continue;
+		}
+		// if (channelExists(name)) {
+		// 	addUserToChannel(fd, name, key);
+		// } else {
+		// 	createChannel(fd, name, key);
+		// }
+	}
+}
+
 //TODO Command Handlers
-void Server::handleRawMessage(const char *buffer) {
+void Server::handleRawMessage(int fd, const char *buffer) {
+	// Remove line break char from end of buffer
 	std::string rawMessage(buffer);
-	std::string command = Parser::extractCommand(rawMessage);
+	stringSizeT lineBreak = 1;
+	stringSizeT trimmedLength = rawMessage.length() - lineBreak;
+	std::string trimmedMessage = rawMessage.substr(0, trimmedLength);
+
+	std::string command = Parser::extractCommand(trimmedMessage);
 	CommandType cmd = Parser::getCommandType(command);
 
 	switch (cmd) {
@@ -204,6 +254,7 @@ void Server::handleRawMessage(const char *buffer) {
 		case CMD_USER:
 			break;
 		case CMD_JOIN:
+			handleJoinCommand(fd, trimmedMessage);
 			break;
 		case CMD_PRIVMSG:
 			break;

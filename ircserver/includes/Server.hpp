@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 09:59:56 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/11 15:22:55 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class Server {
 		void closeFds();
 		void clearUsers(int fd);
 
-		void handleRawMessage(const char* buffer);
+		void handleJoinCommand(int fd, const std::string& rawMessage);
 
 	private:
 		int serverSocketFd;
@@ -47,7 +47,21 @@ class Server {
 		std::vector<struct pollfd> pollFds;
 		std::vector<Channel> channels;
 
+		bool channelExists(const std::string& channelName);
 
+		void addUserToChannel(
+			int userFd,
+			const std::string& channelName,
+			const std::string& channelKey
+		);
+
+		void createChannel(
+			int userFd,
+			const std::string& channelName,
+			const std::string& channelKey
+		);
+
+		void handleRawMessage(int fd, const char* buffer);
 };
 
 #endif
