@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:34:54 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/11 13:56:14 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,5 +59,8 @@ typedef std::vector<struct pollfd>::iterator pollIterator;
 typedef std::vector<User>::iterator UserIterator;
 typedef std::map<std::string, CommandType> CommandMap;
 typedef CommandMap::const_iterator CommandMapConstIterator;
+typedef std::map<std::string, std::string> stringMap;
+typedef std::map<std::string, std::string>::const_iterator stringMapConstIterator;
+typedef std::string::size_type stringSizeT;
 
 #endif
