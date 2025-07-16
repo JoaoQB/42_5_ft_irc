@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/16 09:26:10 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 10:11:17 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 17:22:35 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,33 +18,9 @@ Channel::Channel()
 	, topic()
 	, hasPassword(false)
 	, isInviteOnly(false)
-	, usersInChannel(0)
-	, channelLimit(-1)
 	, isFull(false)
-	, channelUsers() {
-}
-
-Channel::Channel(const std::string& channelName)
-	: name(channelName)
-	, password()
-	, topic()
-	, hasPassword(false)
-	, isInviteOnly(false)
-	, usersInChannel(0)
 	, channelLimit(-1)
-	, isFull(false)
-	, channelUsers() {
-}
-
-Channel::Channel(const std::string& channelName, const std::string& key)
-	: name(channelName)
-	, password(key)
-	, topic()
-	, hasPassword(true)
-	, isInviteOnly(false)
 	, usersInChannel(0)
-	, channelLimit(-1)
-	, isFull(false)
 	, channelUsers() {
 }
 
@@ -52,10 +28,31 @@ const std::string& Channel::getName() const {
 	return this->name;
 }
 
+const std::string& Channel::getPassword() const {
+	return this->password;
+}
+
 int Channel::channelIsFull() const {
-	return usersInChannel == channelLimit;
+	return this->isFull;
 }
 
 bool Channel::requiresPassword() const {
 	return this->hasPassword;
+}
+
+void Channel::setName(const std::string& channelName) {
+	this->name = channelName;
+}
+
+void Channel::setPassword(const std::string& key) {
+	this->password = key;
+	this->hasPassword = true;
+}
+
+void Channel::addUser(User user) {
+	this->channelUsers.push_back(user);
+	this->usersInChannel++;
+	if (channelLimit == usersInChannel) {
+		this->isFull = true;
+	}
 }

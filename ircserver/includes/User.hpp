@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 09:32:59 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 17:24:30 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class User {
 
 		void setFd(int fd);
 		void setIpAddress(std::string ipAddress);
+
 	private:
 		int fd;
 		std::string ipAddress;
