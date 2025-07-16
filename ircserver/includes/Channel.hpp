@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 10:46:42 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/09 13:39:37 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 10:11:00 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,9 @@ class Channel {
 		std::string topic;
 		bool hasPassword;
 		bool isInviteOnly;
+		int usersInChannel;
 		int channelLimit;
+		bool isFull;
 		std::vector<User> channelUsers;
 
 		Channel();
@@ -30,6 +32,10 @@ class Channel {
 	public:
 		Channel(const std::string& channelName);
 		Channel(const std::string& channelName, const std::string& key);
+
+		const std::string& getName() const;
+		int channelIsFull() const;
+		bool requiresPassword() const;
 };
 
 #endif

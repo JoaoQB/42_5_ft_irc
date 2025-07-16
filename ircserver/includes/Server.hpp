@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/11 15:22:55 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 09:49:23 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,9 @@ class Server {
 		std::vector<Channel> channels;
 
 		bool channelExists(const std::string& channelName);
+
+		User& getUser(int fd);
+		Channel& getChannel(const std::string& channelName);
 
 		void addUserToChannel(
 			int userFd,

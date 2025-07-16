@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/11 15:53:10 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 09:40:29 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ Parser::Parser() {
 }
 
 std::string Parser::extractCommand(const std::string& rawMessage) {
-	stringSizeT firstSpace = rawMessage.find(' ');
+	StringSizeT firstSpace = rawMessage.find(' ');
 	if (firstSpace == std::string::npos) {
 		return rawMessage;
 	}
@@ -138,9 +138,9 @@ std::list<std::string> Parser::splitStringToList(
 	const std::string& delimiter
 ) {
 	std::list<std::string> result;
-	stringSizeT start = 0;
-	stringSizeT end;
-	stringSizeT delimiterLength = 1;
+	StringSizeT start = 0;
+	StringSizeT end;
+	StringSizeT delimiterLength = 1;
 
 	while ((end = values.find(delimiter, start)) != std::string::npos) {
 		if (end > start) {
@@ -156,13 +156,13 @@ std::list<std::string> Parser::splitStringToList(
 	return result;
 }
 
-stringMap Parser::mapJoinCommand(
+StringMap Parser::mapJoinCommand(
 	const std::string& channelNames,
 	const std::string& channelKeys
 ) {
 	std::cout << "[DEBUG] Raw channelNames: '" << channelNames << "'" << std::endl;
 	std::cout << "[DEBUG] Raw channelKeys:  '" << channelKeys << "'" << std::endl;
-	stringMap channelKeyMap;
+	StringMap channelKeyMap;
 
 	std::list<std::string> channels = splitStringToList(channelNames, ",");
 	std::list<std::string> keys;

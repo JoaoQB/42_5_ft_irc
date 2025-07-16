@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/12 11:43:42 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 16:15:15 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,58 @@ Server::Server()
 	, users()
 	, pollFds()
 	, channels() {
+}
+
+bool Server::channelExists(const std::string& channelName) {
+	for (
+		ChannelConstIterator it = this->channels.begin() ;
+		it != this->channels.end() ;
+		++it
+	) {
+		if (it->getName() == channelName) {
+			return true;
+		}
+	}
+	return false;
+}
+
+User& Server::getUser(int fd) {
+	for (
+		UserIterator it = this->users.begin() ;
+		it != this->users.end() ;
+		++it
+	) {
+		if (it->getFd() == fd) {
+			return *it;
+		}
+	}
+	throw std::runtime_error("User not found");
+}
+
+Channel& Server::getChannel(const std::string& channelName) {
+	for (
+		ChannelIterator it = this->channels.begin() ;
+		it != this->channels.end() ;
+		++it
+	) {
+		if (it->getName() == channelName) {
+			return *it;
+		}
+	}
+	throw std::runtime_error("Channel not found");
+}
+
+void Server::addUserToChannel(
+	int userFd,
+	const std::string& channelName,
+	const std::string& channelKey
+) {
+	if (getChannel(channelName).channelIsFull()) {
+		Parser::ft_error("channel full");
+	}
+	// if (!getChannel(channelName).requiresPassword()) {
+
+	// }
 }
 
 void Server::serverInit(const std::string& port, const std::string& password) {
@@ -176,7 +228,7 @@ void Server::closeFds() {
 }
 
 void Server::clearUsers(int fd) {
-	for (pollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
+	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
 		if (pIt->fd == fd) {
 			pollFds.erase(pIt);
 			break ;
@@ -192,30 +244,30 @@ void Server::clearUsers(int fd) {
 
 void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 	// Account for space after 'JOIN'
-	const stringSizeT commandPrefixLength = 5;
+	const StringSizeT commandPrefixLength = 5;
 	if (rawMessage.length() <= commandPrefixLength) {
 		Parser::ft_error("empty JOIN command");
 		return;
 	}
 
-	stringSizeT keyStart = rawMessage.find(' ', commandPrefixLength);
+	StringSizeT keyStart = rawMessage.find(' ', commandPrefixLength);
 	std::string channelNames = (keyStart != std::string::npos)
 		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
 		: rawMessage.substr(commandPrefixLength);
 
 	std::string channelKeys;
 	if (keyStart != std::string::npos) {
-		stringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
+		StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
 		if (keyStartTrimmed != std::string::npos) {
-			stringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
+			StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
 			channelKeys = (keyEnd != std::string::npos)
 				? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
 				: rawMessage.substr(keyStartTrimmed);
 		}
 	}
 
-	stringMap channelsWithKeys = Parser::mapJoinCommand(channelNames, channelKeys);
-	for (stringMapConstIterator it = channelsWithKeys.begin();
+	StringMap channelsWithKeys = Parser::mapJoinCommand(channelNames, channelKeys);
+	for (StringMapConstIterator it = channelsWithKeys.begin();
 		it != channelsWithKeys.end();
 		++it
 	) {
@@ -227,9 +279,14 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 			std::cout << "DEBUG! user FD: " << fd << "\n";
 			continue;
 		}
-		// if (channelExists(name)) {
-		// 	addUserToChannel(fd, name, key);
-		// } else {
+		if (channelExists(name)) {
+			try {
+				addUserToChannel(fd, name, key);
+			} catch (const std::exception& e) {
+				std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
+			}
+		}
+		// else {
 		// 	createChannel(fd, name, key);
 		// }
 	}
@@ -239,8 +296,8 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 void Server::handleRawMessage(int fd, const char *buffer) {
 	// Remove line break char from end of buffer
 	std::string rawMessage(buffer);
-	stringSizeT lineBreak = 1;
-	stringSizeT trimmedLength = rawMessage.length() - lineBreak;
+	StringSizeT lineBreak = 1;
+	StringSizeT trimmedLength = rawMessage.length() - lineBreak;
 	std::string trimmedMessage = rawMessage.substr(0, trimmedLength);
 
 	std::string command = Parser::extractCommand(trimmedMessage);

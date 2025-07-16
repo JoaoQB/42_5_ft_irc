@@ -12,10 +12,16 @@
 
 #include "../includes/User.hpp"
 
-User::User() {
+User::User()
+	: fd(-1)
+	, ipAddress()
+	, realname()
+	, username()
+	, nickname()
+	, password() {
 }
 
-int User::getFd() {
+int User::getFd() const {
 	return this->fd;
 }
 

@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/11 15:20:10 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 09:39:28 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ class Parser {
 
 		static bool validateNickname(const std::string& nickname);
 
-		static stringMap mapJoinCommand(
+		static StringMap mapJoinCommand(
 			const std::string& channelNames,
 			const std::string& channelKeys
 		);
