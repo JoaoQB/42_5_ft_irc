@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 13:14:16 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 16:32:45 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ class Server {
 
 		void cmdPass(User &user, std::string cmdParameters);
 		void cmdNick(User &user, std::string cmdParameters);
+		void cmdUser(User &user, std::string cmdParameters);
 
 	private:
 		int serverSocketFd;

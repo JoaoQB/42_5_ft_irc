@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Common.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:34:54 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/22 17:08:15 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,8 @@ class Channel;
 # include <poll.h> // poll()
 # include <csignal> // signal()
 # include <cstdlib> // atoi
+#include <sstream> //isstringstream
+
 
 #define RED "\033[1;31m" // red color
 #define WHI "\033[0;37m" // white color

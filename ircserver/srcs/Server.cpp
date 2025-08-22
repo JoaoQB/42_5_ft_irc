@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 16:04:23 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 17:20:05 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,7 +214,7 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 		throw std::runtime_error("User not found for fd");
 		return;
 	}
-
+	// Sempre que NICK ou USER é usado, if NICK & USER !NULL & registred == false: registred = true
 	switch (cmd) {
 		case CMD_PASS: {
 			cmdPass(*user, params);
@@ -225,6 +225,7 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 			break;
 		}
 		case CMD_USER:
+			cmdUser(*user, params);
 			break;
 		case CMD_JOIN:
 			break;
@@ -255,7 +256,7 @@ void Server::cmdPass(User &user, std::string cmdParameters){
 	}
 
 	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
-	if (!user.getNickName().empty() || !user.getUserName().empty()) {
+	if (!user.getNickName().empty() || !user.getUserName().empty() || !user.getPassword().empty()) {
 		//sendError(user.getFd(), "462", "You may not reregister");
 		std::cout << "Error 462 alreadyregistered" << std::endl;
 		return;
@@ -287,11 +288,15 @@ void Server::cmdPass(User &user, std::string cmdParameters){
 
 	// 5 - Adicionar ao user.password
 	user.setPassword(password);
-	std::cout << "Password Registered Successfully: " << user.getPassword() << std::endl;
+	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << std::endl;
 }
 
 // TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
 void Server::cmdNick(User &user, std::string cmdParameters) {
+	// Se password é NULL erro
+	if (user.getPassword().empty()) {
+		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+	}
 
 	// Não pode ser vaziu
 	if (cmdParameters.empty()) {
@@ -321,5 +326,52 @@ void Server::cmdNick(User &user, std::string cmdParameters) {
 
 	// Adicionar nickname ao user
 	user.setNickName(nickname);
-	std::cout << "User \"" << user.getNickName() << "\" Registered Successfully" << std::endl;
+	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickName() << std::endl;
+}
+
+// USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
+void Server::cmdUser(User &user, std::string cmdParameters){
+	// Se password é NULL erro
+	if (user.getPassword().empty()) {
+		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		return;
+	}
+
+	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
+	if (user.getRegistered())
+		std::cout << "ERR_ALREADYREGISTERED (462)" << std::endl;
+
+	// Remover \r\v
+	cmdParameters = Parser::trimCRLF(cmdParameters);
+
+	// Separar em tokens
+	std::istringstream iss(cmdParameters);
+	std::string username, hostname, servername, realname;
+
+	if (!(iss >> username >> hostname >> servername)) {
+		// Se nem username nem os dois params obrigatórios vierem
+		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		return;
+	}
+
+	std::getline(iss, realname);
+
+	if (!realname.empty() && realname[0] == ' ')
+		realname.erase(0, 1);
+	if (!realname.empty() && realname[0] == ':')
+		realname.erase(0, 1);
+
+	if (username.empty()) {
+		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		return;
+	}
+
+	if (realname.empty()) {
+		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		return;
+	}
+
+	user.setUserName(username);
+	user.setRealName(realname);
+	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUserName() << " " << user.getRealName() << std::endl;
 }

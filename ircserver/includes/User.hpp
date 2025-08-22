@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 11:28:42 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 17:02:35 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,9 @@ class User {
 
 		std::string getPassword(void);
 		void setPassword(std::string password);
+
+		bool getRegistered(void);
+		void setRegistered(bool registred);
 
 	private:
 		int fd;

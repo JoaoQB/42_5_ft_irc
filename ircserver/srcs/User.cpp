@@ -58,3 +58,11 @@ std::string User::getPassword(void) {
 void User::setPassword(std::string password) {
 	this->password = password;
 }
+
+bool User::getRegistered(void) {
+	return this->registered;
+}
+
+void User::setRegistered(bool registred) {
+	this->registered = registred;
+}
