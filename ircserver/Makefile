@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+         #
+#    By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/06/27 10:56:09 by jqueijo-          #+#    #+#              #
-#    Updated: 2025/07/09 09:59:42 by jqueijo-         ###   ########.fr        #
+#    Updated: 2025/08/22 16:02:03 by dpetrukh         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,5 +48,8 @@ fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
+
+1: all
+	./ircserv 6667 mypassword
 
 .PHONY: all clean fclean re

@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 15:43:18 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 16:01:03 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,15 +103,16 @@ bool Parser::containsNicknameForbiddenChars(const std::string& input) {
 // Return false
 bool Parser::nicknameIsCommand(const std::string& nickname) {
 	std::string commands[] = {"PASS", "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PART", "QUIT"};
+	const int numCommands = sizeof(commands) / sizeof(commands[0]);
 
-	for (const auto& cmd: commands) {
-		std::size_t pos = nickname.find(cmd);
+	for (int i = 0; i < numCommands; ++i) {
+		std::size_t pos = nickname.find(commands[i]);
 		if (pos != std::string::npos) {
 			bool at_start = (pos == 0 || nickname[pos - 1] == ' ');
-			bool at_end = (pos + cmd.size() == nickname.size() || nickname[pos + cmd.size()] == ' ');
+			bool at_end = (pos + commands[i].size() == nickname.size() || nickname[pos + commands[i].size()] == ' ');
 			if (at_start || at_end)
 				return true;
-		}
+ 		}
 	}
 	return false;
 }

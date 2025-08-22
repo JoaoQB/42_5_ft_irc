@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 15:54:00 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 16:04:23 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -248,8 +248,7 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 }
 
 void Server::cmdPass(User &user, std::string cmdParameters){
-
-	std::cout << "Command parameters: " << cmdParameters << std::endl;
+	// std::cout << "Command parameters: " << cmdParameters << std::endl;
 
 	if (cmdParameters.empty()) {
 		std::cout << "Error 461 needmoreparams" << std::endl;
@@ -279,8 +278,8 @@ void Server::cmdPass(User &user, std::string cmdParameters){
 	password = Parser::trimCRLF(password);
 
 	// 4 - Verificar se a password coicide com o servidor, se errada 464 ERR_PASSWDMISMATCH.
-	std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
-	std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
+	// std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
+	// std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
 	if (password != this->serverPassword) {
 		std::cout << "Error 464 passmismatch" << std::endl;
 		return ;
@@ -322,5 +321,5 @@ void Server::cmdNick(User &user, std::string cmdParameters) {
 
 	// Adicionar nickname ao user
 	user.setNickName(nickname);
-	std::cout << "User " << user.getNickName() << " Registered Successfully" << std::endl;
+	std::cout << "User \"" << user.getNickName() << "\" Registered Successfully" << std::endl;
 }
