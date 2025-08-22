@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 13:05:42 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 14:11:17 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,7 @@ std::string Parser::extractParams(const std::string rawMessage, const std::strin
 	return rawMessage.substr(pos);
 }
 
+// Remove \r\n from string end
 std::string Parser::trimCRLF(const std::string &s) {
 	size_t end = s.size();
 	if (!s.empty() && s[end-1] == '\n')
@@ -70,12 +71,12 @@ std::string Parser::trimCRLF(const std::string &s) {
 }
 
 bool Parser::isNicknameForbiddenChar(char c) {
-	const std::string forbidden = " ,*?!@.";
+	const std::string forbidden = " ,*?!@.\n\r";
 	return forbidden.find(c) != std::string::npos;
 }
 
 bool Parser::isNicknameForbiddenFirstChar(char c) {
-	const std::string forbidden = "$:#&~%+";
+	const std::string forbidden = "0123456789$:#&~%+";
 	return forbidden.find(c) != std::string::npos;
 }
 
@@ -85,6 +86,26 @@ bool Parser::containsNicknameForbiddenChars(const std::string& input) {
 			input.end(),
 			isNicknameForbiddenChar
 		) != input.end();
+}
+
+// Se nickname "PASS" || " PASS" || "PASS "
+// Return true
+// Se nickname "PASSagem"
+// Return false
+
+bool Parser::nicknameIsCommand(const std::string& nickname) {
+	std::string commands[] = {"PASS", "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PART", "QUIT"};
+
+	for (const auto& cmd: commands) {
+		std::size_t pos = nickname.find(cmd);
+		if (pos != std::string::npos) {
+			bool at_start = (pos == 0 || nickname[pos - 1] == ' ');
+			bool at_end = (pos + cmd.size() == nickname.size() || nickname[pos + cmd.size()] == ' ');
+			if (at_start || at_end)
+				return true;
+		}
+	}
+	return false;
 }
 
 /*
@@ -115,6 +136,10 @@ bool Parser::validateNickname(const std::string& nickname) {
 	if (containsNicknameForbiddenChars(nickname)) {
 		return false;
 	}
+	if (nicknameIsCommand(nickname)) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -154,6 +179,7 @@ bool Parser::validateChannelName(const std::string& channelName) {
 	if (containsChannelForbiddenChars(channelName)) {
 		return false;
 	}
+
 	return true;
 }
 
@@ -192,3 +218,4 @@ std::map<std::string, std::string> Parser::divideJoinCommand(
 
 	return channelKeyMap;
 }
+

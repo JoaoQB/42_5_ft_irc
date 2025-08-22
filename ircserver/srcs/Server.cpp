@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 13:05:00 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 14:19:23 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,8 +220,10 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 			cmdPass(*user, params);
 			break;
 		}
-		case CMD_NICK:
+		case CMD_NICK: {
+			cmdNick(*user, params);
 			break;
+		}
 		case CMD_USER:
 			break;
 		case CMD_JOIN:
@@ -247,26 +249,25 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 
 void Server::cmdPass(User &user, std::string cmdParameters){
 
-	std::cout << "PASS parameters: " << cmdParameters << std::endl;
+	std::cout << "Command parameters: " << cmdParameters << std::endl;
 
 	if (cmdParameters.empty()) {
-		std::cout << "Erro 461 needmoreparams" << std::endl;
+		std::cout << "Error 461 needmoreparams" << std::endl;
 	}
 
 	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
 	if (!user.getNickName().empty() || !user.getUserName().empty()) {
 		//sendError(user.getFd(), "462", "You may not reregister");
-		std::cout << "Erro 462 alreadyregistered" << std::endl;
+		std::cout << "Error 462 alreadyregistered" << std::endl;
 		return;
 	}
 
 	// 2 - Se comeca com ":", remover o ":" e aceitar espaços
-
 	std::string password;
 
 	if (!cmdParameters.empty() && cmdParameters[0] == ':')
 		password = cmdParameters.substr(1);
-	else { // Se NÃO ":", substr até primeiro espaço ou fim.
+	else { // Se NÃO começa ":", substr até primeiro espaço ou fim.
 		size_t spacePos = cmdParameters.find(' ');
 		if (spacePos != std::string::npos)
 			password = cmdParameters.substr(0, spacePos);
@@ -281,11 +282,42 @@ void Server::cmdPass(User &user, std::string cmdParameters){
 	std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
 	std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
 	if (password != this->serverPassword) {
-		std::cout << "Erro 464 passmismatch" << std::endl;
+		std::cout << "Error 464 passmismatch" << std::endl;
 		return ;
 	}
 
 	// 5 - Adicionar ao user.password
 	user.setPassword(password);
 	std::cout << "Password Registered Successfully: " << user.getPassword() << std::endl;
+}
+
+// TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
+void Server::cmdNick(User &user, std::string cmdParameters) {
+
+	// Não pode ser vaziu
+	if (cmdParameters.empty()) {
+		std::cout << "Error 431 nonicknamegiven" << std::endl;
+		return ;
+	}
+
+	// Remover o \r e \n no fim
+	std::string nickname = Parser::trimCRLF(cmdParameters);
+
+	// Proteção caracteres especiais && nickname não pode ser outro comando como NICK PASS JOIN...
+	if (!Parser::validateNickname(nickname)) {
+		std::cout << "ERR_ERRONEUSNICKNAME (432)" << std::endl;
+		return ;
+	}
+
+	// Se o nickname já está existe na mesma network
+	for (size_t i; i < users.size(); i++) {
+		if (users[i].getNickName().find(nickname)) {
+			std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
+			return ;
+		}
+	}
+
+	// Adicionar nickname ao user
+	user.setNickName(nickname);
+	std::cout << "User " << user.getNickName() << " Registered Successfully" << std::endl;
 }

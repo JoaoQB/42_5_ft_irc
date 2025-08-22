@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 13:04:42 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 14:08:45 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ class Parser {
 		static bool isNicknameForbiddenFirstChar(char c);
 		static bool isNicknameForbiddenChar(char c);
 		static bool containsNicknameForbiddenChars(const std::string& input);
+		static bool nicknameIsCommand(const std::string& input);
 
 		static bool isValidChannelPrefix(char c);
 		static bool isChannelForbiddenChar(char c);
