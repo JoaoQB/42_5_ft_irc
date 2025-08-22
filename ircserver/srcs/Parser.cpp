@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 14:11:17 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 15:43:18 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,18 +45,27 @@ CommandType Parser::getCommandType(const std::string& command) {
 	return cmd;
 }
 
-std::string Parser::extractParams(const std::string rawMessage, const std::string cmd)
-{
+std::string Parser::extractParams(const std::string rawMessage, const std::string cmd) {
 	size_t pos = rawMessage.find(cmd);
+
 	if (pos == std::string::npos)
 		return "";
 
 	pos += cmd.length();
 
-	if (pos < rawMessage.size() && rawMessage[pos] == ' ')
+	if (pos < rawMessage.size() && std::isspace(rawMessage[pos]))
 		pos++;
 
 	return rawMessage.substr(pos);
+}
+
+std::string Parser::extractFirstParam(const std::string parameters) {
+	std::size_t pos = parameters.find(' ');
+
+	if (pos != std::string::npos)
+		return parameters.substr(0, pos);
+
+	return (parameters);
 }
 
 // Remove \r\n from string end
@@ -92,7 +101,6 @@ bool Parser::containsNicknameForbiddenChars(const std::string& input) {
 // Return true
 // Se nickname "PASSagem"
 // Return false
-
 bool Parser::nicknameIsCommand(const std::string& nickname) {
 	std::string commands[] = {"PASS", "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PART", "QUIT"};
 

@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 14:08:45 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 15:43:06 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,8 @@ class Parser {
 		static CommandType getCommandType(const std::string& command);
 
 		static std::string extractParams(const std::string rawMessage, const std::string cmd);
+
+		static std::string extractFirstParam(const std::string parameters);
 
 		static bool validateChannelName(const std::string& channelName);
 

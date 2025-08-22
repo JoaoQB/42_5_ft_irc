@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 14:19:23 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 15:54:00 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -301,7 +301,10 @@ void Server::cmdNick(User &user, std::string cmdParameters) {
 	}
 
 	// Remover o \r e \n no fim
-	std::string nickname = Parser::trimCRLF(cmdParameters);
+	cmdParameters = Parser::trimCRLF(cmdParameters);
+
+	// AQUI <--
+	std::string nickname = Parser::extractFirstParam(cmdParameters);
 
 	// Proteção caracteres especiais && nickname não pode ser outro comando como NICK PASS JOIN...
 	if (!Parser::validateNickname(nickname)) {
@@ -310,8 +313,8 @@ void Server::cmdNick(User &user, std::string cmdParameters) {
 	}
 
 	// Se o nickname já está existe na mesma network
-	for (size_t i; i < users.size(); i++) {
-		if (users[i].getNickName().find(nickname)) {
+	for (size_t i = 0; i < users.size(); i++) {
+		if (users[i].getNickName() == nickname) {
 			std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
 			return ;
 		}
