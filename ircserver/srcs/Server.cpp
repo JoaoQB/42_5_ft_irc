@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:52:47 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/22 13:05:00 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,7 @@ void Server::receiveNewData(int fd) {
 	} else {
 		buffer[bytes] = '\0';
 		std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
-		handleRawMessage(buffer);
+		handleRawMessage(buffer, fd);
 		// TODO! Add code to process the received data:
 		// parse, check, authenticate, handle the command, etc...
 	}
@@ -190,15 +190,36 @@ void Server::clearUsers(int fd) {
 	}
 }
 
+User* Server::getUserByFd(int fd){
+	for (size_t i = 0; i < users.size(); i++) {
+		if (users[i].getFd() == fd)
+			return &users[i];
+	}
+	return NULL;
+}
+
 //TODO Command Handlers
-void Server::handleRawMessage(const char *buffer) {
+void Server::handleRawMessage(const char *buffer, int fd) {
 	std::string rawMessage(buffer);
+
+	//rawMessage = "PASS mypassword"
 	std::string command = Parser::extractCommand(rawMessage);
+	// command = "PASS"
 	CommandType cmd = Parser::getCommandType(command);
+	// cmd = 1
+	std::string params = Parser::extractParams(rawMessage, command);
+
+	User *user = getUserByFd(fd);
+	if (!user) {
+		throw std::runtime_error("User not found for fd");
+		return;
+	}
 
 	switch (cmd) {
-		case CMD_PASS:
+		case CMD_PASS: {
+			cmdPass(*user, params);
 			break;
+		}
 		case CMD_NICK:
 			break;
 		case CMD_USER:
@@ -222,4 +243,49 @@ void Server::handleRawMessage(const char *buffer) {
 		default:
 			break;
 	}
+}
+
+void Server::cmdPass(User &user, std::string cmdParameters){
+
+	std::cout << "PASS parameters: " << cmdParameters << std::endl;
+
+	if (cmdParameters.empty()) {
+		std::cout << "Erro 461 needmoreparams" << std::endl;
+	}
+
+	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
+	if (!user.getNickName().empty() || !user.getUserName().empty()) {
+		//sendError(user.getFd(), "462", "You may not reregister");
+		std::cout << "Erro 462 alreadyregistered" << std::endl;
+		return;
+	}
+
+	// 2 - Se comeca com ":", remover o ":" e aceitar espaços
+
+	std::string password;
+
+	if (!cmdParameters.empty() && cmdParameters[0] == ':')
+		password = cmdParameters.substr(1);
+	else { // Se NÃO ":", substr até primeiro espaço ou fim.
+		size_t spacePos = cmdParameters.find(' ');
+		if (spacePos != std::string::npos)
+			password = cmdParameters.substr(0, spacePos);
+		else
+			password = cmdParameters;
+	}
+
+	// 3 - Remover o \r e \n no fim
+	password = Parser::trimCRLF(password);
+
+	// 4 - Verificar se a password coicide com o servidor, se errada 464 ERR_PASSWDMISMATCH.
+	std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
+	std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
+	if (password != this->serverPassword) {
+		std::cout << "Erro 464 passmismatch" << std::endl;
+		return ;
+	}
+
+	// 5 - Adicionar ao user.password
+	user.setPassword(password);
+	std::cout << "Password Registered Successfully: " << user.getPassword() << std::endl;
 }

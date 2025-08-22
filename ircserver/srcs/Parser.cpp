@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:52:06 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/22 13:05:42 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,30 @@ CommandType Parser::getCommandType(const std::string& command) {
 	CommandType cmd = it != commands.end() ? it->second : CMD_UNKNOWN;
 
 	return cmd;
+}
+
+std::string Parser::extractParams(const std::string rawMessage, const std::string cmd)
+{
+	size_t pos = rawMessage.find(cmd);
+	if (pos == std::string::npos)
+		return "";
+
+	pos += cmd.length();
+
+	if (pos < rawMessage.size() && rawMessage[pos] == ' ')
+		pos++;
+
+	return rawMessage.substr(pos);
+}
+
+std::string Parser::trimCRLF(const std::string &s) {
+	size_t end = s.size();
+	if (!s.empty() && s[end-1] == '\n')
+		end--;
+	if (!s.empty() && s[end-1] == '\r')
+		end--;
+
+	return s.substr(0, end);
 }
 
 bool Parser::isNicknameForbiddenChar(char c) {

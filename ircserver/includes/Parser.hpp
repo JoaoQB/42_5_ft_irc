@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 10:23:26 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/22 13:04:42 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,13 @@ class Parser {
 
 		static CommandType getCommandType(const std::string& command);
 
+		static std::string extractParams(const std::string rawMessage, const std::string cmd);
+
 		static bool validateChannelName(const std::string& channelName);
 
 		static bool validateNickname(const std::string& nickname);
+
+		static std::string trimCRLF(const std::string &s);
 
 		std::map<std::string, std::string> divideJoinCommand(
 			const std::string& channelNames,
