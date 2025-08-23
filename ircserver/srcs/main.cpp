@@ -13,17 +13,6 @@
 #include "../includes/User.hpp"
 #include "../includes/Server.hpp"
 
-// int main(int argc, char** argv) {
-// 	if (argc != 3) {
-// 		std::cerr << "Error: invalid input, "
-// 			<< "please provide a port and password as arguments.\n"
-// 			<< "Usage: './ircserv <port> <password> [...]'\n"
-// 			<< "Example: './ircserv 5 9 1 20 3'" << std::endl;
-// 		return 1;
-// 	}
-// 	return 0;
-// }
-
 int main(int argc, char **argv) {
 	if (argc != 3) {
 		std::cerr << "Error: invalid input, "

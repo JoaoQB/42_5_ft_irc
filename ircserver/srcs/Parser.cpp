@@ -137,8 +137,6 @@ StringMap Parser::mapJoinCommand(
 	const std::string& channelNames,
 	const std::string& channelKeys
 ) {
-	std::cout << "[DEBUG] Raw channelNames: '" << channelNames << "'" << std::endl;
-	std::cout << "[DEBUG] Raw channelKeys:  '" << channelKeys << "'" << std::endl;
 	StringMap channelKeyMap;
 
 	std::list<std::string> channels = splitStringToList(channelNames, ",");
@@ -146,14 +144,6 @@ StringMap Parser::mapJoinCommand(
 	if (!channelKeys.empty()) {
 		keys = splitStringToList(channelKeys, ",");
 	}
-
-	std::cout << "[DEBUG] Parsed channel list:" << std::endl;
-	for (std::list<std::string>::const_iterator it = channels.begin(); it != channels.end(); ++it)
-		std::cout << " - " << *it << std::endl;
-
-	std::cout << "[DEBUG] Parsed key list:" << std::endl;
-	for (std::list<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
-		std::cout << " - " << *it << std::endl;
 
 	std::list<std::string>::iterator chanIt = channels.begin();
 	std::list<std::string>::iterator keyIt = keys.begin();

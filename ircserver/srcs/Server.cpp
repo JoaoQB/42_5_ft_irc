@@ -263,8 +263,6 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 		const std::string& key = it->second;
 		if (!Parser::validateChannelName(name)) {
 			Parser::ft_error("invalid Channel name");
-			std::cout << "DEBUG! name: " << name << "\nkey: " << key << "\n";
-			std::cout << "DEBUG! user FD: " << fd << "\n";
 			continue;
 		}
 		if (channelExists(name)) {
