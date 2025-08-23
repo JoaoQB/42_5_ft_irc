@@ -33,7 +33,7 @@ const std::string& Channel::getPassword() const {
 	return this->password;
 }
 
-int Channel::channelIsFull() const {
+bool Channel::channelIsFull() const {
 	return this->isFull;
 }
 
@@ -50,7 +50,10 @@ void Channel::setPassword(const std::string& key) {
 	this->hasPassword = true;
 }
 
-void Channel::addUser(User user) {
+void Channel::addUser(User* user) {
+	if (!user || hasUser(user)) {
+		return;
+	}
 	this->channelUsers.push_back(user);
 	this->usersInChannel++;
 	if (channelLimit == usersInChannel) {
@@ -58,20 +61,16 @@ void Channel::addUser(User user) {
 	}
 }
 
-void Channel::addOperator(User user) {
+void Channel::addOperator(User* user) {
+	if (!user) {
+		return;
+	}
 	this->channelOperators.push_back(user);
 }
 
-bool Channel::hasUser(const User& user) const {
-	int userFd = user.getFd();
-	for (
-		ConstUserIterator it = this->channelUsers.begin() ;
-		it != this->channelUsers.end() ;
-		++it
-	) {
-		if (it->getFd() == userFd) {
-			return true;
-		}
-	}
-	return false;
+bool Channel::hasUser(const User* user) const {
+	if (!user) return false;
+
+	return std::find(channelUsers.begin(), channelUsers.end(), user) != channelUsers.end();
 }
+

@@ -110,7 +110,7 @@ void Server::signalHandler(int signum) {
 
 void Server::closeFds() {
 	// Close all Users
-	for (UserIterator it = users.begin() ; it != users.end() ; ++it) {
+	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
 		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHI << "\n";
 		close(it->getFd());
 	}
@@ -121,6 +121,7 @@ void Server::closeFds() {
 	}
 }
 
+//TODO remove user from channels
 void Server::clearUser(int fd) {
 	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
 		if (pIt->fd == fd) {
@@ -128,7 +129,7 @@ void Server::clearUser(int fd) {
 			break ;
 		}
 	}
-	for (UserIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
+	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
 		if (cIt->getFd() == fd) {
 			users.erase(cIt);
 			break;
@@ -169,7 +170,7 @@ void Server::acceptNewUser() {
 
 void Server::receiveNewData(int fd) {
 	// Buffer for incoming data
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	// Clear buffer
 	memset(buffer, 0, sizeof(buffer));
 
@@ -284,22 +285,9 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 	}
 }
 
-bool Server::channelExists(const std::string& channelName) {
-	for (
-		ChannelConstIterator it = this->channels.begin() ;
-		it != this->channels.end() ;
-		++it
-	) {
-		if (it->getName() == channelName) {
-			return true;
-		}
-	}
-	return false;
-}
-
 Channel& Server::getChannel(const std::string& channelName) {
 	for (
-		ChannelIterator it = this->channels.begin() ;
+		ChannelListIterator it = this->channels.begin() ;
 		it != this->channels.end() ;
 		++it
 	) {
@@ -310,20 +298,35 @@ Channel& Server::getChannel(const std::string& channelName) {
 	throw std::runtime_error("Channel not found");
 }
 
+bool Server::channelExists(const std::string& channelName) const {
+	for (
+		ChannelListConstIterator it = this->channels.begin() ;
+		it != this->channels.end() ;
+		++it
+	) {
+		if (it->getName() == channelName) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void Server::createChannel(
 	int userFd,
 	const std::string& channelName,
 	const std::string& channelKey
 ) {
-	User& targetUser = getUser(userFd);
+	User& creator = getUser(userFd);
 	Channel newChannel;
 	newChannel.setName(channelName);
 	if (!channelKey.empty()) {
 		newChannel.setPassword(channelKey);
 	}
-	newChannel.addUser(targetUser);
-	newChannel.addOperator(targetUser);
+	newChannel.addUser(&creator);
+	newChannel.addOperator(&creator);
 	this->channels.push_back(newChannel);
+	Channel* joinedChannel = &this->channels.back();
+	creator.addChannel(joinedChannel);
 	std::cout << "Channel " << channelName << " created by user " << userFd << "\n";
 }
 
@@ -334,7 +337,7 @@ void Server::addUserToChannel(
 ) {
 	Channel& targetChannel = getChannel(channelName);
 	User& targetUser = getUser(userFd);
-	if (targetChannel.hasUser(targetUser)) {
+	if (targetChannel.hasUser(&targetUser)) {
 		std::cout << "User " << userFd << " is already in channel " << channelName << std::endl;
 		return;
 	}
@@ -345,7 +348,8 @@ void Server::addUserToChannel(
 	if (!targetChannel.requiresPassword() ||
 		targetChannel.getPassword() == channelKey
 	) {
-		targetChannel.addUser(targetUser);
+		targetChannel.addUser(&targetUser);
+		targetUser.addChannel(&targetChannel);
 		std::cout << "User " << userFd << " added to channel " << channelName << std::endl;
 	} else {
 		Parser::ft_error("channel password is incorrect");
@@ -354,7 +358,7 @@ void Server::addUserToChannel(
 
 User& Server::getUser(int fd) {
 	for (
-		UserIterator it = this->users.begin() ;
+		UserListIterator it = this->users.begin() ;
 		it != this->users.end() ;
 		++it
 	) {

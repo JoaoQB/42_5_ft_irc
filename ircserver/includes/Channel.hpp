@@ -23,7 +23,7 @@ class Channel {
 		// Accessors (getters)
 		const std::string& getName() const;
 		const std::string& getPassword() const;
-		int channelIsFull() const;
+		bool channelIsFull() const;
 		bool requiresPassword() const;
 
 		// Mutators (setters)
@@ -31,11 +31,11 @@ class Channel {
 		void setPassword(const std::string& key);
 
 		// Actions
-		void addUser(User user);
-		void addOperator(User user);
+		void addUser(User* user);
+		void addOperator(User* user);
 
 		// Helpers
-		bool hasUser(const User& user) const;
+		bool hasUser(const User* user) const;
 
 	private:
 		std::string name;
@@ -49,8 +49,8 @@ class Channel {
 		int channelLimit;
 		int usersInChannel;
 
-		std::vector<User> channelUsers;
-		std::vector<User> channelOperators;
+		std::vector<User*> channelUsers;
+		std::vector<User*> channelOperators;
 };
 
 #endif

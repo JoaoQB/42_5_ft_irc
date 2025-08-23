@@ -19,8 +19,8 @@ class Parser {
 	public:
 		// Extractors
 		static std::string extractCommand(const std::string& rawMessage);
-		std::string extractChannelNames(const std::string& rawJoinMessage);
-		std::string extractChannelKeys(const std::string& rawJoinMessage);
+		// std::string extractChannelNames(const std::string& rawJoinMessage); //TODO
+		// std::string extractChannelKeys(const std::string& rawJoinMessage); //TODO
 
 		// Command classification
 		static CommandType getCommandType(const std::string& command);

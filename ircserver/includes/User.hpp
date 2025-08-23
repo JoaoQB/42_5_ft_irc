@@ -23,7 +23,11 @@ class User {
 		int getFd() const;
 
 		void setFd(int fd);
-		void setIpAddress(std::string ipAddress);
+		void setIpAddress(const std::string& ipAddr);
+
+		bool hasChannel(const Channel* channel) const;
+
+		void addChannel(Channel* channel);
 
 	private:
 		int fd;
@@ -33,7 +37,7 @@ class User {
 		std::string nickname;
 		std::string password;
 
-		std::vector<Channel> userChannels;
+		std::vector<Channel*> userChannels;
 };
 
 #endif

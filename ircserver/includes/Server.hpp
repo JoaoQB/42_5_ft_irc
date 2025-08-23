@@ -50,13 +50,13 @@ class Server {
 		static bool signal;
 
 		// Data Containers
-		std::vector<User> users;
+		std::list<User> users;
 		std::vector<struct pollfd> pollFds;
-		std::vector<Channel> channels;
+		std::list<Channel> channels;
 
 		// Channel Utilities
-		bool channelExists(const std::string& channelName);
 		Channel& getChannel(const std::string& channelName);
+		bool channelExists(const std::string& channelName) const;
 		void createChannel(int userFd, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(int userFd, const std::string& channelName, const std::string& channelKey);
 
