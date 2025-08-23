@@ -14,6 +14,7 @@
 # define USER_HPP
 
 # include "./Common.hpp"
+#include "Channel.hpp"
 
 class User {
 	public:
@@ -31,6 +32,8 @@ class User {
 		std::string username;
 		std::string nickname;
 		std::string password;
+
+		std::vector<Channel> userChannels;
 };
 
 #endif

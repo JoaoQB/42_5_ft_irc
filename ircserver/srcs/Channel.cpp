@@ -21,7 +21,8 @@ Channel::Channel()
 	, isFull(false)
 	, channelLimit(-1)
 	, usersInChannel(0)
-	, channelUsers() {
+	, channelUsers()
+	, channelOperators() {
 }
 
 const std::string& Channel::getName() const {
@@ -55,4 +56,22 @@ void Channel::addUser(User user) {
 	if (channelLimit == usersInChannel) {
 		this->isFull = true;
 	}
+}
+
+void Channel::addOperator(User user) {
+	this->channelOperators.push_back(user);
+}
+
+bool Channel::hasUser(const User& user) const {
+	int userFd = user.getFd();
+	for (
+		ConstUserIterator it = this->channelUsers.begin() ;
+		it != this->channelUsers.end() ;
+		++it
+	) {
+		if (it->getFd() == userFd) {
+			return true;
+		}
+	}
+	return false;
 }

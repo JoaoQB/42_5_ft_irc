@@ -58,7 +58,7 @@ enum CommandType {
 typedef std::vector<struct pollfd>::iterator PollIterator;
 
 typedef std::vector<User>::iterator UserIterator;
-typedef std::vector<User>::iterator UserIterator;
+typedef std::vector<User>::const_iterator ConstUserIterator;
 
 typedef std::map<std::string, CommandType> CommandMap;
 typedef CommandMap::const_iterator CommandMapConstIterator;

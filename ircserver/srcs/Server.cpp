@@ -269,7 +269,7 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 		if (channelExists(name)) {
 			try {
 				addUserToChannel(fd, name, key);
-				std::cout << "Added user " << fd << " to existing channel " << name << "\n";
+				// std::cout << "Added user " << fd << " to existing channel " << name << "\n";
 			} catch (const std::exception& e) {
 				std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
 			}
@@ -322,9 +322,9 @@ void Server::createChannel(
 		newChannel.setPassword(channelKey);
 	}
 	newChannel.addUser(targetUser);
+	newChannel.addOperator(targetUser);
 	this->channels.push_back(newChannel);
 	std::cout << "Channel " << channelName << " created by user " << userFd << "\n";
-	// TODO add user as channel operator.
 }
 
 void Server::addUserToChannel(
@@ -333,16 +333,20 @@ void Server::addUserToChannel(
 	const std::string& channelKey
 ) {
 	Channel& targetChannel = getChannel(channelName);
+	User& targetUser = getUser(userFd);
+	if (targetChannel.hasUser(targetUser)) {
+		std::cout << "User " << userFd << " is already in channel " << channelName << std::endl;
+		return;
+	}
 	if (targetChannel.channelIsFull()) {
 		Parser::ft_error("channel full");
 		return ;
 	}
-	User& targetUser = getUser(userFd);
 	if (!targetChannel.requiresPassword() ||
 		targetChannel.getPassword() == channelKey
 	) {
 		targetChannel.addUser(targetUser);
-		std::cout << "User " << userFd << " added to channel " << channelName << "\n";
+		std::cout << "User " << userFd << " added to channel " << channelName << std::endl;
 	} else {
 		Parser::ft_error("channel password is incorrect");
 	}

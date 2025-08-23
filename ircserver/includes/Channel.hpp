@@ -32,6 +32,10 @@ class Channel {
 
 		// Actions
 		void addUser(User user);
+		void addOperator(User user);
+
+		// Helpers
+		bool hasUser(const User& user) const;
 
 	private:
 		std::string name;
@@ -46,6 +50,7 @@ class Channel {
 		int usersInChannel;
 
 		std::vector<User> channelUsers;
+		std::vector<User> channelOperators;
 };
 
 #endif
