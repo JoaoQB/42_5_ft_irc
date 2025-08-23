@@ -6,7 +6,7 @@
 /*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/10 09:59:56 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/07/16 17:25:49 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,32 +22,46 @@ class Server {
 	public:
 		static const int BUFFER_SIZE = 1024;
 
+		// Constructor
 		Server();
 
+		// Lifecycle & Core Setup
 		void serverInit(const std::string& port, const std::string& password);
 		void serverSocketCreate();
+		static void signalHandler(int signum);
+		void closeFds();
+		void clearUser(int fd);
+
+		// Connection Handling
 		void acceptNewUser();
 		void receiveNewData(int fd);
 
-		static void signalHandler(int signum);
+		// Message Handling
+		void handleRawMessage(int fd, const char* buffer);
 
-		void closeFds();
-		void clearUsers(int fd);
-
-		void handleRawMessage(const char* buffer);
+		// Command Handlers
+		void handleJoinCommand(int fd, const std::string& rawMessage);
 
 	private:
+		// Server State
 		int serverSocketFd;
 		int serverPort;
 		std::string serverPassword;
-
 		static bool signal;
 
-		std::vector<User> users;
+		// Data Containers
+		std::list<User> users;
 		std::vector<struct pollfd> pollFds;
-		std::vector<Channel> channels;
+		std::list<Channel> channels;
 
+		// Channel Utilities
+		Channel& getChannel(const std::string& channelName);
+		bool channelExists(const std::string& channelName) const;
+		void createChannel(int userFd, const std::string& channelName, const std::string& channelKey);
+		void addUserToChannel(int userFd, const std::string& channelName, const std::string& channelKey);
 
+		// User Utilities
+		User& getUser(int fd);
 };
 
 #endif

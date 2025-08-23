@@ -12,10 +12,17 @@
 
 #include "../includes/User.hpp"
 
-User::User() {
+User::User()
+	: fd(-1)
+	, ipAddress()
+	, realname()
+	, username()
+	, nickname()
+	, password()
+	, userChannels() {
 }
 
-int User::getFd() {
+int User::getFd() const {
 	return this->fd;
 }
 
@@ -23,6 +30,19 @@ void User::setFd(int fd) {
 	this->fd = fd;
 }
 
-void User::setIpAddress(std::string ipAddress) {
-	this->ipAddress = ipAddress;
+void User::setIpAddress(const std::string& ipAddr) {
+	this->ipAddress = ipAddr;
+}
+
+bool User::hasChannel(const Channel* channel) const {
+	if (!channel) return false;
+
+	return std::find(userChannels.begin(), userChannels.end(), channel) != userChannels.end();
+}
+
+void User::addChannel(Channel* channel) {
+	if (!channel || hasChannel(channel)) {
+		return;
+	}
+	this->userChannels.push_back(channel);
 }
