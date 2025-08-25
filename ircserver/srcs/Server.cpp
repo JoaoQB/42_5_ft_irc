@@ -237,22 +237,9 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 		return;
 	}
 
-	//TODO create helper functions for this logic.
 	StringSizeT keyStart = rawMessage.find(' ', commandPrefixLength);
-	std::string channelNames = (keyStart != std::string::npos)
-		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
-		: rawMessage.substr(commandPrefixLength);
-
-	std::string channelKeys;
-	if (keyStart != std::string::npos) {
-		StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
-		if (keyStartTrimmed != std::string::npos) {
-			StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
-			channelKeys = (keyEnd != std::string::npos)
-				? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
-				: rawMessage.substr(keyStartTrimmed);
-		}
-	}
+	std::string channelNames = extractChannelNames(rawMessage, commandPrefixLength, keyStart);
+	std::string channelKeys = extractChannelKeys(rawMessage, keyStart);
 
 	StringMap channelsWithKeys = Parser::mapJoinCommand(channelNames, channelKeys);
 	for (StringMapConstIterator it = channelsWithKeys.begin();
@@ -265,20 +252,14 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 			Parser::ft_error("invalid Channel name");
 			continue;
 		}
-		if (channelExists(name)) {
-			try {
+		try {
+			if (channelExists(name)) {
 				addUserToChannel(fd, name, key);
-				// std::cout << "Added user " << fd << " to existing channel " << name << "\n";
-			} catch (const std::exception& e) {
-				std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
-			}
-		}
-		else {
-			try {
+			} else {
 				createChannel(fd, name, key);
-			} catch (const std::exception& e) {
-				std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
 			}
+		} catch (const std::exception& e) {
+			std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
 		}
 	}
 }
@@ -294,6 +275,32 @@ Channel& Server::getChannel(const std::string& channelName) {
 		}
 	}
 	throw std::runtime_error("Channel not found");
+}
+
+std::string Server::extractChannelNames(
+	const std::string& rawMessage,
+	StringSizeT commandPrefixLength,
+	StringSizeT keyStart
+) {
+	return (keyStart != std::string::npos)
+		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
+		: rawMessage.substr(commandPrefixLength);
+}
+
+std::string Server::extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart) {
+	if (keyStart == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
+	if (keyStartTrimmed == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
+	return (keyEnd != std::string::npos)
+		? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
+		: rawMessage.substr(keyStartTrimmed);
 }
 
 bool Server::channelExists(const std::string& channelName) const {
@@ -347,15 +354,15 @@ void Server::addUserToChannel(
 		Parser::ft_error("channel is invite only");
 		return ;
 	}
-	if (!targetChannel.requiresPassword() ||
-		targetChannel.getPassword() == channelKey
+	if (targetChannel.requiresPassword() &&
+		targetChannel.getPassword() != channelKey
 	) {
-		targetChannel.addUser(&targetUser);
-		targetUser.addChannel(&targetChannel);
-		std::cout << "User " << userFd << " added to channel " << channelName << std::endl;
-	} else {
 		Parser::ft_error("channel password is incorrect");
+		return;
 	}
+	targetChannel.addUser(&targetUser);
+	targetUser.addChannel(&targetChannel);
+	std::cout << "User " << userFd << " added to channel " << channelName << std::endl;
 }
 
 User& Server::getUser(int fd) {

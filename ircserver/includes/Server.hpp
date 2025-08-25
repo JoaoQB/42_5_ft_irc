@@ -56,6 +56,12 @@ class Server {
 
 		// Channel Utilities
 		Channel& getChannel(const std::string& channelName);
+		std::string extractChannelNames(
+			const std::string& rawMessage,
+			StringSizeT commandPrefixLength,
+			StringSizeT keyStart
+		);
+		std::string extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart);
 		bool channelExists(const std::string& channelName) const;
 		void createChannel(int userFd, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(int userFd, const std::string& channelName, const std::string& channelKey);
