@@ -23,8 +23,9 @@ class Channel {
 		// Accessors (getters)
 		const std::string& getName() const;
 		const std::string& getPassword() const;
-		bool channelIsFull() const;
+		bool isFull() const;
 		bool requiresPassword() const;
+		bool isInviteOnly() const;
 
 		// Mutators (setters)
 		void setName(const std::string& channelName);
@@ -43,8 +44,8 @@ class Channel {
 		std::string topic;
 
 		bool hasPassword;
-		bool isInviteOnly;
-		bool isFull;
+		bool inviteOnly;
+		bool full;
 
 		int channelLimit;
 		int usersInChannel;

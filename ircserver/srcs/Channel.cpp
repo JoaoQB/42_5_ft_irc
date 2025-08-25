@@ -17,8 +17,8 @@ Channel::Channel()
 	, password()
 	, topic()
 	, hasPassword(false)
-	, isInviteOnly(false)
-	, isFull(false)
+	, inviteOnly(false)
+	, full(false)
 	, channelLimit(-1)
 	, usersInChannel(0)
 	, channelUsers()
@@ -33,12 +33,16 @@ const std::string& Channel::getPassword() const {
 	return this->password;
 }
 
-bool Channel::channelIsFull() const {
-	return this->isFull;
+bool Channel::isFull() const {
+	return this->full;
 }
 
 bool Channel::requiresPassword() const {
 	return this->hasPassword;
+}
+
+bool Channel::isInviteOnly() const {
+	return this->inviteOnly;
 }
 
 void Channel::setName(const std::string& channelName) {
@@ -57,7 +61,7 @@ void Channel::addUser(User* user) {
 	this->channelUsers.push_back(user);
 	this->usersInChannel++;
 	if (channelLimit == usersInChannel) {
-		this->isFull = true;
+		this->full = true;
 	}
 }
 

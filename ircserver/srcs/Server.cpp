@@ -339,8 +339,12 @@ void Server::addUserToChannel(
 		std::cout << "User " << userFd << " is already in channel " << channelName << std::endl;
 		return;
 	}
-	if (targetChannel.channelIsFull()) {
+	if (targetChannel.isFull()) {
 		Parser::ft_error("channel full");
+		return ;
+	}
+	if (targetChannel.isInviteOnly()) {
+		Parser::ft_error("channel is invite only");
 		return ;
 	}
 	if (!targetChannel.requiresPassword() ||
