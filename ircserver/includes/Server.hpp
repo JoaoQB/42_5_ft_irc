@@ -44,6 +44,7 @@ class Server {
 
 	private:
 		// Server State
+		std::string name;
 		int serverSocketFd;
 		int serverPort;
 		std::string serverPassword;
@@ -56,18 +57,23 @@ class Server {
 
 		// Channel Utilities
 		Channel& getChannel(const std::string& channelName);
-		std::string extractChannelNames(
-			const std::string& rawMessage,
-			StringSizeT commandPrefixLength,
-			StringSizeT keyStart
-		);
-		std::string extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart);
 		bool channelExists(const std::string& channelName) const;
 		void createChannel(int userFd, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(int userFd, const std::string& channelName, const std::string& channelKey);
+		void sendJoinReplies(const User* user, const Channel* channel);
+		void broadcastJoin(const User* user, const Channel* channel);
+		void sendChannelTopic(const User* user, const Channel* channel);
+		void sendChannelUsersAndSetat(const User* user, const Channel* channel);
 
 		// User Utilities
 		User& getUser(int fd);
+		void sendMessage(int userFd, const std::string &message);
+		void sendNumericReply(
+			const User* user,
+			 NumericReply numericCode,
+			const std::string& command,
+			const std::string& message
+		);
 };
 
 #endif

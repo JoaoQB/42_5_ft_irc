@@ -15,7 +15,10 @@
 Channel::Channel()
 	: name()
 	, password()
+	, channelCreationTime()
 	, topic()
+	, topicSetter()
+	, topicCreationTime()
 	, hasPassword(false)
 	, inviteOnly(false)
 	, full(false)
@@ -23,6 +26,40 @@ Channel::Channel()
 	, usersInChannel(0)
 	, channelUsers()
 	, channelOperators() {
+	channelCreationTime = Parser::getTimestamp();
+}
+
+// Test printing channel topic
+// Channel::Channel()
+// 	: name()
+// 	, password()
+// 	, channelCreationTime()
+// 	, topic("a contemporaneadade")
+// 	, topicSetter("theBest!")
+// 	, topicCreationTime()
+// 	, hasPassword(false)
+// 	, inviteOnly(false)
+// 	, full(false)
+// 	, channelLimit(-1)
+// 	, usersInChannel(0)
+// 	, channelUsers()
+// 	, channelOperators() {
+// 	channelCreationTime = Parser::getTimestamp();
+// 	topicCreationTime = Parser::getTimestamp();
+// }
+
+void Channel::setName(const std::string& channelName) {
+	this->name = channelName;
+}
+
+void Channel::setPassword(const std::string& key) {
+	this->password = key;
+	this->hasPassword = true;
+}
+
+void Channel::setTopic(const std::string& message) {
+	this->topic = message;
+
 }
 
 const std::string& Channel::getName() const {
@@ -31,6 +68,22 @@ const std::string& Channel::getName() const {
 
 const std::string& Channel::getPassword() const {
 	return this->password;
+}
+
+const std::string& Channel::getTopic() const {
+	return this->topic;
+}
+
+const std::string& Channel::getTopicSetter() const {
+	return this->topicSetter;
+}
+
+const std::string& Channel::getTopicCreationTime() const {
+	return this->topicCreationTime;
+}
+
+const std::string& Channel::getCreationTime() const {
+	return this->topicCreationTime;
 }
 
 bool Channel::isFull() const {
@@ -45,13 +98,18 @@ bool Channel::isInviteOnly() const {
 	return this->inviteOnly;
 }
 
-void Channel::setName(const std::string& channelName) {
-	this->name = channelName;
+bool Channel::hasTopic() const {
+	return !this->topic.empty();
 }
 
-void Channel::setPassword(const std::string& key) {
-	this->password = key;
-	this->hasPassword = true;
+bool Channel::isOperator(const User* user) const {
+	if (!user) return false;
+
+	return std::find(channelOperators.begin(), channelOperators.end(), user) != channelOperators.end();
+}
+
+const std::vector<User*>& Channel::getUsers() const {
+	return this->channelUsers;
 }
 
 void Channel::addUser(User* user) {

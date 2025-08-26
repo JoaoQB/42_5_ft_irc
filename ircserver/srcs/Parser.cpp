@@ -23,6 +23,32 @@ std::string Parser::extractCommand(const std::string& rawMessage) {
 	return rawMessage.substr(0, firstSpace);
 }
 
+std::string Parser::extractChannelNames(
+	const std::string& rawMessage,
+	StringSizeT commandPrefixLength,
+	StringSizeT keyStart
+) {
+	return (keyStart != std::string::npos)
+		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
+		: rawMessage.substr(commandPrefixLength);
+}
+
+std::string Parser::extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart) {
+	if (keyStart == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
+	if (keyStartTrimmed == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
+	return (keyEnd != std::string::npos)
+		? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
+		: rawMessage.substr(keyStartTrimmed);
+}
+
 CommandType Parser::getCommandType(const std::string& command) {
 	static CommandMap commands;
 	if (commands.empty()) {
@@ -162,10 +188,6 @@ StringMap Parser::mapJoinCommand(
 	return channelKeyMap;
 }
 
-void Parser::ft_error(const std::string& errorMessage) {
-	std::cerr << "Error: " << errorMessage << std::endl;
-}
-
 std::list<std::string> Parser::splitStringToList(
 	const std::string& values,
 	const std::string& delimiter
@@ -187,4 +209,27 @@ std::list<std::string> Parser::splitStringToList(
 	}
 
 	return result;
+}
+
+void Parser::ft_error(const std::string& errorMessage) {
+	std::cerr << "Error: " << errorMessage << std::endl;
+}
+
+std::string Parser::getTimestamp() {
+	std::time_t now = std::time(NULL);
+	std::ostringstream oss;
+	oss << now;
+	std::string setAtString = oss.str();
+	std::cout << "[DEBUG!] Timestamp is:\n" << setAtString << "!\n";
+
+
+	return setAtString;
+}
+
+std::string Parser::numericReplyToString(NumericReply numericCode) {
+	std::ostringstream oss;
+	oss << static_cast<int>(numericCode);
+	std::string code = oss.str();
+
+	return code;
 }

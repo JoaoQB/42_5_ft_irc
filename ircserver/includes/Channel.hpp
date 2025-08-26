@@ -15,6 +15,7 @@
 
 # include "./Common.hpp"
 # include "./User.hpp"
+# include "./Parser.hpp"
 
 class Channel {
 	public:
@@ -23,13 +24,21 @@ class Channel {
 		// Accessors (getters)
 		const std::string& getName() const;
 		const std::string& getPassword() const;
+		const std::string& getTopic() const;
+		const std::string& getTopicSetter() const;
+		const std::string& getTopicCreationTime() const;
+		const std::string& getCreationTime() const;
 		bool isFull() const;
 		bool requiresPassword() const;
 		bool isInviteOnly() const;
+		bool hasTopic() const;
+		bool isOperator(const User* user) const;
+		const std::vector<User*>& getUsers() const;
 
 		// Mutators (setters)
 		void setName(const std::string& channelName);
 		void setPassword(const std::string& key);
+		void setTopic(const std::string& message);
 
 		// Actions
 		void addUser(User* user);
@@ -41,7 +50,10 @@ class Channel {
 	private:
 		std::string name;
 		std::string password;
+		std::string channelCreationTime;
 		std::string topic;
+		std::string topicSetter;
+		std::string topicCreationTime;
 
 		bool hasPassword;
 		bool inviteOnly;

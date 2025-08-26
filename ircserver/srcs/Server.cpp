@@ -15,7 +15,8 @@
 bool Server::signal = false;
 
 Server::Server()
-	: serverSocketFd(-1)
+	: name("ft_irc")
+	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
 	, users()
@@ -238,8 +239,8 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 	}
 
 	StringSizeT keyStart = rawMessage.find(' ', commandPrefixLength);
-	std::string channelNames = extractChannelNames(rawMessage, commandPrefixLength, keyStart);
-	std::string channelKeys = extractChannelKeys(rawMessage, keyStart);
+	std::string channelNames = Parser::extractChannelNames(rawMessage, commandPrefixLength, keyStart);
+	std::string channelKeys = Parser::extractChannelKeys(rawMessage, keyStart);
 
 	StringMap channelsWithKeys = Parser::mapJoinCommand(channelNames, channelKeys);
 	for (StringMapConstIterator it = channelsWithKeys.begin();
@@ -277,32 +278,6 @@ Channel& Server::getChannel(const std::string& channelName) {
 	throw std::runtime_error("Channel not found");
 }
 
-std::string Server::extractChannelNames(
-	const std::string& rawMessage,
-	StringSizeT commandPrefixLength,
-	StringSizeT keyStart
-) {
-	return (keyStart != std::string::npos)
-		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
-		: rawMessage.substr(commandPrefixLength);
-}
-
-std::string Server::extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart) {
-	if (keyStart == std::string::npos) {
-		return "";
-	}
-
-	StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
-	if (keyStartTrimmed == std::string::npos) {
-		return "";
-	}
-
-	StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
-	return (keyEnd != std::string::npos)
-		? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
-		: rawMessage.substr(keyStartTrimmed);
-}
-
 bool Server::channelExists(const std::string& channelName) const {
 	for (
 		ChannelListConstIterator it = this->channels.begin() ;
@@ -323,15 +298,16 @@ void Server::createChannel(
 ) {
 	User& creator = getUser(userFd);
 	Channel newChannel;
-	newChannel.setName(channelName);
-	if (!channelKey.empty()) {
-		newChannel.setPassword(channelKey);
-	}
-	newChannel.addUser(&creator);
-	newChannel.addOperator(&creator);
 	this->channels.push_back(newChannel);
 	Channel* joinedChannel = &this->channels.back();
+	joinedChannel->setName(channelName);
+	if (!channelKey.empty()) {
+		joinedChannel->setPassword(channelKey);
+	}
+	joinedChannel->addUser(&creator);
+	joinedChannel->addOperator(&creator);
 	creator.addChannel(joinedChannel);
+	sendJoinReplies(&creator, joinedChannel);
 	std::cout << "Channel " << channelName << " created by user " << userFd << "\n";
 }
 
@@ -362,7 +338,106 @@ void Server::addUserToChannel(
 	}
 	targetChannel.addUser(&targetUser);
 	targetUser.addChannel(&targetChannel);
+	sendJoinReplies(&targetUser, &targetChannel);
 	std::cout << "User " << userFd << " added to channel " << channelName << std::endl;
+}
+
+void Server::sendJoinReplies(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	broadcastJoin(user, channel);
+	sendChannelTopic(user, channel);
+	sendChannelUsersAndSetat(user, channel);
+}
+
+void Server::broadcastJoin(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string joinMessage = ":" + user->getUserIdentifier()
+		+ " JOIN " + channel->getName();
+	// sendMessage(user->getFd(), joinMessage);
+	for (
+		UserVectorConstIterator it = channel->getUsers().begin();
+		it != channel->getUsers().end();
+		++it
+	) {
+		sendMessage((*it)->getFd(), joinMessage);
+	}
+}
+
+void Server::sendChannelTopic(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	if (!channel->hasTopic()) {
+		std::string noTopicMessage = ":" + this->name
+			+ " " + Parser::numericReplyToString(RPL_NOTOPIC)
+			+ " " + user->getNickname()
+			+ " " + channel->getName()
+			+ " :" + "No topic is set";
+
+		sendNumericReply(user, RPL_NOTOPIC, channel->getName(), "No topic is set");
+
+		return;
+	}
+	std::string topicMessage = ":" + this->name
+		+ " " + Parser::numericReplyToString(RPL_TOPIC)
+		+ " " + user->getNickname()
+		+ " " + channel->getName()
+		+ " :" + channel->getTopic();
+
+	sendNumericReply(user, RPL_TOPIC, channel->getName(), channel->getTopic());
+
+	std::string topicWhoTimeMessage = ":" + this->name
+		+ " " + Parser::numericReplyToString(RPL_TOPICWHOTIME)
+		+ " " + user->getNickname()
+		+ " " + channel->getName()
+		+ " " + channel->getTopicSetter()
+		+ " " + channel->getTopicCreationTime();
+
+	sendMessage(user->getFd(), topicWhoTimeMessage);
+	//TODO Incorporate last message in helper function
+}
+
+void Server::sendChannelUsersAndSetat(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string channelUsers;
+	for (
+		UserVectorConstIterator it = channel->getUsers().begin();
+		it != channel->getUsers().end();
+		++it
+	) {
+		std::string isOperatorPrefix = channel->isOperator(*it) ? "@" : "";
+		channelUsers += (*it)->getNickname() + " ";
+	}
+	std::string usersMessage = ":" + this->name
+		+ " " + Parser::numericReplyToString(RPL_NAMREPLY)
+		+ " " + user->getNickname()
+		+ " " + channel->getName()
+		+ " :" + channelUsers;
+
+	std::string endOfNames = ":" + this->name
+		+ " " + Parser::numericReplyToString(RPL_ENDOFNAMES)
+		+ " " + user->getNickname()
+		+ " " + channel->getName()
+		+ " :End of /NAMES list";
+
+	std::string setAt = ":" + this->name
+		+ " " + Parser::numericReplyToString(RPL_CREATIONTIME)
+		+ " " + user->getNickname()
+		+ " " + channel->getName()
+		+ " :" + channel->getCreationTime();
+
+
+	sendMessage(user->getFd(), usersMessage);
+	sendMessage(user->getFd(), endOfNames);
+	sendMessage(user->getFd(), setAt);
+
+	//TODO Incorporate messages in helper function
 }
 
 User& Server::getUser(int fd) {
@@ -376,4 +451,39 @@ User& Server::getUser(int fd) {
 		}
 	}
 	throw std::runtime_error("User not found");
+}
+
+void Server::sendMessage(int userFd, const std::string &message) {
+	if (userFd < 0)
+	return;
+
+	// IRC messages must end with CRLF
+	std::string messageToSend = message + "\r\n";
+
+	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), 0);
+	std::cout << "[DEBUG!] Sending:\n" << messageToSend << "To user: " << userFd << "!\n";
+	if (bytesSent == -1) {
+		std::cerr << "Failed to send message to fd " << userFd << std::endl;
+		// TODO Handle Disconnect???
+	}
+}
+
+void Server::sendNumericReply(
+	const User* user,
+	NumericReply numericCode,
+	const std::string& command,
+	const std::string& message
+) {
+	if (!user) return;
+
+	std::string reply = ":" + this->name
+		+ " " + Parser::numericReplyToString(numericCode)
+		+ " " + user->getNickname();
+
+	if (!command.empty())
+		reply += " " + command;
+
+	reply += " :" + message;
+
+	sendMessage(user->getFd(), reply);
 }
