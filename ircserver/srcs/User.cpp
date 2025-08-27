@@ -15,15 +15,11 @@
 User::User()
 	: fd(-1)
 	, ipAddress()
-	, realname()
-	, username()
-	, nickname()
+	, realname("jqueijo-")
+	, username("jqueijo-")
+	, nickname("jqueijo-")
 	, password()
 	, userChannels() {
-}
-
-int User::getFd() const {
-	return this->fd;
 }
 
 void User::setFd(int fd) {
@@ -31,13 +27,46 @@ void User::setFd(int fd) {
 }
 
 void User::setIpAddress(const std::string& ipAddr) {
-	this->ipAddress = ipAddr;
+	ipAddress = ipAddr;
+}
+
+int User::getFd() const {
+	return fd;
+}
+
+const std::string& User::getNickname() const {
+	return nickname;
+}
+
+const std::string& User::getUsername() const {
+	return username;
+}
+
+const std::string& User::getIpAddress() const {
+	return ipAddress;
+}
+
+std::string User::getUserIdentifier() const {
+	return nickname + "!" + username + "@" + ipAddress;
 }
 
 bool User::hasChannel(const Channel* channel) const {
 	if (!channel) return false;
 
-	return std::find(userChannels.begin(), userChannels.end(), channel) != userChannels.end();
+	bool hasChannel = std::find(
+		userChannels.begin(),
+		userChannels.end(),
+		channel
+	) != userChannels.end();
+
+	// std::cout << "[Debug] Checking if has channel for: "
+	// 	<< channel->getName()
+	// 	<< " @ " << channel << std::endl;
+
+	// Parser::debugPrintChannels(userChannels);
+	// std::cout << "[Debug] is " << hasChannel << "\n";
+
+	return hasChannel;
 }
 
 void User::addChannel(Channel* channel) {

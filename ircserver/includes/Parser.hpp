@@ -19,8 +19,12 @@ class Parser {
 	public:
 		// Extractors
 		static std::string extractCommand(const std::string& rawMessage);
-		// std::string extractChannelNames(const std::string& rawJoinMessage); //TODO
-		// std::string extractChannelKeys(const std::string& rawJoinMessage); //TODO
+		static std::string extractChannelNames(
+			const std::string& rawMessage,
+			StringSizeT commandPrefixLength,
+			StringSizeT keyStart
+		);
+		static std::string extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart);
 
 		// Command classification
 		static CommandType getCommandType(const std::string& command);
@@ -35,8 +39,13 @@ class Parser {
 			const std::string& channelKeys
 		);
 
-		// TODO Add error number and accurate message
 		static void ft_error(const std::string& errorMessage);
+		static std::string getTimestamp();
+		static std::string numericReplyToString(NumericReply numericCode);
+
+		// DEBUG
+		static void debugPrintUsers(const std::vector<User*>& users);
+		static void debugPrintChannels(const std::vector<Channel*>& channels);
 
 	private:
 		Parser();

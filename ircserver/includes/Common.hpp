@@ -19,6 +19,7 @@ class Parser;
 class Channel;
 
 # include <iostream>
+# include <sstream>
 # include <string>
 # include <cstring>
 # include <algorithm>
@@ -34,6 +35,7 @@ class Channel;
 # include <poll.h> // poll()
 # include <csignal> // signal()
 # include <cstdlib> // atoi
+# include <ctime> // getDayAndTime()
 
 #define RED "\033[1;31m" // red color
 #define WHI "\033[0;37m" // white color
@@ -55,10 +57,27 @@ enum CommandType {
 	CMD_UNKNOWN
 };
 
+enum NumericReply {
+	RPL_CREATIONTIME = 329,
+	RPL_NOTOPIC = 331,
+	RPL_TOPIC = 332,
+	RPL_TOPICWHOTIME = 333,
+	RPL_NAMREPLY = 353,
+	RPL_ENDOFNAMES = 366,
+	ERR_NOSUCHCHANNEL = 403,
+	ERR_NEEDMOREPARAMS = 461,
+	ERR_CHANNELISFULL = 471,
+	ERR_INVITEONLYCHAN = 473,
+	ERR_BADCHANNELKEY = 475,
+	ERR_BADCHANMASK = 476
+};
+
 typedef std::vector<struct pollfd>::iterator PollIterator;
 
 typedef std::list<User>::iterator UserListIterator;
 typedef std::list<User>::const_iterator UserListConstIterator;
+typedef std::vector<User*>::iterator UserVectorIterator;
+typedef std::vector<User*>::const_iterator UserVectorConstIterator;
 
 typedef std::map<std::string, CommandType> CommandMap;
 typedef CommandMap::const_iterator CommandMapConstIterator;
