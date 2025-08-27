@@ -240,12 +240,17 @@ void Server::handleJoinCommand(int fd, const std::string& rawMessage) {
 		sendNumericReply(&user, ERR_NEEDMOREPARAMS, needMoreParams);
 		return;
 	}
+	bool isJoin0Command = rawMessage == "JOIN 0";
+	if (isJoin0Command) {
+		disconnectUserFromAllChannels(&user);
+		return;
+	}
 
 	StringSizeT keyStart = rawMessage.find(' ', commandPrefixLength);
 	std::string channelNames = Parser::extractChannelNames(rawMessage, commandPrefixLength, keyStart);
 	std::string channelKeys = Parser::extractChannelKeys(rawMessage, keyStart);
+	StringMap channelsWithKeys = Parser::mapChanneslWithKeys(channelNames, channelKeys);
 
-	StringMap channelsWithKeys = Parser::mapJoinCommand(channelNames, channelKeys);
 	for (StringMapConstIterator it = channelsWithKeys.begin();
 		it != channelsWithKeys.end();
 		++it
@@ -365,18 +370,19 @@ void Server::sendJoinReplies(const User* user, const Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastJoin(user, channel);
+	broadcastCommand(user, channel, "JOIN");
 	sendChannelTopic(user, channel);
 	sendChannelUsers(user, channel);
 	sendChannelSetAt(user, channel);
 }
 
-void Server::broadcastJoin(const User* user, const Channel* channel) {
+void Server::broadcastCommand(const User* user, const Channel* channel, const std::string& command) {
 	if (!user || !channel) {
 		return ;
 	}
 	std::string joinMessage = ":" + user->getUserIdentifier()
-		+ " JOIN " + channel->getName();
+		+ " " + command
+		+ " " + channel->getName();
 	for (
 		UserVectorConstIterator it = channel->getUsers().begin();
 		it != channel->getUsers().end();
@@ -438,6 +444,37 @@ void Server::sendChannelSetAt(const User* user, const Channel* channel) {
 	sendNumericReply(user, RPL_CREATIONTIME, setAt);
 }
 
+/*
+// This function can only be called on a copy of a user's <channel*> vector,
+// because it modifies user->userChannels.
+*/
+void Server::partUserFromChannel(User* user, Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	broadcastCommand(user, channel, "PART");
+	channel->removeUser(user);
+	user->removeChannel(channel);
+	if (channel->isEmpty()) {
+		this->removeChannel(channel);
+		return;
+	}
+}
+
+void Server::removeChannel(Channel* channel) {
+	if (!channel || !channel->isEmpty()) {
+		return;
+	}
+
+	for (std::list<Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		if (&(*it) == channel) {
+			std::cout << "Removing empty channel: " << it->getName() << std::endl;
+			channels.erase(it);
+			return;
+		}
+	}
+}
+
 User& Server::getUser(int fd) {
 	for (
 		UserListIterator it = this->users.begin() ;
@@ -449,6 +486,21 @@ User& Server::getUser(int fd) {
 		}
 	}
 	throw std::runtime_error("User not found");
+}
+
+void Server::disconnectUserFromAllChannels(User* user) {
+	if (!user) {
+		return;
+	}
+	std::vector<Channel*> userChannelCopies = user->getChannels();
+	for (
+		ChannelVectorIterator channelIt = userChannelCopies.begin();
+		channelIt != userChannelCopies.end();
+		++channelIt
+	) {
+		partUserFromChannel(user, *channelIt);
+	}
+	user->getChannels().clear();
 }
 
 void Server::sendMessage(int userFd, const std::string &message) {

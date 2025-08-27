@@ -23,12 +23,14 @@ class User {
 		int getFd() const;
 		const std::string& getNickname() const;
 		std::string getUserIdentifier() const;
+		std::vector<Channel*>& getChannels();
 
 		void setFd(int fd);
 		void setIpAddress(const std::string& ipAddr);
 
 		bool hasChannel(const Channel* channel) const;
 		void addChannel(Channel* channel);
+		void removeChannel(Channel* channel);
 
 	private:
 		int fd;

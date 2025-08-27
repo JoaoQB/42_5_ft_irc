@@ -90,6 +90,10 @@ bool Channel::isFull() const {
 	return this->full;
 }
 
+bool Channel::isEmpty() const {
+	return this->usersInChannel <= 0;
+}
+
 bool Channel::requiresPassword() const {
 	return this->hasPassword;
 }
@@ -138,6 +142,28 @@ void Channel::addOperator(User* user) {
 		return;
 	}
 	this->channelOperators.push_back(user);
+}
+
+void Channel::removeUser(User* user) {
+	if (!user) return;
+
+	std::vector<User*>::iterator it = std::remove(
+		channelUsers.begin(),
+		channelUsers.end(),
+		user
+	);
+	if (it != channelUsers.end()) {
+		channelUsers.erase(it, channelUsers.end());
+		this->usersInChannel--;
+	}
+	it = std::remove(
+		channelOperators.begin(),
+		channelOperators.end(),
+		user
+	);
+	if (it != channelOperators.end()) {
+		channelOperators.erase(it, channelOperators.end());
+	}
 }
 
 bool Channel::hasUser(const User* user) const {
