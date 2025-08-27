@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../includes/Parser.hpp"
+#include "../includes/User.hpp"
 
 Parser::Parser() {
 }
@@ -220,8 +221,6 @@ std::string Parser::getTimestamp() {
 	std::ostringstream oss;
 	oss << now;
 	std::string setAtString = oss.str();
-	std::cout << "[DEBUG!] Timestamp is:\n" << setAtString << "!\n";
-
 
 	return setAtString;
 }
@@ -232,4 +231,30 @@ std::string Parser::numericReplyToString(NumericReply numericCode) {
 	std::string code = oss.str();
 
 	return code;
+}
+
+void Parser::debugPrintUsers(const std::vector<User*>& users) {
+	std::cout << "[Debug] Users (" << users.size() << "):" << std::endl;
+	for (std::size_t i = 0; i < users.size(); ++i) {
+		if (users[i]) {
+			std::cout << "  [" << i << "] "
+					<< users[i]->getUserIdentifier()
+					<< " @ " << users[i] << std::endl;
+		} else {
+			std::cout << "  [" << i << "] (null)" << std::endl;
+		}
+	}
+}
+
+void Parser::debugPrintChannels(const std::vector<Channel*>& channels) {
+	std::cout << "[Debug] Channels (" << channels.size() << "):" << std::endl;
+	for (std::size_t i = 0; i < channels.size(); ++i) {
+		if (channels[i]) {
+			std::cout << "  [" << i << "] "
+					<< channels[i]->getName()
+					<< " @ " << channels[i] << std::endl;
+		} else {
+			std::cout << "  [" << i << "] (null)" << std::endl;
+		}
+	}
 }

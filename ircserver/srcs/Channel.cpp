@@ -29,13 +29,13 @@ Channel::Channel()
 	channelCreationTime = Parser::getTimestamp();
 }
 
-// Test printing channel topic
+// // Test printing channel topic
 // Channel::Channel()
 // 	: name()
 // 	, password()
 // 	, channelCreationTime()
-// 	, topic("a contemporaneadade")
-// 	, topicSetter("theBest!")
+// 	, topic("teste")
+// 	, topicSetter("test2")
 // 	, topicCreationTime()
 // 	, hasPassword(false)
 // 	, inviteOnly(false)
@@ -105,7 +105,17 @@ bool Channel::hasTopic() const {
 bool Channel::isOperator(const User* user) const {
 	if (!user) return false;
 
-	return std::find(channelOperators.begin(), channelOperators.end(), user) != channelOperators.end();
+	bool isOperator = std::find(
+		channelOperators.begin(),
+		channelOperators.end(), user) != channelOperators.end();
+
+	// std::cout << "[Debug] Checking operator for: "
+	// 	<< user->getUserIdentifier()
+	// 	<< " @ " << user << std::endl;
+	// Parser::debugPrintUsers(channelOperators);
+	// std::cout << "[Debug] is " << isOperator << "\n";
+
+	return isOperator;
 }
 
 const std::vector<User*>& Channel::getUsers() const {
@@ -133,6 +143,19 @@ void Channel::addOperator(User* user) {
 bool Channel::hasUser(const User* user) const {
 	if (!user) return false;
 
-	return std::find(channelUsers.begin(), channelUsers.end(), user) != channelUsers.end();
+	bool hasUser = std::find(
+		channelUsers.begin(),
+		channelUsers.end(),
+		user
+	) != channelUsers.end();
+
+	// std::cout << "[Debug] Checking if has user for: "
+	// 	<< user->getUserIdentifier()
+	// 	<< " @ " << user << std::endl;
+
+	// Parser::debugPrintUsers(channelUsers);
+	// std::cout << "[Debug] is " << hasUser << "\n";
+
+	return hasUser;
 }
 

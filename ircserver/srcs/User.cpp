@@ -53,7 +53,20 @@ std::string User::getUserIdentifier() const {
 bool User::hasChannel(const Channel* channel) const {
 	if (!channel) return false;
 
-	return std::find(userChannels.begin(), userChannels.end(), channel) != userChannels.end();
+	bool hasChannel = std::find(
+		userChannels.begin(),
+		userChannels.end(),
+		channel
+	) != userChannels.end();
+
+	// std::cout << "[Debug] Checking if has channel for: "
+	// 	<< channel->getName()
+	// 	<< " @ " << channel << std::endl;
+
+	// Parser::debugPrintChannels(userChannels);
+	// std::cout << "[Debug] is " << hasChannel << "\n";
+
+	return hasChannel;
 }
 
 void User::addChannel(Channel* channel) {
