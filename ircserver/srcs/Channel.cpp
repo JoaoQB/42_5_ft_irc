@@ -83,7 +83,7 @@ const std::string& Channel::getTopicCreationTime() const {
 }
 
 const std::string& Channel::getCreationTime() const {
-	return this->topicCreationTime;
+	return this->channelCreationTime;
 }
 
 bool Channel::isFull() const {
