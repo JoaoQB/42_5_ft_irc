@@ -34,7 +34,7 @@ class Parser {
 		static bool validateNickname(const std::string& nickname);
 
 		// Mappers
-		static StringMap mapJoinCommand(
+		static StringMap mapChanneslWithKeys(
 			const std::string& channelNames,
 			const std::string& channelKeys
 		);

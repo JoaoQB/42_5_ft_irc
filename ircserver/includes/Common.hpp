@@ -87,6 +87,8 @@ typedef StringMap::const_iterator StringMapConstIterator;
 
 typedef std::list<Channel>::iterator ChannelListIterator;
 typedef std::list<Channel>::const_iterator ChannelListConstIterator;
+typedef std::vector<Channel*>::iterator ChannelVectorIterator;
+typedef std::vector<Channel*>::const_iterator ChannelVectorConstIterator;
 
 typedef std::string::size_type StringSizeT;
 

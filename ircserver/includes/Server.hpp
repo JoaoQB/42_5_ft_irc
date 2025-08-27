@@ -61,13 +61,16 @@ class Server {
 		void createChannel(User& creator, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
 		void sendJoinReplies(const User* user, const Channel* channel);
-		void broadcastJoin(const User* user, const Channel* channel);
+		void broadcastCommand(const User* user, const Channel* channel, const std::string& command);
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
+		void partUserFromChannel(User* user, Channel* channel);
+		void removeChannel(Channel* channel);
 
 		// User Utilities
 		User& getUser(int fd);
+		void disconnectUserFromAllChannels(User* user);
 		void sendMessage(int userFd, const std::string &message);
 		void sendNumericReply(
 			const User* user,

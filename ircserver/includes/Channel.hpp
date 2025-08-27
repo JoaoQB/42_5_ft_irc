@@ -29,6 +29,7 @@ class Channel {
 		const std::string& getTopicCreationTime() const;
 		const std::string& getCreationTime() const;
 		bool isFull() const;
+		bool isEmpty() const;
 		bool requiresPassword() const;
 		bool isInviteOnly() const;
 		bool hasTopic() const;
@@ -43,6 +44,7 @@ class Channel {
 		// Actions
 		void addUser(User* user);
 		void addOperator(User* user);
+		void removeUser(User* user);
 
 		// Helpers
 		bool hasUser(const User* user) const;

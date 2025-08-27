@@ -50,6 +50,10 @@ std::string User::getUserIdentifier() const {
 	return nickname + "!" + username + "@" + ipAddress;
 }
 
+std::vector<Channel*>& User::getChannels() {
+	return this->userChannels;
+}
+
 bool User::hasChannel(const Channel* channel) const {
 	if (!channel) return false;
 
@@ -74,4 +78,18 @@ void User::addChannel(Channel* channel) {
 		return;
 	}
 	this->userChannels.push_back(channel);
+}
+
+void User::removeChannel(Channel* channel) {
+	if (!channel) {
+		return;
+	}
+	ChannelVectorIterator it = std::remove(
+		this->userChannels.begin(),
+		this->userChannels.end(),
+		channel
+	);
+	if (it != this->userChannels.end()) {
+		userChannels.erase(it, userChannels.end());
+	}
 }

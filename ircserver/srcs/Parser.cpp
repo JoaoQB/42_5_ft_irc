@@ -160,7 +160,7 @@ bool Parser::containsNicknameForbiddenChars(const std::string& input) {
 		) != input.end();
 }
 
-StringMap Parser::mapJoinCommand(
+StringMap Parser::mapChanneslWithKeys(
 	const std::string& channelNames,
 	const std::string& channelKeys
 ) {
