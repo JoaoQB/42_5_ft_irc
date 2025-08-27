@@ -13,6 +13,7 @@
 #include "../includes/User.hpp"
 
 User::User() {
+	this->registered = false;
 }
 
 int User::getFd() {

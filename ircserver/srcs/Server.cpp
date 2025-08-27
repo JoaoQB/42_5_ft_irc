@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 17:20:05 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/27 16:52:28 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -327,6 +327,7 @@ void Server::cmdNick(User &user, std::string cmdParameters) {
 	// Adicionar nickname ao user
 	user.setNickName(nickname);
 	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickName() << std::endl;
+	turnRegistrationOn(user);
 }
 
 // USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
@@ -338,8 +339,11 @@ void Server::cmdUser(User &user, std::string cmdParameters){
 	}
 
 	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
-	if (user.getRegistered())
+	if (user.getRegistered() == true) {
 		std::cout << "ERR_ALREADYREGISTERED (462)" << std::endl;
+		return ;
+	}
+
 
 	// Remover \r\v
 	cmdParameters = Parser::trimCRLF(cmdParameters);
@@ -374,4 +378,20 @@ void Server::cmdUser(User &user, std::string cmdParameters){
 	user.setUserName(username);
 	user.setRealName(realname);
 	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUserName() << " " << user.getRealName() << std::endl;
+	turnRegistrationOn(user);
+}
+
+void Server::turnRegistrationOn(User &user) {
+	if (!user.getPassword().empty() &&
+		!user.getNickName().empty() &&
+		!user.getUserName().empty() &&
+		!user.getRealName().empty())
+	{
+		if (!user.getRegistered()) {
+			user.setRegistered(true); //passa para registrado
+
+			std::cout << "🥳 Client " << user.getNickName()
+					  << " fully registred!" << std::endl;
+		}
+	}
 }
