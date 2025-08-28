@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/27 16:52:28 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/27 17:08:23 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,7 +214,11 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 		throw std::runtime_error("User not found for fd");
 		return;
 	}
-	// Sempre que NICK ou USER é usado, if NICK & USER !NULL & registred == false: registred = true
+	// Usuário está retrito a fazer outros comandos enquanto que não está registrado no servidor
+	if (cmd != CMD_PASS && cmd != CMD_USER && cmd != CMD_NICK && !user->getRegistered()) {
+		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
+		return;
+	}
 	switch (cmd) {
 		case CMD_PASS: {
 			cmdPass(*user, params);
