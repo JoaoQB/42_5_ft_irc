@@ -193,41 +193,33 @@ void Server::receiveNewData(int fd) {
 
 //TODO Command Handlers
 void Server::handleRawMessage(int fd, const char *buffer) {
-	// Remove line break char from end of buffer
-	std::string rawMessage(buffer);
-
-	//rawMessage = "PASS mypassword"
-	std::string command = Parser::extractCommand(rawMessage);
-	// command = "PASS"
-	CommandType cmd = Parser::getCommandType(command);
-	// cmd = 1
-	std::string params = Parser::extractParams(rawMessage, command);
-
 	User &user = getUser(fd);
-	// // TODO
-	// if (!Parser::isAuth(user, cmd)) {
-	// 	std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
-	// 	return;
-	// }
+	std::string rawMessage(buffer); // rawMessage = "PASS mypassword"
+	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
+	std::string command = Parser::extractCommand(trimmedMessage); // command = "PASS"
+	std::string params = Parser::extractParams(trimmedMessage, command); // params = "mypassword"
+	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
+
 	// Usuário está retrito a fazer outros comandos enquanto que não está registrado no servidor
-	if (cmd != CMD_PASS && cmd != CMD_USER && cmd != CMD_NICK && !user.isRegistered()) {
+	if (!Parser::isAuthentication(user, cmd)) {
 		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
 		return;
 	}
+
 	switch (cmd) {
 		case CMD_PASS: {
-			cmdPass(user, params);
+			handlePassCommand(user, params);
 			break;
 		}
 		case CMD_NICK: {
-			cmdNick(user, params);
+			handleNickCommand(user, params);
 			break;
 		}
 		case CMD_USER:
-			cmdUser(user, params);
+			handleUserCommand(user, params);
 			break;
 		case CMD_JOIN:
-			handleJoinCommand(fd, params);
+			handleJoinCommand(user, params);
 			break;
 		case CMD_PRIVMSG:
 			break;
@@ -248,25 +240,143 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	}
 }
 
-void Server::handleJoinCommand(int fd, const std::string& rawMessageParams) {
-	// const StringSizeT commandPrefixLength = 5; // Account for space after 'JOIN'
-	User &user = getUser(fd);
-	std::string trimmedMessage = Parser::trimCRLF(rawMessageParams);
-	if (trimmedMessage.empty()) {
-		Parser::ft_error("empty JOIN command");
-		std::string needMoreParams = "JOIN :Not enough parameters";
+void Server::handlePassCommand(User &user, std::string cmdParameters){
+	// std::cout << "Command parameters: " << cmdParameters << std::endl;
+
+	if (cmdParameters.empty()) {
+		std::cout << "Error 461 needmoreparams" << std::endl;
+	}
+
+	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
+	if (!user.getNickname().empty() || !user.getUsername().empty() || !user.getPassword().empty()) {
+		//sendError(user.getFd(), "462", "You may not reregister");
+		std::cout << "Error 462 alreadyregistered" << std::endl;
+		return;
+	}
+
+	// 2 - Se comeca com ":", remover o ":" e aceitar espaços
+	std::string password;
+
+	if (!cmdParameters.empty() && cmdParameters[0] == ':')
+		password = cmdParameters.substr(1);
+	else { // Se NÃO começa ":", substr até primeiro espaço ou fim.
+		size_t spacePos = cmdParameters.find(' ');
+		if (spacePos != std::string::npos)
+			password = cmdParameters.substr(0, spacePos);
+		else
+			password = cmdParameters;
+	}
+
+	// 3 - Verificar se a password coicide com o servidor, se errada 464 ERR_PASSWDMISMATCH.
+	// std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
+	// std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
+	if (password != this->serverPassword) {
+		std::cout << "Error 464 passmismatch" << std::endl;
+		return ;
+	}
+
+	// 4 - Adicionar ao user.password
+	user.setPassword(password);
+	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << std::endl;
+}
+
+// TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
+void Server::handleNickCommand(User &user, std::string cmdParameters) {
+	// Se password é NULL erro
+	if (user.getPassword().empty()) {
+		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		return;
+	}
+
+	// Não pode ser vaziu
+	if (cmdParameters.empty()) {
+		std::cout << "Error 431 nonicknamegiven" << std::endl;
+		return ;
+	}
+
+	// AQUI <--
+	std::string nickname = Parser::extractFirstParam(cmdParameters);
+
+	// Proteção caracteres especiais && nickname não pode ser outro comando como NICK PASS JOIN...
+	if (!Parser::validateNickname(nickname)) {
+		std::cout << "ERR_ERRONEUSNICKNAME (432)" << std::endl;
+		return ;
+	}
+
+	if (nicknameExists(nickname)) {
+		std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
+			return ;
+	}
+
+	// Adicionar nickname ao user
+	user.setNickname(nickname);
+	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << std::endl;
+	registerUser(user);
+}
+
+// USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
+void Server::handleUserCommand(User &user, std::string cmdParameters){
+	// Se password é NULL erro
+	if (user.getPassword().empty()) {
+		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		return;
+	}
+
+	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
+	if (user.isRegistered() == true) {
+		std::cout << "ERR_ALREADYREGISTERED (462)" << std::endl;
+		return ;
+	}
+
+	// Separar em tokens
+	std::istringstream iss(cmdParameters);
+	std::string username, hostname, servername, realname;
+
+	if (!(iss >> username >> hostname >> servername)) {
+		// Se nem username nem os dois params obrigatórios vierem
+		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		return;
+	}
+
+	std::getline(iss, realname);
+
+	if (!realname.empty() && realname[0] == ' ')
+		realname.erase(0, 1);
+	if (!realname.empty() && realname[0] == ':')
+		realname.erase(0, 1);
+
+	if (username.empty()) {
+		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		return;
+	}
+
+	if (realname.empty()) {
+		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		return;
+	}
+
+	user.setUsername(username);
+	user.setRealname(realname);
+	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << " " << user.getRealname() << std::endl;
+	registerUser(user);
+}
+
+void Server::handleJoinCommand(User &user, const std::string& rawMessageParams) {
+	if (rawMessageParams.empty()) {
+		Parser::ft_error("empty: '" + rawMessageParams + "' command");
+		std::string needMoreParams = rawMessageParams + " :Not enough parameters";
 		sendNumericReply(&user, ERR_NEEDMOREPARAMS, needMoreParams);
 		return;
 	}
-	bool isJoin0Command = trimmedMessage == "0";
+	bool isJoin0Command = rawMessageParams == "0";
 	if (isJoin0Command) {
 		disconnectUserFromAllChannels(&user);
 		return;
 	}
 
-	StringSizeT keyStart = trimmedMessage.find(' ');
-	std::string channelNames = Parser::extractChannelNames(trimmedMessage, keyStart);
-	std::string channelKeys = Parser::extractChannelKeys(trimmedMessage, keyStart);
+	StringSizeT keyStart = rawMessageParams.find(' ');
+	std::string channelNames = Parser::extractChannelNames(rawMessageParams, keyStart);
+	std::string channelKeys = Parser::extractChannelKeys(rawMessageParams, keyStart);
 	StringMap channelsWithKeys = Parser::mapChanneslWithKeys(channelNames, channelKeys);
 
 	for (StringMapConstIterator it = channelsWithKeys.begin();
@@ -506,6 +616,35 @@ User& Server::getUser(int fd) {
 	throw std::runtime_error("User not found");
 }
 
+bool Server::nicknameExists(const std::string& nickname) const {
+	for (
+		UserListConstIterator it = this->users.begin();
+		it != this->users.end() ;
+		++it
+	) {
+		if (it->getNickname() == nickname) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Server::registerUser(User &user) {
+	if (user.getPassword().empty() ||
+		user.getNickname().empty() ||
+		user.getUsername().empty() ||
+		user.getRealname().empty()) {
+			return ;
+	}
+	if (!user.isRegistered()) {
+		user.setRegistered(true); //passa para registrado
+
+		std::cout << "🥳 Client " << user.getNickname()
+			<< " fully registred!" << std::endl;
+		user.setUserIdentifier();
+	}
+}
+
 void Server::disconnectUserFromAllChannels(User* user) {
 	if (!user) {
 		return;
@@ -551,155 +690,4 @@ void Server::sendNumericReply(
 		reply += " " + message;
 
 	sendMessage(user->getFd(), reply);
-}
-
-void Server::cmdPass(User &user, std::string cmdParameters){
-	// std::cout << "Command parameters: " << cmdParameters << std::endl;
-
-	if (cmdParameters.empty()) {
-		std::cout << "Error 461 needmoreparams" << std::endl;
-	}
-
-	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
-	if (!user.getNickname().empty() || !user.getUsername().empty() || !user.getPassword().empty()) {
-		//sendError(user.getFd(), "462", "You may not reregister");
-		std::cout << "Error 462 alreadyregistered" << std::endl;
-		return;
-	}
-
-	// 2 - Se comeca com ":", remover o ":" e aceitar espaços
-	std::string password;
-
-	if (!cmdParameters.empty() && cmdParameters[0] == ':')
-		password = cmdParameters.substr(1);
-	else { // Se NÃO começa ":", substr até primeiro espaço ou fim.
-		size_t spacePos = cmdParameters.find(' ');
-		if (spacePos != std::string::npos)
-			password = cmdParameters.substr(0, spacePos);
-		else
-			password = cmdParameters;
-	}
-
-	// 3 - Remover o \r e \n no fim
-	password = Parser::trimCRLF(password);
-
-	// 4 - Verificar se a password coicide com o servidor, se errada 464 ERR_PASSWDMISMATCH.
-	// std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
-	// std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
-	if (password != this->serverPassword) {
-		std::cout << "Error 464 passmismatch" << std::endl;
-		return ;
-	}
-
-	// 5 - Adicionar ao user.password
-	user.setPassword(password);
-	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << std::endl;
-}
-
-// TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
-void Server::cmdNick(User &user, std::string cmdParameters) {
-	// Se password é NULL erro
-	if (user.getPassword().empty()) {
-		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
-	}
-
-	// Não pode ser vaziu
-	if (cmdParameters.empty()) {
-		std::cout << "Error 431 nonicknamegiven" << std::endl;
-		return ;
-	}
-
-	// Remover o \r e \n no fim
-	cmdParameters = Parser::trimCRLF(cmdParameters);
-
-	// AQUI <--
-	std::string nickname = Parser::extractFirstParam(cmdParameters);
-
-	// Proteção caracteres especiais && nickname não pode ser outro comando como NICK PASS JOIN...
-	if (!Parser::validateNickname(nickname)) {
-		std::cout << "ERR_ERRONEUSNICKNAME (432)" << std::endl;
-		return ;
-	}
-
-	// // Se o nickname já está existe na mesma network
-	// for (size_t i = 0; i < users.size(); i++) {
-	// 	if (users[i].getNickname() == nickname) {
-	// 		std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
-	// 		return ;
-	// 	}
-	// }
-
-	//TODO
-	//Check Username exists in server users
-
-	// Adicionar nickname ao user
-	user.setNickName(nickname);
-	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << std::endl;
-	turnRegistrationOn(user);
-}
-
-// USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
-void Server::cmdUser(User &user, std::string cmdParameters){
-	// Se password é NULL erro
-	if (user.getPassword().empty()) {
-		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
-		return;
-	}
-
-	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
-	if (user.isRegistered() == true) {
-		std::cout << "ERR_ALREADYREGISTERED (462)" << std::endl;
-		return ;
-	}
-
-
-	// Remover \r\v
-	cmdParameters = Parser::trimCRLF(cmdParameters);
-
-	// Separar em tokens
-	std::istringstream iss(cmdParameters);
-	std::string username, hostname, servername, realname;
-
-	if (!(iss >> username >> hostname >> servername)) {
-		// Se nem username nem os dois params obrigatórios vierem
-		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
-		return;
-	}
-
-	std::getline(iss, realname);
-
-	if (!realname.empty() && realname[0] == ' ')
-		realname.erase(0, 1);
-	if (!realname.empty() && realname[0] == ':')
-		realname.erase(0, 1);
-
-	if (username.empty()) {
-		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
-		return;
-	}
-
-	if (realname.empty()) {
-		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
-		return;
-	}
-
-	user.setUserName(username);
-	user.setRealName(realname);
-	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << " " << user.getRealName() << std::endl;
-	turnRegistrationOn(user);
-}
-
-void Server::turnRegistrationOn(User &user) {
-	if (user.getPassword().empty() ||
-		user.getNickname().empty() ||
-		user.getUsername().empty() ||
-		user.getRealName().empty()) {
-			return ;
-	}
-	if (!user.isRegistered()) {
-		user.setRegistered(true); //passa para registrado
-
-		std::cout << "🥳 Client " << user.getNickname()
-			<< " fully registred!" << std::endl;
-	}
 }
