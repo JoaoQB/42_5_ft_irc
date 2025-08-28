@@ -214,8 +214,13 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 		throw std::runtime_error("User not found for fd");
 		return;
 	}
+	// // TODO
+	// if (!Parser::isAuth(user, cmd)) {
+	// 	std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
+	// 	return;
+	// }
 	// Usuário está retrito a fazer outros comandos enquanto que não está registrado no servidor
-	if (cmd != CMD_PASS && cmd != CMD_USER && cmd != CMD_NICK && !user->getRegistered()) {
+	if (cmd != CMD_PASS && cmd != CMD_USER && cmd != CMD_NICK && !user->isRegistered()) {
 		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
 		return;
 	}
@@ -343,7 +348,7 @@ void Server::cmdUser(User &user, std::string cmdParameters){
 	}
 
 	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
-	if (user.getRegistered() == true) {
+	if (user.isRegistered() == true) {
 		std::cout << "ERR_ALREADYREGISTERED (462)" << std::endl;
 		return ;
 	}
@@ -386,16 +391,16 @@ void Server::cmdUser(User &user, std::string cmdParameters){
 }
 
 void Server::turnRegistrationOn(User &user) {
-	if (!user.getPassword().empty() &&
-		!user.getNickName().empty() &&
-		!user.getUserName().empty() &&
-		!user.getRealName().empty())
-	{
-		if (!user.getRegistered()) {
-			user.setRegistered(true); //passa para registrado
+	if (user.getPassword().empty() ||
+		user.getNickName().empty() ||
+		user.getUserName().empty() ||
+		user.getRealName().empty()) {
+			return ;
+	}
+	if (!user.isRegistered()) {
+		user.setRegistered(true); //passa para registrado
 
-			std::cout << "🥳 Client " << user.getNickName()
-					  << " fully registred!" << std::endl;
-		}
+		std::cout << "🥳 Client " << user.getNickName()
+			<< " fully registred!" << std::endl;
 	}
 }

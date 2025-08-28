@@ -60,7 +60,7 @@ void User::setPassword(std::string password) {
 	this->password = password;
 }
 
-bool User::getRegistered(void) {
+bool User::isRegistered(void) {
 	return this->registered;
 }
 

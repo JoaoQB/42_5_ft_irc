@@ -36,7 +36,7 @@ class User {
 		std::string getPassword(void);
 		void setPassword(std::string password);
 
-		bool getRegistered(void);
+		bool isRegistered(void);
 		void setRegistered(bool registred);
 
 	private:
