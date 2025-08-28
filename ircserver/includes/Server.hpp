@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:25:49 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/27 15:54:54 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,11 +36,13 @@ class Server {
 		void acceptNewUser();
 		void receiveNewData(int fd);
 
-		// Message Handling
 		void handleRawMessage(int fd, const char* buffer);
 
 		// Command Handlers
-		void handleJoinCommand(int fd, const std::string& rawMessage);
+		void handleJoinCommand(int fd, const std::string& rawMessageParams);
+		void cmdPass(User &user, std::string cmdParameters);
+		void cmdNick(User &user, std::string cmdParameters);
+		void cmdUser(User &user, std::string cmdParameters);
 
 	private:
 		// Server State
@@ -77,6 +79,7 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
+		void turnRegistrationOn(User &user);
 };
 
 #endif

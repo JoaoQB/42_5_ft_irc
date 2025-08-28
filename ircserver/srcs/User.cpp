@@ -15,11 +15,12 @@
 User::User()
 	: fd(-1)
 	, ipAddress()
-	, realname("jqueijo-")
-	, username("jqueijo-")
-	, nickname("jqueijo-")
+	, realname()
+	, username()
+	, nickname()
 	, password()
 	, userChannels() {
+	this->registered = false;
 }
 
 void User::setFd(int fd) {
@@ -92,4 +93,36 @@ void User::removeChannel(Channel* channel) {
 	if (it != this->userChannels.end()) {
 		userChannels.erase(it, userChannels.end());
 	}
+}
+
+const std::string& User::getRealName() const {
+	return this->realname;
+}
+
+void User::setRealName(std::string realname) {
+	this->realname = realname;
+}
+
+void User::setUserName(std::string username) {
+	this->username = username;
+}
+
+void User::setNickName(std::string nickname) {
+	this->nickname = nickname;
+}
+
+const std::string& User::getPassword() const {
+	return this->password;
+}
+
+void User::setPassword(std::string password) {
+	this->password = password;
+}
+
+bool User::isRegistered(void) {
+	return this->registered;
+}
+
+void User::setRegistered(bool registred) {
+	this->registered = registred;
 }

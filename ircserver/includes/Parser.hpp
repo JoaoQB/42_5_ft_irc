@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:28:20 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/22 15:43:06 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,10 @@ class Parser {
 	public:
 		// Extractors
 		static std::string extractCommand(const std::string& rawMessage);
+		static std::string extractParams(const std::string rawMessage, const std::string cmd);
+		static std::string extractFirstParam(const std::string parameters);
 		static std::string extractChannelNames(
 			const std::string& rawMessage,
-			StringSizeT commandPrefixLength,
 			StringSizeT keyStart
 		);
 		static std::string extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart);
@@ -39,6 +40,7 @@ class Parser {
 			const std::string& channelKeys
 		);
 
+		static std::string trimCRLF(const std::string &s);
 		static void ft_error(const std::string& errorMessage);
 		static std::string getTimestamp();
 		static std::string numericReplyToString(NumericReply numericCode);
@@ -54,6 +56,7 @@ class Parser {
 		static bool isNicknameForbiddenFirstChar(char c);
 		static bool isNicknameForbiddenChar(char c);
 		static bool containsNicknameForbiddenChars(const std::string& input);
+		static bool nicknameIsCommand(const std::string& input);
 
 		// Channel name validation helpers
 		static bool isValidChannelPrefix(char c);

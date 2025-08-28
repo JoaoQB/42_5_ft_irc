@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   Common.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
 /*   Updated: 2025/07/16 09:51:23 by jqueijo-         ###   ########.fr       */
@@ -35,6 +35,7 @@ class Channel;
 # include <poll.h> // poll()
 # include <csignal> // signal()
 # include <cstdlib> // atoi
+# include <sstream> //isstringstream
 # include <ctime> // getDayAndTime()
 
 #define RED "\033[1;31m" // red color

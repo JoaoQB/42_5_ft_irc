@@ -6,7 +6,7 @@
 #    By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/06/27 10:56:09 by jqueijo-          #+#    #+#              #
-#    Updated: 2025/07/16 17:32:59 by jqueijo-         ###   ########.fr        #
+#    Updated: 2025/07/09 09:59:42 by jqueijo-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -49,5 +49,8 @@ fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
+
+1: all
+	./ircserv 6667 mypassword
 
 .PHONY: all clean fclean re

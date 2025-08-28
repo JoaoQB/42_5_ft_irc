@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:30:18 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/22 16:01:03 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,11 @@ std::string Parser::extractCommand(const std::string& rawMessage) {
 
 std::string Parser::extractChannelNames(
 	const std::string& rawMessage,
-	StringSizeT commandPrefixLength,
 	StringSizeT keyStart
 ) {
 	return (keyStart != std::string::npos)
-		? rawMessage.substr(commandPrefixLength, keyStart - commandPrefixLength)
-		: rawMessage.substr(commandPrefixLength);
+		? rawMessage.substr(0, keyStart)
+		: rawMessage.substr(0);
 }
 
 std::string Parser::extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart) {
@@ -70,6 +69,40 @@ CommandType Parser::getCommandType(const std::string& command) {
 	CommandType cmd = it != commands.end() ? it->second : CMD_UNKNOWN;
 
 	return cmd;
+}
+
+std::string Parser::extractParams(const std::string rawMessage, const std::string cmd) {
+	size_t pos = rawMessage.find(cmd);
+
+	if (pos == std::string::npos)
+		return "";
+
+	pos += cmd.length();
+
+	if (pos < rawMessage.size() && std::isspace(rawMessage[pos]))
+		pos++;
+
+	return rawMessage.substr(pos);
+}
+
+std::string Parser::extractFirstParam(const std::string parameters) {
+	std::size_t pos = parameters.find(' ');
+
+	if (pos != std::string::npos)
+		return parameters.substr(0, pos);
+
+	return (parameters);
+}
+
+// Remove \r\n from string end
+std::string Parser::trimCRLF(const std::string &s) {
+	size_t end = s.size();
+	if (!s.empty() && s[end-1] == '\n')
+		end--;
+	if (!s.empty() && s[end-1] == '\r')
+		end--;
+
+	return s.substr(0, end);
 }
 
 /*
@@ -111,6 +144,26 @@ bool Parser::containsChannelForbiddenChars(const std::string& input) {
 		) != input.end();
 }
 
+// Se nickname "PASS" || " PASS" || "PASS "
+// Return true
+// Se nickname "PASSagem"
+// Return false
+bool Parser::nicknameIsCommand(const std::string& nickname) {
+	std::string commands[] = {"PASS", "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PART", "QUIT"};
+	const int numCommands = sizeof(commands) / sizeof(commands[0]);
+
+	for (int i = 0; i < numCommands; ++i) {
+		std::size_t pos = nickname.find(commands[i]);
+		if (pos != std::string::npos) {
+			bool at_start = (pos == 0 || nickname[pos - 1] == ' ');
+			bool at_end = (pos + commands[i].size() == nickname.size() || nickname[pos + commands[i].size()] == ' ');
+			if (at_start || at_end)
+				return true;
+ 		}
+	}
+	return false;
+}
+
 /*
 / Nicknames are non-empty strings with the following restrictions:
 / They MUST NOT contain any of the following characters:
@@ -139,16 +192,20 @@ bool Parser::validateNickname(const std::string& nickname) {
 	if (containsNicknameForbiddenChars(nickname)) {
 		return false;
 	}
+	if (nicknameIsCommand(nickname)) {
+		return false;
+	}
+
 	return true;
 }
 
 bool Parser::isNicknameForbiddenChar(char c) {
-	const std::string forbidden = " ,*?!@.";
+	const std::string forbidden = " ,*?!@.\n\r";
 	return forbidden.find(c) != std::string::npos;
 }
 
 bool Parser::isNicknameForbiddenFirstChar(char c) {
-	const std::string forbidden = "$:#&~%+";
+	const std::string forbidden = "0123456789$:#&~%+";
 	return forbidden.find(c) != std::string::npos;
 }
 
