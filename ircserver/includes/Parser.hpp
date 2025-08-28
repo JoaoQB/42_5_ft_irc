@@ -29,6 +29,7 @@ class Parser {
 
 		// Command classification
 		static CommandType getCommandType(const std::string& command);
+		static bool isAuthentication(const User& user, const CommandType& command);
 
 		// Validation
 		static bool validateChannelName(const std::string& channelName);

@@ -48,20 +48,6 @@ Channel::Channel()
 // 	topicCreationTime = Parser::getTimestamp();
 // }
 
-void Channel::setName(const std::string& channelName) {
-	this->name = channelName;
-}
-
-void Channel::setPassword(const std::string& key) {
-	this->password = key;
-	this->hasPassword = true;
-}
-
-void Channel::setTopic(const std::string& message) {
-	this->topic = message;
-
-}
-
 const std::string& Channel::getName() const {
 	return this->name;
 }
@@ -86,6 +72,10 @@ const std::string& Channel::getCreationTime() const {
 	return this->channelCreationTime;
 }
 
+const std::vector<User*>& Channel::getUsers() const {
+	return this->channelUsers;
+}
+
 bool Channel::isFull() const {
 	return this->full;
 }
@@ -102,10 +92,6 @@ bool Channel::isInviteOnly() const {
 	return this->inviteOnly;
 }
 
-bool Channel::hasTopic() const {
-	return !this->topic.empty();
-}
-
 bool Channel::isOperator(const User* user) const {
 	if (!user) return false;
 
@@ -113,17 +99,50 @@ bool Channel::isOperator(const User* user) const {
 		channelOperators.begin(),
 		channelOperators.end(), user) != channelOperators.end();
 
-	// std::cout << "[Debug] Checking operator for: "
-	// 	<< user->getUserIdentifier()
-	// 	<< " @ " << user << std::endl;
-	// Parser::debugPrintUsers(channelOperators);
-	// std::cout << "[Debug] is " << isOperator << "\n";
+		// std::cout << "[Debug] Checking operator for: "
+		// 	<< user->getUserIdentifier()
+		// 	<< " @ " << user << std::endl;
+		// Parser::debugPrintUsers(channelOperators);
+		// std::cout << "[Debug] is " << isOperator << "\n";
 
-	return isOperator;
+		return isOperator;
 }
 
-const std::vector<User*>& Channel::getUsers() const {
-	return this->channelUsers;
+bool Channel::hasTopic() const {
+	return !this->topic.empty();
+}
+
+bool Channel::hasUser(const User* user) const {
+	if (!user) return false;
+
+	bool hasUser = std::find(
+		channelUsers.begin(),
+		channelUsers.end(),
+		user
+	) != channelUsers.end();
+
+	// std::cout << "[Debug] Checking if has user for: "
+	// 	<< user->getUserIdentifier()
+	// 	<< " @ " << user << std::endl;
+
+	// Parser::debugPrintUsers(channelUsers);
+	// std::cout << "[Debug] is " << hasUser << "\n";
+
+	return hasUser;
+}
+
+void Channel::setName(const std::string& channelName) {
+	this->name = channelName;
+}
+
+void Channel::setPassword(const std::string& key) {
+	this->password = key;
+	this->hasPassword = true;
+}
+
+void Channel::setTopic(const std::string& message) {
+	this->topic = message;
+
 }
 
 void Channel::addUser(User* user) {
@@ -164,24 +183,5 @@ void Channel::removeUser(User* user) {
 	if (it != channelOperators.end()) {
 		channelOperators.erase(it, channelOperators.end());
 	}
-}
-
-bool Channel::hasUser(const User* user) const {
-	if (!user) return false;
-
-	bool hasUser = std::find(
-		channelUsers.begin(),
-		channelUsers.end(),
-		user
-	) != channelUsers.end();
-
-	// std::cout << "[Debug] Checking if has user for: "
-	// 	<< user->getUserIdentifier()
-	// 	<< " @ " << user << std::endl;
-
-	// Parser::debugPrintUsers(channelUsers);
-	// std::cout << "[Debug] is " << hasUser << "\n";
-
-	return hasUser;
 }
 

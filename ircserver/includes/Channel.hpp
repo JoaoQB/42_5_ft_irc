@@ -21,22 +21,25 @@ class Channel {
 	public:
 		Channel();
 
-		// Accessors (getters)
+		// Getters
 		const std::string& getName() const;
 		const std::string& getPassword() const;
 		const std::string& getTopic() const;
 		const std::string& getTopicSetter() const;
 		const std::string& getTopicCreationTime() const;
 		const std::string& getCreationTime() const;
+		const std::vector<User*>& getUsers() const;
+
+		// Boolean Accessors
 		bool isFull() const;
 		bool isEmpty() const;
 		bool requiresPassword() const;
 		bool isInviteOnly() const;
-		bool hasTopic() const;
 		bool isOperator(const User* user) const;
-		const std::vector<User*>& getUsers() const;
+		bool hasTopic() const;
+		bool hasUser(const User* user) const;
 
-		// Mutators (setters)
+		// Setters
 		void setName(const std::string& channelName);
 		void setPassword(const std::string& key);
 		void setTopic(const std::string& message);
@@ -45,9 +48,6 @@ class Channel {
 		void addUser(User* user);
 		void addOperator(User* user);
 		void removeUser(User* user);
-
-		// Helpers
-		bool hasUser(const User* user) const;
 
 	private:
 		std::string name;

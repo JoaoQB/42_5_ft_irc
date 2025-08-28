@@ -19,8 +19,9 @@ User::User()
 	, username()
 	, nickname()
 	, password()
+	, userIdentifier()
+	, registered(false)
 	, userChannels() {
-	this->registered = false;
 }
 
 void User::setFd(int fd) {
@@ -35,6 +36,10 @@ int User::getFd() const {
 	return fd;
 }
 
+const std::string& User::getRealname() const {
+	return this->realname;
+}
+
 const std::string& User::getNickname() const {
 	return nickname;
 }
@@ -43,16 +48,16 @@ const std::string& User::getUsername() const {
 	return username;
 }
 
-const std::string& User::getIpAddress() const {
-	return ipAddress;
+const std::string& User::getPassword() const {
+	return this->password;
 }
 
-std::string User::getUserIdentifier() const {
-	return nickname + "!" + username + "@" + ipAddress;
+const std::string& User::getUserIdentifier() const {
+	return this->userIdentifier;
 }
 
-std::vector<Channel*>& User::getChannels() {
-	return this->userChannels;
+bool User::isRegistered(void) const {
+	return this->registered;
 }
 
 bool User::hasChannel(const Channel* channel) const {
@@ -74,6 +79,34 @@ bool User::hasChannel(const Channel* channel) const {
 	return hasChannel;
 }
 
+std::vector<Channel*>& User::getChannels() {
+	return this->userChannels;
+}
+
+void User::setRealname(std::string realname) {
+	this->realname = realname;
+}
+
+void User::setUsername(std::string username) {
+	this->username = username;
+}
+
+void User::setNickname(std::string nickname) {
+	this->nickname = nickname;
+}
+
+void User::setPassword(std::string password) {
+	this->password = password;
+}
+
+void User::setRegistered(bool registered) {
+	this->registered = registered;
+}
+
+void User::setUserIdentifier() {
+	this->userIdentifier = nickname + "!" + username + "@" + ipAddress;
+}
+
 void User::addChannel(Channel* channel) {
 	if (!channel || hasChannel(channel)) {
 		return;
@@ -93,36 +126,4 @@ void User::removeChannel(Channel* channel) {
 	if (it != this->userChannels.end()) {
 		userChannels.erase(it, userChannels.end());
 	}
-}
-
-const std::string& User::getRealName() const {
-	return this->realname;
-}
-
-void User::setRealName(std::string realname) {
-	this->realname = realname;
-}
-
-void User::setUserName(std::string username) {
-	this->username = username;
-}
-
-void User::setNickName(std::string nickname) {
-	this->nickname = nickname;
-}
-
-const std::string& User::getPassword() const {
-	return this->password;
-}
-
-void User::setPassword(std::string password) {
-	this->password = password;
-}
-
-bool User::isRegistered(void) {
-	return this->registered;
-}
-
-void User::setRegistered(bool registred) {
-	this->registered = registred;
 }

@@ -24,6 +24,31 @@ std::string Parser::extractCommand(const std::string& rawMessage) {
 	return rawMessage.substr(0, firstSpace);
 }
 
+std::string Parser::extractParams(const std::string rawMessage, const std::string cmd) {
+	size_t pos = rawMessage.find(cmd);
+
+	if (pos == std::string::npos)
+		return "";
+
+	pos += cmd.length();
+
+	if (pos < rawMessage.size() && std::isspace(rawMessage[pos]))
+		pos++;
+
+	std::string params = rawMessage.substr(pos);
+
+	return params;
+}
+
+std::string Parser::extractFirstParam(const std::string parameters) {
+	std::size_t pos = parameters.find(' ');
+
+	if (pos != std::string::npos)
+		return parameters.substr(0, pos);
+
+	return (parameters);
+}
+
 std::string Parser::extractChannelNames(
 	const std::string& rawMessage,
 	StringSizeT keyStart
@@ -71,38 +96,11 @@ CommandType Parser::getCommandType(const std::string& command) {
 	return cmd;
 }
 
-std::string Parser::extractParams(const std::string rawMessage, const std::string cmd) {
-	size_t pos = rawMessage.find(cmd);
-
-	if (pos == std::string::npos)
-		return "";
-
-	pos += cmd.length();
-
-	if (pos < rawMessage.size() && std::isspace(rawMessage[pos]))
-		pos++;
-
-	return rawMessage.substr(pos);
-}
-
-std::string Parser::extractFirstParam(const std::string parameters) {
-	std::size_t pos = parameters.find(' ');
-
-	if (pos != std::string::npos)
-		return parameters.substr(0, pos);
-
-	return (parameters);
-}
-
-// Remove \r\n from string end
-std::string Parser::trimCRLF(const std::string &s) {
-	size_t end = s.size();
-	if (!s.empty() && s[end-1] == '\n')
-		end--;
-	if (!s.empty() && s[end-1] == '\r')
-		end--;
-
-	return s.substr(0, end);
+bool Parser::isAuthentication(const User& user, const CommandType& command) {
+	if (command != CMD_PASS && command != CMD_USER && command != CMD_NICK && !user.isRegistered()) {
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -244,6 +242,17 @@ StringMap Parser::mapChanneslWithKeys(
 	}
 
 	return channelKeyMap;
+}
+
+// Remove \r\n from string end
+std::string Parser::trimCRLF(const std::string &s) {
+	size_t end = s.size();
+	if (!s.empty() && s[end-1] == '\n')
+		end--;
+	if (!s.empty() && s[end-1] == '\r')
+		end--;
+
+	return s.substr(0, end);
 }
 
 std::list<std::string> Parser::splitStringToList(
