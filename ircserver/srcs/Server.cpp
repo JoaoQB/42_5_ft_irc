@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/27 17:08:23 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/07/16 17:18:14 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,8 @@
 bool Server::signal = false;
 
 Server::Server()
-	: serverSocketFd(-1)
+	: name("ft_irc")
+	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
 	, users()
@@ -102,8 +103,44 @@ void Server::serverSocketCreate() {
 	pollFds.push_back(newPoll);
 }
 
+void Server::signalHandler(int signum) {
+	(void)signum;
+	std::cout << std::endl << "Signal Received!" << std::endl;
+	Server::signal = true;
+}
+
+void Server::closeFds() {
+	// Close all Users
+	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHI << "\n";
+		close(it->getFd());
+	}
+	// Close server socket
+	if (serverSocketFd != -1) {
+		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHI << std::endl;
+		close(serverSocketFd);
+	}
+}
+
+//TODO remove user from channels
+void Server::clearUser(int fd) {
+	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
+		if (pIt->fd == fd) {
+			pollFds.erase(pIt);
+			break ;
+		}
+	}
+	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
+		if (cIt->getFd() == fd) {
+			users.erase(cIt);
+			break;
+		}
+	}
+	//TODO check if user is last from channel and if so clear channel
+}
+
 void Server::acceptNewUser() {
-	User	User;
+	User	newUser;
 	struct sockaddr_in UserAddress;
 	struct pollfd newPoll;
 	socklen_t len = sizeof(UserAddress);
@@ -123,10 +160,10 @@ void Server::acceptNewUser() {
 	newPoll.events = POLLIN;
 	newPoll.revents = 0;
 
-	User.setFd(incomingFd);
+	newUser.setFd(incomingFd);
 	// Convert the ip address to string and set it
-	User.setIpAddress(inet_ntoa(UserAddress.sin_addr));
-	users.push_back(User);
+	newUser.setIpAddress(inet_ntoa(UserAddress.sin_addr));
+	users.push_back(newUser);
 	pollFds.push_back(newPoll);
 
 	std::cout << GRE << "User <" << incomingFd << "> Connected" << WHI << std::endl;
@@ -134,7 +171,7 @@ void Server::acceptNewUser() {
 
 void Server::receiveNewData(int fd) {
 	// Buffer for incoming data
-	char buffer[1024];
+	char buffer[BUFFER_SIZE];
 	// Clear buffer
 	memset(buffer, 0, sizeof(buffer));
 
@@ -144,62 +181,19 @@ void Server::receiveNewData(int fd) {
 	// Check if User is disconnected
 	if (bytes <= 0) {
 		std::cout << RED << "User <" << fd << "> Disconnected" << WHI << std::endl;
-		clearUsers(fd);
+		clearUser(fd);
 		close(fd);
-	} else {
-		buffer[bytes] = '\0';
-		std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
-		handleRawMessage(buffer, fd);
-		// TODO! Add code to process the received data:
-		// parse, check, authenticate, handle the command, etc...
+		return;
 	}
 
-}
-
-void Server::signalHandler(int signum) {
-	(void)signum;
-	std::cout << std::endl << "Signal Received!" << std::endl;
-	Server::signal = true;
-}
-
-void Server::closeFds() {
-	// Close all Users
-	for (UserIterator it = users.begin() ; it != users.end() ; ++it) {
-		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHI << "\n";
-		close(it->getFd());
-	}
-	// Close server socket
-	if (serverSocketFd != -1) {
-		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHI << std::endl;
-		close(serverSocketFd);
-	}
-}
-
-void Server::clearUsers(int fd) {
-	for (pollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
-		if (pIt->fd == fd) {
-			pollFds.erase(pIt);
-			break ;
-		}
-	}
-	for (UserIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
-		if (cIt->getFd() == fd) {
-			users.erase(cIt);
-			break;
-		}
-	}
-}
-
-User* Server::getUserByFd(int fd){
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i].getFd() == fd)
-			return &users[i];
-	}
-	return NULL;
+	buffer[bytes] = '\0';
+	std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
+	handleRawMessage(fd, buffer);
 }
 
 //TODO Command Handlers
-void Server::handleRawMessage(const char *buffer, int fd) {
+void Server::handleRawMessage(int fd, const char *buffer) {
+	// Remove line break char from end of buffer
 	std::string rawMessage(buffer);
 
 	//rawMessage = "PASS mypassword"
@@ -209,34 +203,31 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 	// cmd = 1
 	std::string params = Parser::extractParams(rawMessage, command);
 
-	User *user = getUserByFd(fd);
-	if (!user) {
-		throw std::runtime_error("User not found for fd");
-		return;
-	}
+	User &user = getUser(fd);
 	// // TODO
 	// if (!Parser::isAuth(user, cmd)) {
 	// 	std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
 	// 	return;
 	// }
 	// Usuário está retrito a fazer outros comandos enquanto que não está registrado no servidor
-	if (cmd != CMD_PASS && cmd != CMD_USER && cmd != CMD_NICK && !user->isRegistered()) {
+	if (cmd != CMD_PASS && cmd != CMD_USER && cmd != CMD_NICK && !user.isRegistered()) {
 		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
 		return;
 	}
 	switch (cmd) {
 		case CMD_PASS: {
-			cmdPass(*user, params);
+			cmdPass(user, params);
 			break;
 		}
 		case CMD_NICK: {
-			cmdNick(*user, params);
+			cmdNick(user, params);
 			break;
 		}
 		case CMD_USER:
-			cmdUser(*user, params);
+			cmdUser(user, params);
 			break;
 		case CMD_JOIN:
+			handleJoinCommand(fd, params);
 			break;
 		case CMD_PRIVMSG:
 			break;
@@ -255,6 +246,310 @@ void Server::handleRawMessage(const char *buffer, int fd) {
 		default:
 			break;
 	}
+}
+
+void Server::handleJoinCommand(int fd, const std::string& rawMessageParams) {
+	// const StringSizeT commandPrefixLength = 5; // Account for space after 'JOIN'
+	User &user = getUser(fd);
+	if (rawMessageParams.empty()) {
+		Parser::ft_error("empty JOIN command");
+		std::string needMoreParams = "JOIN :Not enough parameters";
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, needMoreParams);
+		return;
+	}
+	bool isJoin0Command = rawMessageParams == "0";
+	if (isJoin0Command) {
+		disconnectUserFromAllChannels(&user);
+		return;
+	}
+
+	StringSizeT keyStart = rawMessageParams.find(' ');
+	std::string channelNames = Parser::extractChannelNames(rawMessageParams, keyStart);
+	std::string channelKeys = Parser::extractChannelKeys(rawMessageParams, keyStart);
+	StringMap channelsWithKeys = Parser::mapChanneslWithKeys(channelNames, channelKeys);
+
+	for (StringMapConstIterator it = channelsWithKeys.begin();
+		it != channelsWithKeys.end();
+		++it
+	) {
+		const std::string& channelName = it->first;
+		const std::string& key = it->second;
+		if (!Parser::validateChannelName(channelName)) {
+			Parser::ft_error("invalid Channel name");
+			std::string badChannelName = channelName
+				+ " :Bad Channel Mask";
+			sendNumericReply(&user, ERR_BADCHANMASK, badChannelName);
+			continue;
+		}
+		try {
+			if (channelExists(channelName)) {
+				addUserToChannel(user, channelName, key);
+			} else {
+				createChannel(user, channelName, key);
+			}
+		} catch (const std::exception& e) {
+			std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
+		}
+	}
+}
+
+Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
+	for (
+		ChannelListIterator it = this->channels.begin() ;
+		it != this->channels.end() ;
+		++it
+	) {
+		if (it->getName() == channelName) {
+			return *it;
+		}
+	}
+	std::string noSuchChannel = channelName
+		+ " :No such channel";
+	sendNumericReply(&targetUser, ERR_NOSUCHCHANNEL, noSuchChannel);
+	throw std::runtime_error("Channel not found");
+}
+
+bool Server::channelExists(const std::string& channelName) const {
+	for (
+		ChannelListConstIterator it = this->channels.begin() ;
+		it != this->channels.end() ;
+		++it
+	) {
+		if (it->getName() == channelName) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Server::createChannel(
+	User& creator,
+	const std::string& channelName,
+	const std::string& channelKey
+) {
+	Channel newChannel;
+	this->channels.push_back(newChannel);
+	Channel* joinedChannel = &this->channels.back();
+
+	joinedChannel->setName(channelName);
+	if (!channelKey.empty()) {
+		joinedChannel->setPassword(channelKey);
+	}
+	joinedChannel->addUser(&creator);
+	joinedChannel->addOperator(&creator);
+
+	creator.addChannel(joinedChannel);
+
+	sendJoinReplies(&creator, joinedChannel);
+	std::cout << "Channel " << channelName << " created by user " << creator.getFd() << "\n";
+}
+
+void Server::addUserToChannel(
+	User& targetUser,
+	const std::string& channelName,
+	const std::string& channelKey
+) {
+	Channel& targetChannel = getChannel(targetUser, channelName);
+	if (targetChannel.hasUser(&targetUser)) {
+		std::cerr << "User " << targetUser.getFd() << " is already in channel " << channelName << std::endl;
+		return;
+	}
+	if (targetChannel.isFull()) {
+		Parser::ft_error("channel full");
+		std::string channelIsFull = targetChannel.getName()
+			+ " :Cannot join channel (+l)";
+		sendNumericReply(&targetUser, ERR_CHANNELISFULL, channelIsFull);
+		return ;
+	}
+	if (targetChannel.isInviteOnly()) {
+		Parser::ft_error("channel is invite only");
+		std::string inviteOnly = targetChannel.getName()
+			+ " :Cannot join channel (+i)";
+		sendNumericReply(&targetUser, ERR_INVITEONLYCHAN, inviteOnly);
+		return ;
+	}
+	if (targetChannel.requiresPassword() &&
+		targetChannel.getPassword() != channelKey
+	) {
+		Parser::ft_error("channel password is incorrect");
+		std::string badChannelKey = targetChannel.getName()
+			+ " :Cannot join channel (+k)";
+		sendNumericReply(&targetUser, ERR_BADCHANNELKEY, badChannelKey);
+		return;
+	}
+	targetChannel.addUser(&targetUser);
+	targetUser.addChannel(&targetChannel);
+	sendJoinReplies(&targetUser, &targetChannel);
+	std::cout << "User " << targetUser.getFd() << " added to channel " << channelName << std::endl;
+}
+
+void Server::sendJoinReplies(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	broadcastCommand(user, channel, "JOIN");
+	sendChannelTopic(user, channel);
+	sendChannelUsers(user, channel);
+	sendChannelSetAt(user, channel);
+}
+
+void Server::broadcastCommand(const User* user, const Channel* channel, const std::string& command) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string joinMessage = ":" + user->getUserIdentifier()
+		+ " " + command
+		+ " " + channel->getName();
+	for (
+		UserVectorConstIterator it = channel->getUsers().begin();
+		it != channel->getUsers().end();
+		++it
+	) {
+		sendMessage((*it)->getFd(), joinMessage);
+	}
+}
+
+void Server::sendChannelTopic(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	if (!channel->hasTopic()) {
+		std::string noTopicMessage = channel->getName()
+			+ " :" + "No topic is set";
+		sendNumericReply(user, RPL_NOTOPIC, noTopicMessage);
+		return;
+	}
+	std::string topicMessage = channel->getName()
+		+ " :" + channel->getTopic();
+	sendNumericReply(user, RPL_TOPIC, topicMessage);
+
+	std::string topicWhoTimeMessage = channel->getName()
+		+ " " + channel->getTopicSetter()
+		+ " " + channel->getTopicCreationTime();
+	sendNumericReply(user, RPL_TOPICWHOTIME, topicWhoTimeMessage);
+}
+
+void Server::sendChannelUsers(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string channelUsers;
+	for (
+		UserVectorConstIterator it = channel->getUsers().begin();
+		it != channel->getUsers().end();
+		++it
+	) {
+		std::string isOperatorPrefix = channel->isOperator(*it) ? "@" : "";
+		channelUsers += isOperatorPrefix + (*it)->getNickname() + " ";
+	}
+	std::string usersMessage = "= " + channel->getName()
+		+ " :" + channelUsers;
+	sendNumericReply(user, RPL_NAMREPLY, usersMessage);
+
+	std::string endOfNames = channel->getName()
+		+ " :End of /NAMES list";
+	sendNumericReply(user, RPL_ENDOFNAMES, endOfNames);
+}
+
+void Server::sendChannelSetAt(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+
+	std::string setAt = channel->getName()
+		+ " " + channel->getCreationTime();
+	sendNumericReply(user, RPL_CREATIONTIME, setAt);
+}
+
+/*
+// This function can only be called on a copy of a user's <channel*> vector,
+// because it modifies user->userChannels.
+*/
+void Server::partUserFromChannel(User* user, Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	broadcastCommand(user, channel, "PART");
+	channel->removeUser(user);
+	user->removeChannel(channel);
+	if (channel->isEmpty()) {
+		this->removeChannel(channel);
+		return;
+	}
+}
+
+void Server::removeChannel(Channel* channel) {
+	if (!channel || !channel->isEmpty()) {
+		return;
+	}
+
+	for (std::list<Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		if (&(*it) == channel) {
+			std::cout << "Removing empty channel: " << it->getName() << std::endl;
+			channels.erase(it);
+			return;
+		}
+	}
+}
+
+User& Server::getUser(int fd) {
+	for (
+		UserListIterator it = this->users.begin() ;
+		it != this->users.end() ;
+		++it
+	) {
+		if (it->getFd() == fd) {
+			return *it;
+		}
+	}
+	throw std::runtime_error("User not found");
+}
+
+void Server::disconnectUserFromAllChannels(User* user) {
+	if (!user) {
+		return;
+	}
+	std::vector<Channel*> userChannelCopies = user->getChannels();
+	for (
+		ChannelVectorIterator channelIt = userChannelCopies.begin();
+		channelIt != userChannelCopies.end();
+		++channelIt
+	) {
+		partUserFromChannel(user, *channelIt);
+	}
+	user->getChannels().clear();
+}
+
+void Server::sendMessage(int userFd, const std::string &message) {
+	if (userFd < 0)
+	return;
+
+	// IRC messages must end with CRLF
+	std::string messageToSend = message + "\r\n";
+
+	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), 0);
+	std::cout << "[DEBUG!] Sending:\n" << messageToSend << "To user: " << userFd << "!\n";
+	if (bytesSent == -1) {
+		std::cerr << "Failed to send message to fd " << userFd << std::endl;
+		// TODO Handle Disconnect???
+	}
+}
+
+void Server::sendNumericReply(
+	const User* user,
+	NumericReply numericCode,
+	const std::string& message
+) {
+	if (!user) return;
+
+	std::string reply = ":" + this->name
+		+ " " + Parser::numericReplyToString(numericCode)
+		+ " " + user->getNickname();
+
+	if (!message.empty())
+		reply += " " + message;
+
+	sendMessage(user->getFd(), reply);
 }
 
 void Server::cmdPass(User &user, std::string cmdParameters){
@@ -325,13 +620,16 @@ void Server::cmdNick(User &user, std::string cmdParameters) {
 		return ;
 	}
 
-	// Se o nickname já está existe na mesma network
-	for (size_t i = 0; i < users.size(); i++) {
-		if (users[i].getNickName() == nickname) {
-			std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
-			return ;
-		}
-	}
+	// // Se o nickname já está existe na mesma network
+	// for (size_t i = 0; i < users.size(); i++) {
+	// 	if (users[i].getNickName() == nickname) {
+	// 		std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
+	// 		return ;
+	// 	}
+	// }
+
+	//TODO
+	//Check Username exists in server users
 
 	// Adicionar nickname ao user
 	user.setNickName(nickname);

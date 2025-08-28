@@ -14,15 +14,24 @@
 # define USER_HPP
 
 # include "./Common.hpp"
+#include "Channel.hpp"
 
 class User {
 	public:
 		User();
 
-		int getFd();
+		int getFd() const;
+		const std::string& getNickname() const;
+		std::string getUserIdentifier() const;
+		std::vector<Channel*>& getChannels();
 
 		void setFd(int fd);
-		void setIpAddress(std::string ipAddress);
+		void setIpAddress(const std::string& ipAddr);
+
+		bool hasChannel(const Channel* channel) const;
+		void addChannel(Channel* channel);
+		void removeChannel(Channel* channel);
+
 
 		std::string getRealName(void);
 		void setRealName(std::string realname);
@@ -47,6 +56,11 @@ class User {
 		std::string nickname;
 		std::string password;
 		bool registered;
+
+		std::vector<Channel*> userChannels;
+
+		const std::string& getUsername() const;
+		const std::string& getIpAddress() const;
 };
 
 #endif

@@ -1,0 +1,187 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/16 09:26:10 by jqueijo-          #+#    #+#             */
+/*   Updated: 2025/07/16 17:22:35 by jqueijo-         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/Channel.hpp"
+
+Channel::Channel()
+	: name()
+	, password()
+	, channelCreationTime()
+	, topic()
+	, topicSetter()
+	, topicCreationTime()
+	, hasPassword(false)
+	, inviteOnly(false)
+	, full(false)
+	, channelLimit(-1)
+	, usersInChannel(0)
+	, channelUsers()
+	, channelOperators() {
+	channelCreationTime = Parser::getTimestamp();
+}
+
+// // Test printing channel topic
+// Channel::Channel()
+// 	: name()
+// 	, password()
+// 	, channelCreationTime()
+// 	, topic("teste")
+// 	, topicSetter("test2")
+// 	, topicCreationTime()
+// 	, hasPassword(false)
+// 	, inviteOnly(false)
+// 	, full(false)
+// 	, channelLimit(-1)
+// 	, usersInChannel(0)
+// 	, channelUsers()
+// 	, channelOperators() {
+// 	channelCreationTime = Parser::getTimestamp();
+// 	topicCreationTime = Parser::getTimestamp();
+// }
+
+void Channel::setName(const std::string& channelName) {
+	this->name = channelName;
+}
+
+void Channel::setPassword(const std::string& key) {
+	this->password = key;
+	this->hasPassword = true;
+}
+
+void Channel::setTopic(const std::string& message) {
+	this->topic = message;
+
+}
+
+const std::string& Channel::getName() const {
+	return this->name;
+}
+
+const std::string& Channel::getPassword() const {
+	return this->password;
+}
+
+const std::string& Channel::getTopic() const {
+	return this->topic;
+}
+
+const std::string& Channel::getTopicSetter() const {
+	return this->topicSetter;
+}
+
+const std::string& Channel::getTopicCreationTime() const {
+	return this->topicCreationTime;
+}
+
+const std::string& Channel::getCreationTime() const {
+	return this->channelCreationTime;
+}
+
+bool Channel::isFull() const {
+	return this->full;
+}
+
+bool Channel::isEmpty() const {
+	return this->usersInChannel <= 0;
+}
+
+bool Channel::requiresPassword() const {
+	return this->hasPassword;
+}
+
+bool Channel::isInviteOnly() const {
+	return this->inviteOnly;
+}
+
+bool Channel::hasTopic() const {
+	return !this->topic.empty();
+}
+
+bool Channel::isOperator(const User* user) const {
+	if (!user) return false;
+
+	bool isOperator = std::find(
+		channelOperators.begin(),
+		channelOperators.end(), user) != channelOperators.end();
+
+	// std::cout << "[Debug] Checking operator for: "
+	// 	<< user->getUserIdentifier()
+	// 	<< " @ " << user << std::endl;
+	// Parser::debugPrintUsers(channelOperators);
+	// std::cout << "[Debug] is " << isOperator << "\n";
+
+	return isOperator;
+}
+
+const std::vector<User*>& Channel::getUsers() const {
+	return this->channelUsers;
+}
+
+void Channel::addUser(User* user) {
+	if (!user || hasUser(user)) {
+		return;
+	}
+	this->channelUsers.push_back(user);
+	this->usersInChannel++;
+	if (channelLimit == usersInChannel) {
+		this->full = true;
+	}
+}
+
+void Channel::addOperator(User* user) {
+	if (!user) {
+		return;
+	}
+	this->channelOperators.push_back(user);
+}
+
+void Channel::removeUser(User* user) {
+	if (!user) return;
+
+	std::vector<User*>::iterator it = std::remove(
+		channelUsers.begin(),
+		channelUsers.end(),
+		user
+	);
+	if (it != channelUsers.end()) {
+		channelUsers.erase(it, channelUsers.end());
+		this->usersInChannel--;
+	}
+	it = std::remove(
+		channelOperators.begin(),
+		channelOperators.end(),
+		user
+	);
+	if (it != channelOperators.end()) {
+		channelOperators.erase(it, channelOperators.end());
+	}
+}
+
+bool Channel::hasUser(const User* user) const {
+	if (!user) return false;
+
+	bool hasUser = std::find(
+		channelUsers.begin(),
+		channelUsers.end(),
+		user
+	) != channelUsers.end();
+
+	// std::cout << "[Debug] Checking if has user for: "
+	// 	<< user->getUserIdentifier()
+	// 	<< " @ " << user << std::endl;
+
+	// Parser::debugPrintUsers(channelUsers);
+	// std::cout << "[Debug] is " << hasUser << "\n";
+
+	return hasUser;
+}
+

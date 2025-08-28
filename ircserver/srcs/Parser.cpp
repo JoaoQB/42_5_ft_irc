@@ -11,16 +11,42 @@
 /* ************************************************************************** */
 
 #include "../includes/Parser.hpp"
+#include "../includes/User.hpp"
 
 Parser::Parser() {
 }
 
 std::string Parser::extractCommand(const std::string& rawMessage) {
-	std::string::size_type firstSpace = rawMessage.find(' ');
+	StringSizeT firstSpace = rawMessage.find(' ');
 	if (firstSpace == std::string::npos) {
 		return rawMessage;
 	}
 	return rawMessage.substr(0, firstSpace);
+}
+
+std::string Parser::extractChannelNames(
+	const std::string& rawMessage,
+	StringSizeT keyStart
+) {
+	return (keyStart != std::string::npos)
+		? rawMessage.substr(0, keyStart)
+		: rawMessage.substr(0);
+}
+
+std::string Parser::extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart) {
+	if (keyStart == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
+	if (keyStartTrimmed == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
+	return (keyEnd != std::string::npos)
+		? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
+		: rawMessage.substr(keyStartTrimmed);
 }
 
 CommandType Parser::getCommandType(const std::string& command) {
@@ -79,21 +105,42 @@ std::string Parser::trimCRLF(const std::string &s) {
 	return s.substr(0, end);
 }
 
-bool Parser::isNicknameForbiddenChar(char c) {
-	const std::string forbidden = " ,*?!@.\n\r";
+/*
+/	Channel names are strings (beginning with specified prefix characters).
+/	First character must be a valid channel type prefix character ('#', '&').
+/	They MUST NOT contain the following characters:
+/	space (' ', 0x20),
+/	control G / BELL ('^G', 0x07),
+/	comma (',', 0x2C) (which is used as a list item separator by the protocol).
+*/
+bool Parser::validateChannelName(const std::string& channelName) {
+	if (channelName.empty()) {
+		return false;
+	}
+	if (!isValidChannelPrefix(*channelName.begin())) {
+		return false;
+	}
+	if (containsChannelForbiddenChars(channelName)) {
+		return false;
+	}
+	return true;
+}
+
+bool Parser::isValidChannelPrefix(char c) {
+	const std::string valid = "#&";
+	return valid.find(c) != std::string::npos;
+}
+
+bool Parser::isChannelForbiddenChar(char c) {
+	const std::string forbidden = " ^G,";
 	return forbidden.find(c) != std::string::npos;
 }
 
-bool Parser::isNicknameForbiddenFirstChar(char c) {
-	const std::string forbidden = "0123456789$:#&~%+";
-	return forbidden.find(c) != std::string::npos;
-}
-
-bool Parser::containsNicknameForbiddenChars(const std::string& input) {
+bool Parser::containsChannelForbiddenChars(const std::string& input) {
 	return std::find_if(
 			input.begin(),
 			input.end(),
-			isNicknameForbiddenChar
+			isChannelForbiddenChar
 		) != input.end();
 }
 
@@ -152,55 +199,61 @@ bool Parser::validateNickname(const std::string& nickname) {
 	return true;
 }
 
-bool Parser::isValidChannelPrefix(char c) {
-	const std::string valid = "#&";
-	return valid.find(c) != std::string::npos;
-}
-
-bool Parser::isChannelForbiddenChar(char c) {
-	const std::string forbidden = " ^G,";
+bool Parser::isNicknameForbiddenChar(char c) {
+	const std::string forbidden = " ,*?!@.\n\r";
 	return forbidden.find(c) != std::string::npos;
 }
 
-bool Parser::containsChannelForbiddenChars(const std::string& input) {
+bool Parser::isNicknameForbiddenFirstChar(char c) {
+	const std::string forbidden = "0123456789$:#&~%+";
+	return forbidden.find(c) != std::string::npos;
+}
+
+bool Parser::containsNicknameForbiddenChars(const std::string& input) {
 	return std::find_if(
 			input.begin(),
 			input.end(),
-			isChannelForbiddenChar
+			isNicknameForbiddenChar
 		) != input.end();
 }
 
-/*
-/	Channel names are strings (beginning with specified prefix characters).
-/	First character must be a valid channel type prefix character ('#', '&').
-/	They MUST NOT contain the following characters:
-/	space (' ', 0x20),
-/	control G / BELL ('^G', 0x07),
-/	comma (',', 0x2C) (which is used as a list item separator by the protocol).
-*/
-bool Parser::validateChannelName(const std::string& channelName) {
-	if (channelName.empty()) {
-		return false;
-	}
-	if (!isValidChannelPrefix(*channelName.begin())) {
-		return false;
-	}
-	if (containsChannelForbiddenChars(channelName)) {
-		return false;
+StringMap Parser::mapChanneslWithKeys(
+	const std::string& channelNames,
+	const std::string& channelKeys
+) {
+	StringMap channelKeyMap;
+
+	std::list<std::string> channels = splitStringToList(channelNames, ",");
+	std::list<std::string> keys;
+	if (!channelKeys.empty()) {
+		keys = splitStringToList(channelKeys, ",");
 	}
 
-	return true;
+	std::list<std::string>::iterator chanIt = channels.begin();
+	std::list<std::string>::iterator keyIt = keys.begin();
+
+	for ( ; chanIt != channels.end(); ++chanIt) {
+		std::string key;
+		if (keyIt != keys.end()) {
+			key = *keyIt;
+			++keyIt;
+		} else {
+			key = "";
+		}
+		channelKeyMap[*chanIt] = key;
+	}
+
+	return channelKeyMap;
 }
 
-// TODO Confirm it's working
 std::list<std::string> Parser::splitStringToList(
 	const std::string& values,
 	const std::string& delimiter
 ) {
 	std::list<std::string> result;
-	std::string::size_type start = 0;
-	std::string::size_type end;
-	std::string::size_type delimiterLength = 1;
+	StringSizeT start = 0;
+	StringSizeT end;
+	StringSizeT delimiterLength = 1;
 
 	while ((end = values.find(delimiter, start)) != std::string::npos) {
 		if (end > start) {
@@ -214,17 +267,52 @@ std::list<std::string> Parser::splitStringToList(
 	}
 
 	return result;
+
 }
 
-// TODO comfirm it's working
-std::map<std::string, std::string> Parser::divideJoinCommand(
-	const std::string& channelNames,
-	const std::string& channelKeys
-) {
-	std::map<std::string, std::string> channelKeyMap;
-	std::list<std::string> channels = splitStringToList(channelNames, ",");
-	std::list<std::string> keys = splitStringToList(channelKeys, ",");
-
-	return channelKeyMap;
+void Parser::ft_error(const std::string& errorMessage) {
+	std::cerr << "Error: " << errorMessage << std::endl;
 }
 
+std::string Parser::getTimestamp() {
+	std::time_t now = std::time(NULL);
+	std::ostringstream oss;
+	oss << now;
+	std::string setAtString = oss.str();
+
+	return setAtString;
+}
+
+std::string Parser::numericReplyToString(NumericReply numericCode) {
+	std::ostringstream oss;
+	oss << static_cast<int>(numericCode);
+	std::string code = oss.str();
+
+	return code;
+}
+
+void Parser::debugPrintUsers(const std::vector<User*>& users) {
+	std::cout << "[Debug] Users (" << users.size() << "):" << std::endl;
+	for (std::size_t i = 0; i < users.size(); ++i) {
+		if (users[i]) {
+			std::cout << "  [" << i << "] "
+					<< users[i]->getUserIdentifier()
+					<< " @ " << users[i] << std::endl;
+		} else {
+			std::cout << "  [" << i << "] (null)" << std::endl;
+		}
+	}
+}
+
+void Parser::debugPrintChannels(const std::vector<Channel*>& channels) {
+	std::cout << "[Debug] Channels (" << channels.size() << "):" << std::endl;
+	for (std::size_t i = 0; i < channels.size(); ++i) {
+		if (channels[i]) {
+			std::cout << "  [" << i << "] "
+					<< channels[i]->getName()
+					<< " @ " << channels[i] << std::endl;
+		} else {
+			std::cout << "  [" << i << "] (null)" << std::endl;
+		}
+	}
+}
