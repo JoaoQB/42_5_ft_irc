@@ -21,32 +21,26 @@ class User {
 		User();
 
 		int getFd() const;
+		const std::string& getRealName() const;
 		const std::string& getNickname() const;
+		const std::string& getUsername() const;
+		const std::string& getPassword() const;
 		std::string getUserIdentifier() const;
+		bool isRegistered(void);
 		std::vector<Channel*>& getChannels();
 
 		void setFd(int fd);
 		void setIpAddress(const std::string& ipAddr);
+		void setRealName(std::string realname);
+		void setUserName(std::string username);
+		void setNickName(std::string nickname);
+		void setPassword(std::string password);
+		void setRegistered(bool registered);
 
 		bool hasChannel(const Channel* channel) const;
 		void addChannel(Channel* channel);
 		void removeChannel(Channel* channel);
 
-
-		std::string getRealName(void);
-		void setRealName(std::string realname);
-
-		std::string getUserName(void);
-		void setUserName(std::string username);
-
-		std::string getNickName(void);
-		void setNickName(std::string nickname);
-
-		std::string getPassword(void);
-		void setPassword(std::string password);
-
-		bool isRegistered(void);
-		void setRegistered(bool registred);
 
 	private:
 		int fd;
@@ -59,7 +53,6 @@ class User {
 
 		std::vector<Channel*> userChannels;
 
-		const std::string& getUsername() const;
 		const std::string& getIpAddress() const;
 };
 

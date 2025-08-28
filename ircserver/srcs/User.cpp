@@ -95,7 +95,7 @@ void User::removeChannel(Channel* channel) {
 	}
 }
 
-std::string User::getRealName(void) {
+const std::string& User::getRealName() const {
 	return this->realname;
 }
 
@@ -103,23 +103,15 @@ void User::setRealName(std::string realname) {
 	this->realname = realname;
 }
 
-std::string User::getUserName(void) {
-	return this->username;
-}
-
 void User::setUserName(std::string username) {
 	this->username = username;
-}
-
-std::string User::getNickName(void) {
-	return this->nickname;
 }
 
 void User::setNickName(std::string nickname) {
 	this->nickname = nickname;
 }
 
-std::string User::getPassword(void) {
+const std::string& User::getPassword() const {
 	return this->password;
 }
 

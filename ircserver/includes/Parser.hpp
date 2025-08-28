@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 15:43:06 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/22 15:43:06 by jqueijo-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ class Parser {
 	public:
 		// Extractors
 		static std::string extractCommand(const std::string& rawMessage);
+		static std::string extractParams(const std::string rawMessage, const std::string cmd);
+		static std::string extractFirstParam(const std::string parameters);
 		static std::string extractChannelNames(
 			const std::string& rawMessage,
 			StringSizeT keyStart
@@ -38,6 +40,7 @@ class Parser {
 			const std::string& channelKeys
 		);
 
+		static std::string trimCRLF(const std::string &s);
 		static void ft_error(const std::string& errorMessage);
 		static std::string getTimestamp();
 		static std::string numericReplyToString(NumericReply numericCode);
@@ -64,27 +67,6 @@ class Parser {
 		static std::list<std::string> splitStringToList(
 			const std::string& values,
 			const std::string& delimiter
-		);
-
-	public:
-
-		static std::string extractCommand(const std::string& rawMessage);
-
-		static CommandType getCommandType(const std::string& command);
-
-		static std::string extractParams(const std::string rawMessage, const std::string cmd);
-
-		static std::string extractFirstParam(const std::string parameters);
-
-		static bool validateChannelName(const std::string& channelName);
-
-		static bool validateNickname(const std::string& nickname);
-
-		static std::string trimCRLF(const std::string &s);
-
-		std::map<std::string, std::string> divideJoinCommand(
-			const std::string& channelNames,
-			const std::string& channelKeys
 		);
 };
 

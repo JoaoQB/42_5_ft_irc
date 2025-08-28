@@ -38,14 +38,11 @@ class Server {
 
 		void handleRawMessage(int fd, const char* buffer);
 
+		// Command Handlers
+		void handleJoinCommand(int fd, const std::string& rawMessageParams);
 		void cmdPass(User &user, std::string cmdParameters);
 		void cmdNick(User &user, std::string cmdParameters);
 		void cmdUser(User &user, std::string cmdParameters);
-
-		void turnRegistrationOn(User &user);
-
-		// Command Handlers
-		void handleJoinCommand(int fd, const std::string& rawMessageParams);
 
 	private:
 		// Server State
@@ -82,6 +79,7 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
+		void turnRegistrationOn(User &user);
 };
 
 #endif
