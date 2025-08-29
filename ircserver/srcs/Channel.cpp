@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
+#include "../includes/ChannelConstants.hpp"
 
 Channel::Channel()
 	: name()
@@ -20,33 +21,15 @@ Channel::Channel()
 	, topicSetter()
 	, topicCreationTime()
 	, hasPassword(false)
-	, inviteOnly(false)
 	, full(false)
 	, channelLimit(-1)
 	, usersInChannel(0)
 	, channelUsers()
-	, channelOperators() {
+	, channelOperators()
+	, channelModes() {
 	channelCreationTime = Parser::getTimestamp();
+	channelModes.push_back(TOPIC_MODE);
 }
-
-// // Test printing channel topic
-// Channel::Channel()
-// 	: name()
-// 	, password()
-// 	, channelCreationTime()
-// 	, topic("teste")
-// 	, topicSetter("test2")
-// 	, topicCreationTime()
-// 	, hasPassword(false)
-// 	, inviteOnly(false)
-// 	, full(false)
-// 	, channelLimit(-1)
-// 	, usersInChannel(0)
-// 	, channelUsers()
-// 	, channelOperators() {
-// 	channelCreationTime = Parser::getTimestamp();
-// 	topicCreationTime = Parser::getTimestamp();
-// }
 
 const std::string& Channel::getName() const {
 	return this->name;
@@ -89,7 +72,7 @@ bool Channel::requiresPassword() const {
 }
 
 bool Channel::isInviteOnly() const {
-	return this->inviteOnly;
+	return std::find(channelModes.begin(), channelModes.end(), INVITE_MODE) != channelModes.end();
 }
 
 bool Channel::isOperator(const User* user) const {
@@ -110,6 +93,10 @@ bool Channel::isOperator(const User* user) const {
 
 bool Channel::hasTopic() const {
 	return !this->topic.empty();
+}
+
+bool Channel::isTopicProtected() const {
+	return std::find(channelModes.begin(), channelModes.end(), TOPIC_MODE) != channelModes.end();
 }
 
 bool Channel::hasUser(const User* user) const {
@@ -140,9 +127,10 @@ void Channel::setPassword(const std::string& key) {
 	this->hasPassword = true;
 }
 
-void Channel::setTopic(const std::string& message) {
+void Channel::setTopic(const User* user, const std::string& message) {
 	this->topic = message;
-
+	this->topicSetter = user->getNickname();
+	this->topicCreationTime = Parser::getTimestamp();
 }
 
 void Channel::addUser(User* user) {
@@ -183,5 +171,11 @@ void Channel::removeUser(User* user) {
 	if (it != channelOperators.end()) {
 		channelOperators.erase(it, channelOperators.end());
 	}
+}
+
+void Channel::deleteTopic() {
+	this->topic = "";
+	this->topicCreationTime = "";
+	this->topicSetter = "";
 }
 

@@ -18,14 +18,10 @@
 class Parser {
 	public:
 		// Extractors
-		static std::string extractCommand(const std::string& rawMessage);
 		static std::string extractParams(const std::string rawMessage, const std::string cmd);
 		static std::string extractFirstParam(const std::string parameters);
-		static std::string extractChannelNames(
-			const std::string& rawMessage,
-			StringSizeT keyStart
-		);
-		static std::string extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart);
+		static std::string extractSecondParam(const std::string& parameters);
+		static std::string extractFromSecondParam(const std::string& parameters);
 
 		// Command classification
 		static CommandType getCommandType(const std::string& command);
@@ -42,6 +38,7 @@ class Parser {
 		);
 
 		static std::string trimCRLF(const std::string &s);
+		static std::string trimWhitespace(const std::string &string);
 		static void ft_error(const std::string& errorMessage);
 		static std::string getTimestamp();
 		static std::string numericReplyToString(NumericReply numericCode);

@@ -37,17 +37,19 @@ class Channel {
 		bool isInviteOnly() const;
 		bool isOperator(const User* user) const;
 		bool hasTopic() const;
+		bool isTopicProtected() const;
 		bool hasUser(const User* user) const;
 
 		// Setters
 		void setName(const std::string& channelName);
 		void setPassword(const std::string& key);
-		void setTopic(const std::string& message);
+		void setTopic(const User* user, const std::string& message);
 
 		// Actions
 		void addUser(User* user);
 		void addOperator(User* user);
 		void removeUser(User* user);
+		void deleteTopic();
 
 	private:
 		std::string name;
@@ -58,7 +60,6 @@ class Channel {
 		std::string topicCreationTime;
 
 		bool hasPassword;
-		bool inviteOnly;
 		bool full;
 
 		int channelLimit;
@@ -66,6 +67,7 @@ class Channel {
 
 		std::vector<User*> channelUsers;
 		std::vector<User*> channelOperators;
+		std::vector<std::string> channelModes;
 };
 
 #endif

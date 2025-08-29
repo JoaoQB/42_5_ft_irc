@@ -196,7 +196,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	User &user = getUser(fd);
 	std::string rawMessage(buffer); // rawMessage = "PASS mypassword"
 	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
-	std::string command = Parser::extractCommand(trimmedMessage); // command = "PASS"
+	std::string command = Parser::extractFirstParam(trimmedMessage); // command = "PASS"
 	std::string params = Parser::extractParams(trimmedMessage, command); // params = "mypassword"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
 
@@ -228,6 +228,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 		case CMD_INVITE:
 			break;
 		case CMD_TOPIC:
+			handleTopicCommand(user, params);
 			break;
 		case CMD_MODE:
 			break;
@@ -361,22 +362,20 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 	registerUser(user);
 }
 
-void Server::handleJoinCommand(User &user, const std::string& rawMessageParams) {
-	if (rawMessageParams.empty()) {
-		Parser::ft_error("empty: '" + rawMessageParams + "' command");
-		std::string needMoreParams = rawMessageParams + " :Not enough parameters";
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, needMoreParams);
+void Server::handleJoinCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
 		return;
 	}
-	bool isJoin0Command = rawMessageParams == "0";
+	bool isJoin0Command = commandParams == "0";
 	if (isJoin0Command) {
 		disconnectUserFromAllChannels(&user);
 		return;
 	}
 
-	StringSizeT keyStart = rawMessageParams.find(' ');
-	std::string channelNames = Parser::extractChannelNames(rawMessageParams, keyStart);
-	std::string channelKeys = Parser::extractChannelKeys(rawMessageParams, keyStart);
+	std::string channelNames = Parser::extractFirstParam(commandParams);
+	std::string channelKeys = Parser::extractSecondParam(commandParams);
 	StringMap channelsWithKeys = Parser::mapChanneslWithKeys(channelNames, channelKeys);
 
 	for (StringMapConstIterator it = channelsWithKeys.begin();
@@ -387,9 +386,7 @@ void Server::handleJoinCommand(User &user, const std::string& rawMessageParams) 
 		const std::string& key = it->second;
 		if (!Parser::validateChannelName(channelName)) {
 			Parser::ft_error("invalid Channel name");
-			std::string badChannelName = channelName
-				+ " :Bad Channel Mask";
-			sendNumericReply(&user, ERR_BADCHANMASK, badChannelName);
+			sendNumericReply(&user, ERR_BADCHANMASK, channelName + " :Bad Channel Mask");
 			continue;
 		}
 		try {
@@ -401,6 +398,50 @@ void Server::handleJoinCommand(User &user, const std::string& rawMessageParams) 
 		} catch (const std::exception& e) {
 			std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
 		}
+	}
+}
+
+void Server::handleTopicCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string channelName = Parser::extractFirstParam(commandParams);
+	try {
+		Channel& targetChannel = getChannel(user, channelName);
+		if (!targetChannel.hasUser(&user)) {
+			sendNumericReply(&user, ERR_NOTONCHANNEL, channelName + " :Not on channel");
+			return;
+		}
+		std::string commandTopic = Parser::extractFromSecondParam(commandParams);
+		std::cout << "Command Topic is: " << "\n";
+		if (commandTopic.empty()) {
+			sendChannelTopic(&user, &targetChannel);
+			return;
+		}
+		if (targetChannel.isTopicProtected() && !targetChannel.isOperator(&user)) {
+			sendNumericReply(
+				&user,
+				ERR_CHANOPRIVSNEEDED,
+				targetChannel.getName() + " :You're not channel operator"
+			);
+			return;
+		}
+		// Trim whitespaces and remove ":" separator
+		std::string trimmedCommandTopic = Parser::trimWhitespace(commandTopic);
+		if (!trimmedCommandTopic.empty() && trimmedCommandTopic[0] == ':') {
+			trimmedCommandTopic = trimmedCommandTopic.substr(1);
+		}
+		// If empty string after ':', delete topic
+		if (trimmedCommandTopic.empty()) {
+			targetChannel.deleteTopic();
+		} else {
+			targetChannel.setTopic(&user, trimmedCommandTopic);
+		}
+		broadcastCommand(&user, &targetChannel, "TOPIC", ":" + trimmedCommandTopic);
+	} catch (const std::exception& e) {
+		std::cerr << "TOPIC: " << e.what() << std::endl;
 	}
 }
 
@@ -498,25 +539,35 @@ void Server::sendJoinReplies(const User* user, const Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "JOIN");
+	broadcastCommand(user, channel, "JOIN", "");
 	sendChannelTopic(user, channel);
 	sendChannelUsers(user, channel);
 	sendChannelSetAt(user, channel);
 }
 
-void Server::broadcastCommand(const User* user, const Channel* channel, const std::string& command) {
+void Server::broadcastCommand(
+	const User* user,
+	const Channel* channel,
+	const std::string& command,
+	const std::string& message
+) {
 	if (!user || !channel) {
 		return ;
 	}
-	std::string joinMessage = ":" + user->getUserIdentifier()
+	std::string commandMessage = ":" + user->getUserIdentifier()
 		+ " " + command
 		+ " " + channel->getName();
+
+	if (!message.empty()) {
+		commandMessage += " " + message;
+	}
+
 	for (
 		UserVectorConstIterator it = channel->getUsers().begin();
 		it != channel->getUsers().end();
 		++it
 	) {
-		sendMessage((*it)->getFd(), joinMessage);
+		sendMessage((*it)->getFd(), commandMessage);
 	}
 }
 
@@ -580,7 +631,7 @@ void Server::partUserFromChannel(User* user, Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "PART");
+	broadcastCommand(user, channel, "PART", "");
 	channel->removeUser(user);
 	user->removeChannel(channel);
 	if (channel->isEmpty()) {
@@ -686,8 +737,9 @@ void Server::sendNumericReply(
 		+ " " + Parser::numericReplyToString(numericCode)
 		+ " " + user->getNickname();
 
-	if (!message.empty())
+	if (!message.empty()) {
 		reply += " " + message;
+	}
 
 	sendMessage(user->getFd(), reply);
 }
