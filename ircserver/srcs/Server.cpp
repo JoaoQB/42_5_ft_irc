@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:18:14 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/29 12:43:01 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,11 @@ Server::Server()
 	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
+	, version("1.0")
 	, users()
 	, pollFds()
 	, channels() {
+	serverCreationTime = Parser::getTimestamp();
 }
 
 void Server::serverInit(const std::string& port, const std::string& password) {
@@ -200,7 +202,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	std::string params = Parser::extractParams(trimmedMessage, command); // params = "mypassword"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
 
-	// Usuário está retrito a fazer outros comandos enquanto que não está registrado no servidor
+	// Usuário está retrito a fazer outros comandos enquanto que não está autenticado no servidor
 	if (!Parser::isAuthentication(user, cmd)) {
 		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
 		return;
@@ -642,6 +644,30 @@ void Server::registerUser(User &user) {
 		std::cout << "🥳 Client " << user.getNickname()
 			<< " fully registred!" << std::endl;
 		user.setUserIdentifier();
+
+		std::string welcomeUserMessage =
+			" :Welcome to the " + this->name +
+			" Network, " + user.getNickname() +
+			"[!" + user.getUsername() + "@" +
+			user.getIpAddress() + "]";
+		sendNumericReply(&user, RPL_CREATED, welcomeUserMessage);
+
+		std::string versionServerMessage =
+			":Your host is " + this->name +
+			" , running on version " + this->version;
+		sendNumericReply(&user, RPL_YOURHOST, versionServerMessage);
+
+		std::string formattedServerCreationTime = Parser::formatTimeStamp(this->serverCreationTime);
+		std::string serverCreatedMessage =
+			":This server was created " + formattedServerCreationTime;
+		sendNumericReply(&user, RPL_CREATED, serverCreatedMessage);
+
+		std::string serverInfoMessage =
+			"⚠️" + this->name + " " + this->version +
+			" " + "<available user modes>" +
+			" " + "<available channel modes>" +
+			" " + "[<channel modes with a parameter>]";
+		sendNumericReply(&user, RPL_MYINFO, serverInfoMessage);
 	}
 }
 

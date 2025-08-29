@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 09:51:23 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/29 11:50:02 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,10 +55,16 @@ enum CommandType {
 	CMD_MODE,
 	CMD_PART,
 	CMD_QUIT,
-	CMD_UNKNOWN
+	CMD_UNKNOWN,
+	CAP
 };
 
 enum NumericReply {
+	RPL_WELCOME = 001,
+	RPL_YOURHOST = 002,
+	RPL_CREATED = 003,
+	RPL_MYINFO = 004,
+	RPL_ISUPPORT = 005,
 	RPL_CREATIONTIME = 329,
 	RPL_NOTOPIC = 331,
 	RPL_TOPIC = 332,
