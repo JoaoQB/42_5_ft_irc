@@ -42,7 +42,8 @@ class Server {
 		void handlePassCommand(User &user, std::string cmdParameters);
 		void handleNickCommand(User &user, std::string cmdParameters);
 		void handleUserCommand(User &user, std::string cmdParameters);
-		void handleJoinCommand(User &user, const std::string& rawMessageParams);
+		void handleJoinCommand(User &user, const std::string& commandParams);
+		void handleTopicCommand(User &user, const std::string& commandParams);
 
 	private:
 		// Server State
@@ -65,7 +66,12 @@ class Server {
 		void createChannel(User& creator, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
 		void sendJoinReplies(const User* user, const Channel* channel);
-		void broadcastCommand(const User* user, const Channel* channel, const std::string& command);
+		void broadcastCommand(
+			const User* user,
+			const Channel* channel,
+			const std::string& command,
+			const std::string& message
+		);
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);

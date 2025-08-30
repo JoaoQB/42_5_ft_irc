@@ -16,14 +16,6 @@
 Parser::Parser() {
 }
 
-std::string Parser::extractCommand(const std::string& rawMessage) {
-	StringSizeT firstSpace = rawMessage.find(' ');
-	if (firstSpace == std::string::npos) {
-		return rawMessage;
-	}
-	return rawMessage.substr(0, firstSpace);
-}
-
 std::string Parser::extractParams(const std::string rawMessage, const std::string cmd) {
 	size_t pos = rawMessage.find(cmd);
 
@@ -41,37 +33,48 @@ std::string Parser::extractParams(const std::string rawMessage, const std::strin
 }
 
 std::string Parser::extractFirstParam(const std::string parameters) {
-	std::size_t pos = parameters.find(' ');
+	std::size_t firstSpace = parameters.find(' ');
 
-	if (pos != std::string::npos)
-		return parameters.substr(0, pos);
+	if (firstSpace != std::string::npos)
+		return parameters.substr(0, firstSpace);
 
 	return (parameters);
 }
 
-std::string Parser::extractChannelNames(
-	const std::string& rawMessage,
-	StringSizeT keyStart
-) {
-	return (keyStart != std::string::npos)
-		? rawMessage.substr(0, keyStart)
-		: rawMessage.substr(0);
+std::string Parser::extractSecondParam(const std::string& parameters) {
+	std::size_t firstSpace = parameters.find(' ');
+
+	if (firstSpace != std::string::npos) {
+		return "";
+	}
+
+	StringSizeT secondParamStartTrimmed = parameters.find_first_not_of(' ', firstSpace);
+	if (secondParamStartTrimmed == std::string::npos) {
+		return "";
+	}
+
+	StringSizeT keyEnd = parameters.find(' ', secondParamStartTrimmed);
+	return (keyEnd != std::string::npos)
+		? parameters.substr(secondParamStartTrimmed, keyEnd - secondParamStartTrimmed)
+		: parameters.substr(secondParamStartTrimmed);
 }
 
-std::string Parser::extractChannelKeys(const std::string& rawMessage, StringSizeT keyStart) {
-	if (keyStart == std::string::npos) {
+std::string Parser::extractFromSecondParam(const std::string& parameters) {
+	std::size_t firstSpace = parameters.find(' ');
+
+	if (firstSpace == std::string::npos) {
 		return "";
 	}
 
-	StringSizeT keyStartTrimmed = rawMessage.find_first_not_of(' ', keyStart);
-	if (keyStartTrimmed == std::string::npos) {
+	StringSizeT secondParamStartTrimmed = parameters.find_first_not_of(' ', firstSpace);
+	if (secondParamStartTrimmed == std::string::npos) {
 		return "";
 	}
 
-	StringSizeT keyEnd = rawMessage.find(' ', keyStartTrimmed);
-	return (keyEnd != std::string::npos)
-		? rawMessage.substr(keyStartTrimmed, keyEnd - keyStartTrimmed)
-		: rawMessage.substr(keyStartTrimmed);
+	std::string result = parameters.substr(secondParamStartTrimmed);
+	std::cout << "[DEBUG] '" << result << "'\n";
+
+	return result;
 }
 
 CommandType Parser::getCommandType(const std::string& command) {
@@ -256,6 +259,14 @@ std::string Parser::trimCRLF(const std::string &s) {
 		end--;
 
 	return s.substr(0, end);
+}
+
+std::string Parser::trimWhitespace(const std::string &string) {
+	size_t end = string.size();
+	while (end > 0 && std::isspace(static_cast<unsigned char>(string[end - 1]))) {
+		--end;
+	}
+	return string.substr(0, end);
 }
 
 std::list<std::string> Parser::splitStringToList(
