@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/29 11:50:02 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/30 16:55:10 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,12 @@ enum NumericReply {
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
 	ERR_NOSUCHCHANNEL = 403,
+	ERR_NONICKNAMEGIVEN = 431,
+	ERR_ERRONEUSNICKNAME = 432,
+	ERR_NICKNAMEINUSE = 433,
 	ERR_NEEDMOREPARAMS = 461,
+	ERR_ALREADYREGISTERED = 462,
+	ERR_PASSWDMISMATCH = 464,
 	ERR_CHANNELISFULL = 471,
 	ERR_INVITEONLYCHAN = 473,
 	ERR_BADCHANNELKEY = 475,
