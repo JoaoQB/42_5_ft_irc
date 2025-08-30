@@ -60,6 +60,10 @@ const std::string& User::getUserIdentifier() const {
 	return this->userIdentifier;
 }
 
+const std::string& User::getIpAddress() const {
+	return this->ipAddress;
+}
+
 bool User::isRegistered(void) const {
 	return this->registered;
 }
@@ -84,6 +88,10 @@ bool User::hasChannel(const Channel* channel) const {
 }
 
 std::vector<Channel*>& User::getChannels() {
+	return this->userChannels;
+}
+
+const std::vector<Channel*>& User::getChannels() const {
 	return this->userChannels;
 }
 
