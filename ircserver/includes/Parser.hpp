@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 15:43:06 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/29 12:40:04 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class Parser {
 		static std::string trimWhitespace(const std::string &string);
 		static void ft_error(const std::string& errorMessage);
 		static std::string getTimestamp();
+		static std::string formatTimeStamp(const std::string &timestampStr);
 		static std::string numericReplyToString(NumericReply numericCode);
 
 		// DEBUG

@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/27 15:54:54 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/29 12:08:11 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,8 @@ class Server {
 		int serverPort;
 		std::string serverPassword;
 		static bool signal;
+		std::string serverCreationTime;
+		std::string version;
 
 		// Data Containers
 		std::list<User> users;
