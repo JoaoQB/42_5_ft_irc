@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 13:32:40 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 09:51:23 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/30 16:55:10 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,11 @@ enum CommandType {
 };
 
 enum NumericReply {
+	RPL_WELCOME = 001,
+	RPL_YOURHOST = 002,
+	RPL_CREATED = 003,
+	RPL_MYINFO = 004,
+	RPL_ISUPPORT = 005,
 	RPL_CREATIONTIME = 329,
 	RPL_NOTOPIC = 331,
 	RPL_TOPIC = 332,
@@ -67,8 +72,13 @@ enum NumericReply {
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
 	ERR_NOSUCHCHANNEL = 403,
+	ERR_NONICKNAMEGIVEN = 431,
+	ERR_ERRONEUSNICKNAME = 432,
+	ERR_NICKNAMEINUSE = 433,
 	ERR_NOTONCHANNEL = 442,
 	ERR_NEEDMOREPARAMS = 461,
+	ERR_ALREADYREGISTERED = 462,
+	ERR_PASSWDMISMATCH = 464,
 	ERR_CHANNELISFULL = 471,
 	ERR_INVITEONLYCHAN = 473,
 	ERR_BADCHANNELKEY = 475,

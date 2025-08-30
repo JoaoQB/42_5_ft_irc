@@ -36,6 +36,10 @@ int User::getFd() const {
 	return fd;
 }
 
+const std::string& User::getIpAddress() const {
+	return this->ipAddress;
+}
+
 const std::string& User::getRealname() const {
 	return this->realname;
 }

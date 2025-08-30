@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:14 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:18:14 by jqueijo-         ###   ########.fr       */
+/*   Updated: 2025/08/30 17:00:52 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,11 @@ Server::Server()
 	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
+	, version("1.0")
 	, users()
 	, pollFds()
 	, channels() {
+	serverCreationTime = Parser::getTimestamp();
 }
 
 void Server::serverInit(const std::string& port, const std::string& password) {
@@ -200,7 +202,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	std::string params = Parser::extractParams(trimmedMessage, command); // params = "mypassword"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
 
-	// Usuário está retrito a fazer outros comandos enquanto que não está registrado no servidor
+	// Usuário está retrito a fazer outros comandos enquanto que não está autenticado no servidor
 	if (!Parser::isAuthentication(user, cmd)) {
 		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
 		return;
@@ -243,15 +245,15 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 
 void Server::handlePassCommand(User &user, std::string cmdParameters){
 	// std::cout << "Command parameters: " << cmdParameters << std::endl;
-
+	// TODO tocar para um erro
+	std::string cmd = "PASS";
 	if (cmdParameters.empty()) {
-		std::cout << "Error 461 needmoreparams" << std::endl;
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
 	}
 
 	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
 	if (!user.getNickname().empty() || !user.getUsername().empty() || !user.getPassword().empty()) {
-		//sendError(user.getFd(), "462", "You may not reregister");
-		std::cout << "Error 462 alreadyregistered" << std::endl;
+		sendNumericReply(&user, ERR_ALREADYREGISTERED, " :You may not reregister");
 		return;
 	}
 
@@ -269,10 +271,8 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 	}
 
 	// 3 - Verificar se a password coicide com o servidor, se errada 464 ERR_PASSWDMISMATCH.
-	// std::cout << "Password result: " << password << " length: " << password.length() << std::endl;
-	// std::cout << "Password server: " << this->serverPassword << " length: " << this->serverPassword.length() << std::endl;
 	if (password != this->serverPassword) {
-		std::cout << "Error 464 passmismatch" << std::endl;
+		sendNumericReply(&user, ERR_PASSWDMISMATCH, " :Password incorrect");
 		return ;
 	}
 
@@ -283,7 +283,7 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 
 // TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
 void Server::handleNickCommand(User &user, std::string cmdParameters) {
-	// Se password é NULL erro
+	//TODO descontectar usuário caso passe nick antes da pass.
 	if (user.getPassword().empty()) {
 		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
 		return;
@@ -291,20 +291,20 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 
 	// Não pode ser vaziu
 	if (cmdParameters.empty()) {
-		std::cout << "Error 431 nonicknamegiven" << std::endl;
+		sendNumericReply(&user, ERR_PASSWDMISMATCH, " :No nickname given");
 		return ;
 	}
 
-	// AQUI <--
 	std::string nickname = Parser::extractFirstParam(cmdParameters);
 
 	// Proteção caracteres especiais && nickname não pode ser outro comando como NICK PASS JOIN...
 	if (!Parser::validateNickname(nickname)) {
-		std::cout << "ERR_ERRONEUSNICKNAME (432)" << std::endl;
+		sendNumericReply(&user, ERR_ERRONEUSNICKNAME, nickname + " :Erroneus nickname");
 		return ;
 	}
 
 	if (nicknameExists(nickname)) {
+		sendNumericReply(&user, ERR_NICKNAMEINUSE, nickname + " :Nickname is already in use");
 		std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
 			return ;
 	}
@@ -317,7 +317,9 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 
 // USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
 void Server::handleUserCommand(User &user, std::string cmdParameters){
-	// Se password é NULL erro
+	//TODO descontectar usuário caso passe user antes da pass.
+	std::string cmd = "USER";
+
 	if (user.getPassword().empty()) {
 		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
 		return;
@@ -325,7 +327,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
 	if (user.isRegistered() == true) {
-		std::cout << "ERR_ALREADYREGISTERED (462)" << std::endl;
+		sendNumericReply(&user, ERR_ALREADYREGISTERED, " :You may not reregister");
 		return ;
 	}
 
@@ -335,7 +337,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 	if (!(iss >> username >> hostname >> servername)) {
 		// Se nem username nem os dois params obrigatórios vierem
-		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
 		return;
 	}
 
@@ -347,12 +349,12 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 		realname.erase(0, 1);
 
 	if (username.empty()) {
-		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
 		return;
 	}
 
 	if (realname.empty()) {
-		std::cout << "ERR_NEEDMOREPARAMS (461)" << std::endl;
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
 		return;
 	}
 
@@ -693,6 +695,29 @@ void Server::registerUser(User &user) {
 		std::cout << "🥳 Client " << user.getNickname()
 			<< " fully registred!" << std::endl;
 		user.setUserIdentifier();
+
+		std::string welcomeUserMessage =
+			" :Welcome to the " + this->name +
+			" Network, " + user.getUserIdentifier();
+		sendNumericReply(&user, RPL_WELCOME, welcomeUserMessage);
+
+		std::string versionServerMessage =
+			":Your host is " + this->name +
+			" , running on version " + this->version;
+		sendNumericReply(&user, RPL_YOURHOST, versionServerMessage);
+
+		std::string formattedServerCreationTime = Parser::formatTimeStamp(this->serverCreationTime);
+		std::string serverCreatedMessage =
+			":This server was created " + formattedServerCreationTime;
+		sendNumericReply(&user, RPL_CREATED, serverCreatedMessage);
+
+		// TODO Aqui devem estar os diferentes modes disponíveis do server
+		std::string serverInfoMessage =
+			"⚠️" + this->name + " " + this->version +
+			" " + "<available user modes>" +
+			" " + "<available channel modes>" +
+			" " + "[<channel modes with a parameter>]";
+		sendNumericReply(&user, RPL_MYINFO, serverInfoMessage);
 	}
 }
 
