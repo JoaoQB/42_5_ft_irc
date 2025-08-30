@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 16:01:03 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/29 12:41:29 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,7 @@ CommandType Parser::getCommandType(const std::string& command) {
 		commands["MODE"] = CMD_MODE;
 		commands["PART"] = CMD_PART;
 		commands["QUIT"] = CMD_QUIT;
+		commands["CAP"] = CAP;
 	}
 
 	CommandMapConstIterator it = commands.find(command);
@@ -97,7 +98,9 @@ CommandType Parser::getCommandType(const std::string& command) {
 }
 
 bool Parser::isAuthentication(const User& user, const CommandType& command) {
-	if (command != CMD_PASS && command != CMD_USER && command != CMD_NICK && !user.isRegistered()) {
+	if (command != CAP && command != CMD_PASS
+		&& command != CMD_USER && command != CMD_NICK
+		&& !user.isRegistered()) {
 		return false;
 	}
 	return true;
@@ -290,6 +293,22 @@ std::string Parser::getTimestamp() {
 
 	return setAtString;
 }
+
+std::string Parser::formatTimeStamp(const std::string &timestampStr) {
+	// Converte string para time_t
+	time_t timestamp = static_cast<time_t>(std::atoi(timestampStr.c_str()));
+
+	struct tm *tm_info = localtime(&timestamp);
+	if (!tm_info)
+		return "";
+
+	char buffer[64];
+	// Formato: DD Mon YYYY HH:MM:SS
+	strftime(buffer, sizeof(buffer), "%d %b %Y %H:%M:%S", tm_info);
+
+	return std::string(buffer);
+}
+
 
 std::string Parser::numericReplyToString(NumericReply numericCode) {
 	std::ostringstream oss;

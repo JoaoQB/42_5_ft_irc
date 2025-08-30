@@ -6,7 +6,7 @@
 /*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/22 17:02:35 by dpetrukh         ###   ########.fr       */
+/*   Updated: 2025/08/29 09:53:39 by dpetrukh         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ class User {
 		User();
 
 		int getFd() const;
+		const std::string& getIpAddress() const;
 		const std::string& getRealname() const;
 		const std::string& getNickname() const;
 		const std::string& getUsername() const;
