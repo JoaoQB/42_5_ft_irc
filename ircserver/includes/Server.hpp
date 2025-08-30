@@ -35,6 +35,7 @@ class Server {
 		// Connection Handling
 		void acceptNewUser();
 		void receiveNewData(int fd);
+		void quitUser(int fd, bool quit, const std::string& quitMessage);
 
 		void handleRawMessage(int fd, const char* buffer);
 
@@ -44,6 +45,10 @@ class Server {
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handleModeCommand(User &user, const std::string& commandParams);
+		void handlePartCommand(User &user, const std::string& commandParams);
+		void handleWhoCommand(User &user, const std::string& commandParams);
+		void handleQuitCommand(User &user, const std::string& commandParams);
 
 	private:
 		// Server State
@@ -73,6 +78,7 @@ class Server {
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
+		void replyToWho(const User* user, const Channel* channel);
 		void partUserFromChannel(User* user, Channel* channel);
 		void removeChannel(Channel* channel);
 
@@ -80,7 +86,8 @@ class Server {
 		User& getUser(int fd);
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
-		void disconnectUserFromAllChannels(User* user);
+		void disconnectUserFromAllChannels(User* user, bool quit, const std::string& quitMessage);
+		void removeUser(int fd);
 
 		// Message to Clients
 		void sendMessage(int userFd, const std::string &message);
@@ -89,6 +96,8 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
+
+		void debugPrintUsersAndChannels() const;
 };
 
 #endif

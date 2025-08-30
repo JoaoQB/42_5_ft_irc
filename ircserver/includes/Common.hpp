@@ -38,10 +38,15 @@ class Channel;
 # include <sstream> //isstringstream
 # include <ctime> // getDayAndTime()
 
-#define RED "\033[1;31m" // red color
-#define WHI "\033[0;37m" // white color
-#define GRE "\033[1;32m" // green color
-#define YEL "\033[1;33m" // yellow color
+#define RESET   "\033[0m"
+#define RED "\033[1;31m"
+#define BOLD    "\033[1m"
+#define DIM     "\033[2m"
+#define CYAN    "\033[36m"
+#define YELLOW  "\033[33m"
+#define GREEN   "\033[32m"
+#define MAGENTA "\033[35m"
+#define WHITE   "\033[37m"
 
 enum CommandType {
 	CMD_PASS,
@@ -56,14 +61,17 @@ enum CommandType {
 	CMD_PART,
 	CMD_QUIT,
 	CMD_UNKNOWN,
+	CMD_WHO,
 	CAP
 };
 
 enum NumericReply {
+	RPL_ENDOFWHO = 315,
 	RPL_CREATIONTIME = 329,
 	RPL_NOTOPIC = 331,
 	RPL_TOPIC = 332,
 	RPL_TOPICWHOTIME = 333,
+	RPL_WHOREPLY = 352,
 	RPL_NAMREPLY = 353,
 	RPL_ENDOFNAMES = 366,
 	ERR_NOSUCHCHANNEL = 403,
@@ -86,6 +94,7 @@ typedef std::vector<User*>::const_iterator UserVectorConstIterator;
 typedef std::map<std::string, CommandType> CommandMap;
 typedef CommandMap::const_iterator CommandMapConstIterator;
 
+typedef std::vector<std::string> StringVector;
 typedef std::map<std::string, std::string> StringMap;
 typedef StringMap::const_iterator StringMapConstIterator;
 

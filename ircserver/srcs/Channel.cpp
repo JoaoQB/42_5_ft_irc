@@ -55,8 +55,20 @@ const std::string& Channel::getCreationTime() const {
 	return this->channelCreationTime;
 }
 
+int Channel::getUsersInChannel() const {
+	return this->usersInChannel;
+}
+
 const std::vector<User*>& Channel::getUsers() const {
 	return this->channelUsers;
+}
+
+const std::vector<User*>& Channel::getOperators() const {
+	return this->channelOperators;
+}
+
+const StringVector& Channel::getChannelModes() const {
+	return this->channelModes;
 }
 
 bool Channel::isFull() const {
@@ -154,7 +166,7 @@ void Channel::addOperator(User* user) {
 void Channel::removeUser(User* user) {
 	if (!user) return;
 
-	std::vector<User*>::iterator it = std::remove(
+	UserVectorIterator it = std::remove(
 		channelUsers.begin(),
 		channelUsers.end(),
 		user

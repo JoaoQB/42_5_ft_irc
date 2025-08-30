@@ -54,9 +54,12 @@ std::string Parser::extractSecondParam(const std::string& parameters) {
 	}
 
 	StringSizeT keyEnd = parameters.find(' ', secondParamStartTrimmed);
-	return (keyEnd != std::string::npos)
+	std::string result = (keyEnd != std::string::npos)
 		? parameters.substr(secondParamStartTrimmed, keyEnd - secondParamStartTrimmed)
 		: parameters.substr(secondParamStartTrimmed);
+	// TODO FIX PASSWORD ISSUE
+
+	return result;
 }
 
 std::string Parser::extractFromSecondParam(const std::string& parameters) {
@@ -91,6 +94,7 @@ CommandType Parser::getCommandType(const std::string& command) {
 		commands["MODE"] = CMD_MODE;
 		commands["PART"] = CMD_PART;
 		commands["QUIT"] = CMD_QUIT;
+		commands["WHO"] = CMD_WHO;
 		commands["CAP"] = CAP;
 	}
 

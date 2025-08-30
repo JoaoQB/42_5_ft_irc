@@ -26,9 +26,11 @@ class User {
 		const std::string& getUsername() const;
 		const std::string& getPassword() const;
 		const std::string& getUserIdentifier() const;
+		const std::string& getIpAddress() const;
 		bool isRegistered(void) const;
 		bool hasChannel(const Channel* channel) const;
 		std::vector<Channel*>& getChannels();
+		const std::vector<Channel*>& getChannels() const;
 
 		void setFd(int fd);
 		void setIpAddress(const std::string& ipAddr);

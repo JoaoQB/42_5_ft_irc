@@ -28,6 +28,7 @@ class Parser {
 		static bool isAuthentication(const User& user, const CommandType& command);
 
 		// Validation
+		static bool isValidChannelPrefix(char c);
 		static bool validateChannelName(const std::string& channelName);
 		static bool validateNickname(const std::string& nickname);
 
@@ -57,7 +58,6 @@ class Parser {
 		static bool nicknameIsCommand(const std::string& input);
 
 		// Channel name validation helpers
-		static bool isValidChannelPrefix(char c);
 		static bool isChannelForbiddenChar(char c);
 		static bool containsChannelForbiddenChars(const std::string& input);
 

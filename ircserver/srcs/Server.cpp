@@ -15,7 +15,7 @@
 bool Server::signal = false;
 
 Server::Server()
-	: name("ft_irc")
+	: name("irc:chat:42")
 	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
@@ -32,7 +32,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 
 	serverSocketCreate();
 
-	std::cout << GRE << "Server <" << serverSocketFd << "> Connected" << WHI << std::endl;
+	std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
 	std::cout << "Waiting to accept a connection...\n";
 
 	// Run Server until a signal is received
@@ -112,12 +112,12 @@ void Server::signalHandler(int signum) {
 void Server::closeFds() {
 	// Close all Users
 	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
-		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHI << "\n";
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << "\n";
 		close(it->getFd());
 	}
 	// Close server socket
 	if (serverSocketFd != -1) {
-		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHI << std::endl;
+		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << std::endl;
 		close(serverSocketFd);
 	}
 }
@@ -166,7 +166,7 @@ void Server::acceptNewUser() {
 	users.push_back(newUser);
 	pollFds.push_back(newPoll);
 
-	std::cout << GRE << "User <" << incomingFd << "> Connected" << WHI << std::endl;
+	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << std::endl;
 }
 
 void Server::receiveNewData(int fd) {
@@ -180,19 +180,32 @@ void Server::receiveNewData(int fd) {
 
 	// Check if User is disconnected
 	if (bytes <= 0) {
-		std::cout << RED << "User <" << fd << "> Disconnected" << WHI << std::endl;
-		clearUser(fd);
-		close(fd);
+		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << std::endl;
+		quitUser(fd, false, "");
 		return;
 	}
 
 	buffer[bytes] = '\0';
-	std::cout << YEL << "User <" << fd << "> Data: " << WHI << buffer;
+	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer;
 	handleRawMessage(fd, buffer);
+}
+
+void Server::quitUser(int fd, bool quit, const std::string& quitMessage) {
+	debugPrintUsersAndChannels();
+	try{
+		User* user = &getUser(fd);
+		disconnectUserFromAllChannels(user, quit, quitMessage);
+		close(fd);
+		removeUser(fd);
+	} catch (const std::exception& e) {
+		std::cerr << "clean User: " << e.what() << std::endl;
+	}
+	debugPrintUsersAndChannels();
 }
 
 //TODO Command Handlers
 void Server::handleRawMessage(int fd, const char *buffer) {
+	debugPrintUsersAndChannels();
 	User &user = getUser(fd);
 	std::string rawMessage(buffer); // rawMessage = "PASS mypassword"
 	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
@@ -231,17 +244,25 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 			handleTopicCommand(user, params);
 			break;
 		case CMD_MODE:
+			handleModeCommand(user, params);
 			break;
 		case CMD_PART:
+			handlePartCommand(user, params);
 			break;
 		case CMD_QUIT:
+			handleQuitCommand(user, params);
+			break;
+		case CMD_WHO:
+			handleWhoCommand(user, params);
+			break;
+		case CAP:
 			break;
 		default:
 			break;
 	}
 }
 
-void Server::handlePassCommand(User &user, std::string cmdParameters){
+void Server::handlePassCommand(User &user, std::string cmdParameters) {
 	// std::cout << "Command parameters: " << cmdParameters << std::endl;
 
 	if (cmdParameters.empty()) {
@@ -370,7 +391,7 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	}
 	bool isJoin0Command = commandParams == "0";
 	if (isJoin0Command) {
-		disconnectUserFromAllChannels(&user);
+		disconnectUserFromAllChannels(&user, false, "");
 		return;
 	}
 
@@ -439,10 +460,61 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 		} else {
 			targetChannel.setTopic(&user, trimmedCommandTopic);
 		}
-		broadcastCommand(&user, &targetChannel, "TOPIC", ":" + trimmedCommandTopic);
+		broadcastCommand(&user, &targetChannel, "TOPIC", targetChannel.getName() + " :" + trimmedCommandTopic);
 	} catch (const std::exception& e) {
 		std::cerr << "TOPIC: " << e.what() << std::endl;
 	}
+}
+
+void Server::handleModeCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+}
+
+void Server::handlePartCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	try {
+		std::string channelName = Parser::extractFirstParam(commandParams);
+		Channel channel = getChannel(user, channelName);
+		partUserFromChannel(&user, &channel);
+	} catch (const std::exception& e) {
+		std::cerr << "PART: " << e.what() << std::endl;
+	}
+}
+
+void Server::handleWhoCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string mask = Parser::extractFirstParam(commandParams);
+	try {
+		if (Parser::isValidChannelPrefix(*mask.begin())) {
+			Channel& targetChannel = getChannel(user, mask);
+			replyToWho(&user, &targetChannel);
+		}
+	} catch (const std::exception& e) {
+		std::cerr << "WHO: " << e.what() << std::endl;
+	}
+}
+
+void Server::handleQuitCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+
+	// TODO
+	quitUser(user.getFd(), true, commandParams);
 }
 
 Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
@@ -539,7 +611,7 @@ void Server::sendJoinReplies(const User* user, const Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "JOIN", "");
+	broadcastCommand(user, channel, "JOIN", channel->getName());
 	sendChannelTopic(user, channel);
 	sendChannelUsers(user, channel);
 	sendChannelSetAt(user, channel);
@@ -555,8 +627,7 @@ void Server::broadcastCommand(
 		return ;
 	}
 	std::string commandMessage = ":" + user->getUserIdentifier()
-		+ " " + command
-		+ " " + channel->getName();
+		+ " " + command;
 
 	if (!message.empty()) {
 		commandMessage += " " + message;
@@ -613,11 +684,32 @@ void Server::sendChannelUsers(const User* user, const Channel* channel) {
 	sendNumericReply(user, RPL_ENDOFNAMES, endOfNames);
 }
 
+void Server::replyToWho(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string channelUsers;
+	for (
+		UserVectorConstIterator it = channel->getUsers().begin();
+		it != channel->getUsers().end();
+		++it
+	) {
+		const User* targetUser = (*it);
+		std::string userInfo = channel->getName()
+			+ " " + targetUser->getUsername()
+			+ " " + targetUser->getIpAddress()
+			+ " " + this->name + " " + targetUser->getNickname()
+			+ " :" + targetUser->getRealname();
+		sendNumericReply(user, RPL_WHOREPLY, userInfo);
+	}
+	std::string endReply = channel->getName() + " :End of WHO list";
+	sendNumericReply(user, RPL_ENDOFWHO, endReply);
+}
+
 void Server::sendChannelSetAt(const User* user, const Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-
 	std::string setAt = channel->getName()
 		+ " " + channel->getCreationTime();
 	sendNumericReply(user, RPL_CREATIONTIME, setAt);
@@ -631,7 +723,7 @@ void Server::partUserFromChannel(User* user, Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "PART", "");
+	broadcastCommand(user, channel, "PART", channel->getName());
 	channel->removeUser(user);
 	user->removeChannel(channel);
 	if (channel->isEmpty()) {
@@ -645,7 +737,7 @@ void Server::removeChannel(Channel* channel) {
 		return;
 	}
 
-	for (std::list<Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
+	for (ChannelListIterator it = channels.begin(); it != channels.end(); ++it) {
 		if (&(*it) == channel) {
 			std::cout << "Removing empty channel: " << it->getName() << std::endl;
 			channels.erase(it);
@@ -696,7 +788,7 @@ void Server::registerUser(User &user) {
 	}
 }
 
-void Server::disconnectUserFromAllChannels(User* user) {
+void Server::disconnectUserFromAllChannels(User* user, bool quit, const std::string& quitMessage) {
 	if (!user) {
 		return;
 	}
@@ -706,9 +798,25 @@ void Server::disconnectUserFromAllChannels(User* user) {
 		channelIt != userChannelCopies.end();
 		++channelIt
 	) {
+		if (quit) {
+			std::string finalMessage = ":" + user->getUserIdentifier()
+			+ " QUIT "
+			+ (quitMessage.empty() ? ":Disconnected x(" : quitMessage);
+			broadcastCommand(user, *channelIt, "QUIT", finalMessage);
+		}
 		partUserFromChannel(user, *channelIt);
 	}
 	user->getChannels().clear();
+}
+
+void Server::removeUser(int fd) {
+	for (UserListIterator it = users.begin(); it != users.end(); ++it) {
+		if (it->getFd() == fd) {
+			std::cout << "Removing user: " << it->getNickname() << std::endl;
+			users.erase(it);
+			return;
+		}
+	}
 }
 
 void Server::sendMessage(int userFd, const std::string &message) {
@@ -742,4 +850,61 @@ void Server::sendNumericReply(
 	}
 
 	sendMessage(user->getFd(), reply);
+}
+
+void Server::debugPrintUsersAndChannels() const {
+	std::cout << "\n" BOLD CYAN "==== Channels ====" RESET "\n";
+	for (ChannelListConstIterator cIt = channels.begin(); cIt != channels.end(); ++cIt) {
+		const Channel& ch = *cIt;
+		std::cout << YELLOW "Channel: " << ch.getName() << RESET "\n"
+				<< DIM " | Address: " << &ch << RESET "\n"
+				<< " | Users: " << ch.getUsers().size()
+				<< " | Operators: " << ch.getOperators().size() << "\n";
+
+		// Print users in channel
+		std::cout << "  " BOLD GREEN "Users:" RESET "\n";
+		const std::vector<User*>& usersInCh = ch.getUsers();
+		for (size_t i = 0; i < usersInCh.size(); ++i) {
+			const User* u = usersInCh[i];
+			std::cout << "    [" << i << "] " GREEN << u->getUserIdentifier() << RESET
+					<< DIM " | Addr: " << u << RESET "\n";
+		}
+
+		// Print operators
+		std::cout << "  " BOLD MAGENTA "Operators:" RESET "\n";
+		const std::vector<User*>& opsInCh = ch.getOperators();
+		for (size_t i = 0; i < opsInCh.size(); ++i) {
+			const User* u = opsInCh[i];
+			std::cout << "    [" << i << "] " MAGENTA << u->getUserIdentifier() << RESET
+					<< DIM " | Addr: " << u << RESET "\n";
+		}
+
+		// Print channel modes
+		std::cout << "  " BOLD "Modes: " RESET;
+		const std::vector<std::string>& modes = ch.getChannelModes();
+		for (size_t i = 0; i < modes.size(); ++i) {
+			std::cout << WHITE << modes[i] << " " RESET;
+		}
+		std::cout << "\n\n";
+	}
+
+	std::cout << BOLD CYAN "\n==== Users ====" RESET "\n";
+	for (std::list<User>::const_iterator uIt = users.begin(); uIt != users.end(); ++uIt) {
+		const User& user = *uIt;
+		std::cout << GREEN "User: " << user.getUserIdentifier() << RESET "\n"
+				<< DIM " | Addr: " << &user
+				<< " | FD: " << user.getFd()
+				<< " | Registered: " << (user.isRegistered() ? "yes" : "no") << RESET "\n";
+
+		// Print channels for this user
+		std::cout << "  " BOLD YELLOW "Channels:" RESET "\n";
+		const std::vector<Channel*>& chans = user.getChannels();
+		for (size_t i = 0; i < chans.size(); ++i) {
+			const Channel* ch = chans[i];
+			std::cout << "    [" << i << "] " YELLOW << ch->getName() << RESET
+					<< DIM " | Addr: " << ch << RESET "\n";
+		}
+		std::cout << "\n";
+	}
+	std::cout << BOLD CYAN "===================" RESET "\n";
 }
