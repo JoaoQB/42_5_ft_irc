@@ -1,14 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Parser.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/09 09:54:17 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/29 12:40:04 by dpetrukh         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #ifndef PARSER_HPP
 # define PARSER_HPP
@@ -18,8 +10,7 @@
 class Parser {
 	public:
 		// Extractors
-		static std::string extractParams(const std::string rawMessage, const std::string cmd);
-		static std::string extractFirstParam(const std::string parameters);
+		static std::string extractFirstParam(const std::string& parameters);
 		static std::string extractSecondParam(const std::string& parameters);
 		static std::string extractFromSecondParam(const std::string& parameters);
 

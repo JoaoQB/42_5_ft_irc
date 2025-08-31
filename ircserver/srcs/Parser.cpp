@@ -1,14 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Parser.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/09 09:59:51 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/29 12:41:29 by dpetrukh         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #include "../includes/Parser.hpp"
 #include "../includes/User.hpp"
@@ -16,35 +8,25 @@
 Parser::Parser() {
 }
 
-std::string Parser::extractParams(const std::string rawMessage, const std::string cmd) {
-	size_t pos = rawMessage.find(cmd);
-
-	if (pos == std::string::npos)
+std::string Parser::extractFirstParam(const std::string& parameters) {
+	std::size_t start = parameters.find_first_not_of(' ');
+	if (start == std::string::npos) {
 		return "";
+	}
 
-	pos += cmd.length();
+	std::size_t end = parameters.find(' ', start);
+	std::string firstParam = end == std::string::npos
+		? parameters.substr(start)
+		: parameters.substr(start, end - start);
+	// std::cout << "[DEBUG] First Param: '" << firstParam << "'\n";
 
-	if (pos < rawMessage.size() && std::isspace(rawMessage[pos]))
-		pos++;
-
-	std::string params = rawMessage.substr(pos);
-
-	return params;
-}
-
-std::string Parser::extractFirstParam(const std::string parameters) {
-	std::size_t firstSpace = parameters.find(' ');
-
-	if (firstSpace != std::string::npos)
-		return parameters.substr(0, firstSpace);
-
-	return (parameters);
+	return firstParam;
 }
 
 std::string Parser::extractSecondParam(const std::string& parameters) {
 	std::size_t firstSpace = parameters.find(' ');
 
-	if (firstSpace != std::string::npos) {
+	if (firstSpace == std::string::npos) {
 		return "";
 	}
 
@@ -54,9 +36,12 @@ std::string Parser::extractSecondParam(const std::string& parameters) {
 	}
 
 	StringSizeT keyEnd = parameters.find(' ', secondParamStartTrimmed);
-	return (keyEnd != std::string::npos)
+	std::string secondParam = (keyEnd != std::string::npos)
 		? parameters.substr(secondParamStartTrimmed, keyEnd - secondParamStartTrimmed)
 		: parameters.substr(secondParamStartTrimmed);
+
+	// std::cout << "[DEBUG] Second Param: '" << secondParam << "'\n";
+	return secondParam;
 }
 
 std::string Parser::extractFromSecondParam(const std::string& parameters) {
@@ -72,7 +57,7 @@ std::string Parser::extractFromSecondParam(const std::string& parameters) {
 	}
 
 	std::string result = parameters.substr(secondParamStartTrimmed);
-	std::cout << "[DEBUG] '" << result << "'\n";
+	// std::cout << "[DEBUG] Result: '" << result << "'\n";
 
 	return result;
 }

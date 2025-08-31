@@ -1,14 +1,6 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2025/06/27 10:56:09 by jqueijo-          #+#    #+#              #
-#    Updated: 2025/07/09 09:59:42 by jqueijo-         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+#
+#
+#
 
 NAME = ircserv
 
@@ -17,6 +9,8 @@ OBJ_DIR = ./objs
 
 SRCS = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/Server.cpp \
+	$(SRC_DIR)/ServerCommandUtils.cpp \
+	$(SRC_DIR)/ServerChannelUtils.cpp \
 	$(SRC_DIR)/User.cpp \
 	$(SRC_DIR)/Parser.cpp \
 	$(SRC_DIR)/Channel.cpp
