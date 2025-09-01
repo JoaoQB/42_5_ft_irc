@@ -101,7 +101,7 @@ void Server::sendJoinReplies(const User* user, const Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "JOIN", "");
+	broadcastCommand(user, channel, "JOIN", channel->getName());
 	sendChannelTopic(user, channel);
 	sendChannelUsers(user, channel);
 	sendChannelSetAt(user, channel);
@@ -117,8 +117,7 @@ void Server::broadcastCommand(
 		return ;
 	}
 	std::string commandMessage = ":" + user->getUserIdentifier()
-		+ " " + command
-		+ " " + channel->getName();
+		+ " " + command;
 
 	if (!message.empty()) {
 		commandMessage += " " + message;
@@ -211,11 +210,19 @@ void Server::replyToChannelWho(const User* user, const Channel* channel) {
 // This function can only be called on a copy of a user's <channel*> vector,
 // because it modifies user->userChannels.
 */
-void Server::partUserFromChannel(User* user, Channel* channel) {
+void Server::partUserFromChannel(
+	User* user, Channel* channel,
+	bool quit,
+	const std::string& quitReason
+) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "PART", "");
+	if (quit) {
+		broadcastCommand(user, channel, "QUIT", quitReason);
+	} else {
+		broadcastCommand(user, channel, "PART", channel->getName());
+	}
 	channel->removeUser(user);
 	user->removeChannel(channel);
 	if (channel->isEmpty()) {
@@ -224,7 +231,11 @@ void Server::partUserFromChannel(User* user, Channel* channel) {
 	}
 }
 
-void Server::disconnectUserFromAllChannels(User* user) {
+void Server::disconnectUserFromAllChannels(
+	User* user,
+	bool quit,
+	const std::string& quitReason
+) {
 	if (!user) {
 		return;
 	}
@@ -234,9 +245,11 @@ void Server::disconnectUserFromAllChannels(User* user) {
 		channelIt != userChannelCopies.end();
 		++channelIt
 	) {
-		partUserFromChannel(user, *channelIt);
+		debugPrintUsersAndChannels();
+		partUserFromChannel(user, *channelIt, quit, quitReason);
 	}
 	user->getChannels().clear();
+	debugPrintUsersAndChannels();
 }
 
 void Server::removeChannel(Channel* channel) {

@@ -117,23 +117,6 @@ void Server::closeFds() {
 	}
 }
 
-//TODO remove user from channels
-void Server::clearUserFromPoll(int fd) {
-	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
-		if (pIt->fd == fd) {
-			pollFds.erase(pIt);
-			break ;
-		}
-	}
-	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
-		if (cIt->getFd() == fd) {
-			users.erase(cIt);
-			break;
-		}
-	}
-	//TODO check if user is last from channel and if so clear channel
-}
-
 void Server::acceptNewUser() {
 	User	newUser;
 	struct sockaddr_in UserAddress;
@@ -176,8 +159,7 @@ void Server::receiveNewData(int fd) {
 	// Check if User is disconnected
 	if (bytes <= 0) {
 		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
-		clearUserFromPoll(fd);
-		close(fd);
+		disconnectUser(fd);
 		return;
 	}
 
@@ -206,8 +188,6 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	}
 
 	switch (cmd) {
-		case CAP:
-			break;
 		case CMD_PASS: {
 			handlePassCommand(user, params);
 			break;
@@ -236,6 +216,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 		case CMD_PART:
 			break;
 		case CMD_QUIT:
+			handleQuitCommand(user, params);
 			break;
 		case CMD_PING:
 			handlePingQuery(user, params);
@@ -318,7 +299,7 @@ void Server::debugPrintUsersAndChannels() const {
 	}
 
 	std::cout << BOLD CYAN "\n==== Users ====" RESET "\n";
-	for (std::list<User>::const_iterator uIt = users.begin(); uIt != users.end(); ++uIt) {
+	for (UserListConstIterator uIt = users.begin(); uIt != users.end(); ++uIt) {
 		const User& user = *uIt;
 		std::cout << GREEN "User: " << user.getUserIdentifier() << RESET "\n"
 				<< DIM " | Addr: " << &user

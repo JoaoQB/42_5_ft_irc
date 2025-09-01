@@ -133,7 +133,7 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	}
 	bool isJoin0Command = commandParams == "0";
 	if (isJoin0Command) {
-		disconnectUserFromAllChannels(&user);
+		disconnectUserFromAllChannels(&user, false, "");
 		return;
 	}
 
@@ -202,10 +202,29 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 		} else {
 			targetChannel.setTopic(&user, trimmedCommandTopic);
 		}
-		broadcastCommand(&user, &targetChannel, "TOPIC", ":" + trimmedCommandTopic);
+		broadcastCommand(&user, &targetChannel, "TOPIC", targetChannel.getName() + " :" + trimmedCommandTopic);
 	} catch (const std::exception& e) {
 		std::cerr << "TOPIC: " << e.what() << std::endl;
 	}
+}
+
+void Server::handleQuitCommand(User &user, const std::string& commandParams) {
+	std::cout << commandParams << "\n";
+	disconnectUserFromAllChannels(&user, true, commandParams);
+	int userFd = user.getFd();
+	clearUser(userFd);
+	close(userFd);
+}
+
+void Server::handlePingQuery(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string reference = Parser::extractFirstParam(commandParams);
+	std::string reply = "PONG " + reference;
+	sendMessage(user.getFd(), reply);
 }
 
 void Server::handleWhoQuery(User &user, const std::string& commandParams) {
@@ -226,15 +245,4 @@ void Server::handleWhoQuery(User &user, const std::string& commandParams) {
 	} catch (const std::exception& e) {
 		std::cerr << "WHO: " << e.what() << std::endl;
 	}
-}
-
-void Server::handlePingQuery(User &user, const std::string& commandParams) {
-	if (commandParams.empty()) {
-		Parser::ft_error("empty: '" + commandParams + "' command");
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
-		return;
-	}
-	std::string reference = Parser::extractFirstParam(commandParams);
-	std::string reply = "PONG " + reference;
-	sendMessage(user.getFd(), reply);
 }
