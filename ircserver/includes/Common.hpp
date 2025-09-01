@@ -54,6 +54,7 @@ enum CommandType {
 	CMD_PART,
 	CMD_QUIT,
 	CMD_WHO,
+	CMD_PING,
 	CMD_UNKNOWN
 };
 

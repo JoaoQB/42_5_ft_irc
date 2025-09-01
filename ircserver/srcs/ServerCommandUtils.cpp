@@ -227,3 +227,14 @@ void Server::handleWhoQuery(User &user, const std::string& commandParams) {
 		std::cerr << "WHO: " << e.what() << std::endl;
 	}
 }
+
+void Server::handlePingQuery(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string reference = Parser::extractFirstParam(commandParams);
+	std::string reply = "PONG " + reference;
+	sendMessage(user.getFd(), reply);
+}

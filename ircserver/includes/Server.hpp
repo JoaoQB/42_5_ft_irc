@@ -51,6 +51,7 @@ class Server {
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
 		void handleWhoQuery(User &user, const std::string& commandParams);
+		void handlePingQuery(User &user, const std::string& commandParams);
 
 		// Channel Utilities
 		Channel& getChannel(User& targetUser, const std::string& channelName);

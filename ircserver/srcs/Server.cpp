@@ -107,7 +107,7 @@ void Server::serverSocketCreate() {
 void Server::closeFds() {
 	// Close all Users
 	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
-		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << "\n";
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << std::endl;
 		close(it->getFd());
 	}
 	// Close server socket
@@ -182,7 +182,7 @@ void Server::receiveNewData(int fd) {
 	}
 
 	buffer[bytes] = '\0';
-	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer;
+	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer << std::endl;
 	try {
 		handleRawMessage(fd, buffer);
 	} catch (const std::exception& e) {
@@ -236,6 +236,9 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 		case CMD_PART:
 			break;
 		case CMD_QUIT:
+			break;
+		case CMD_PING:
+			handlePingQuery(user, params);
 			break;
 		case CMD_WHO:
 			handleWhoQuery(user, params);

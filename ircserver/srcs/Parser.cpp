@@ -77,6 +77,7 @@ CommandType Parser::getCommandType(const std::string& command) {
 		commands["MODE"] = CMD_MODE;
 		commands["PART"] = CMD_PART;
 		commands["QUIT"] = CMD_QUIT;
+		commands["PING"] = CMD_PING;
 		commands["WHO"] = CMD_WHO;
 	}
 
