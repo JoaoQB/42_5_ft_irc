@@ -207,3 +207,23 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 		std::cerr << "TOPIC: " << e.what() << std::endl;
 	}
 }
+
+void Server::handleWhoQuery(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string mask = Parser::extractFirstParam(commandParams);
+	try {
+		if (Parser::isValidChannelPrefix(*mask.begin())) {
+			Channel& targetChannel = getChannel(user, mask);
+			replyToChannelWho(&user, &targetChannel);\
+			return;
+		}
+		User& targetUser = getUserByNickname(mask);
+		replyToUserWho(&user, &targetUser);
+	} catch (const std::exception& e) {
+		std::cerr << "WHO: " << e.what() << std::endl;
+	}
+}

@@ -20,7 +20,10 @@ class Channel {
 		const std::string& getTopicSetter() const;
 		const std::string& getTopicCreationTime() const;
 		const std::string& getCreationTime() const;
+		int getUsersInChannel() const;
 		const std::vector<User*>& getUsers() const;
+		const std::vector<User*>& getOperators() const;
+		const StringVector& getChannelModes() const;
 
 		// Boolean Accessors
 		bool isFull() const;

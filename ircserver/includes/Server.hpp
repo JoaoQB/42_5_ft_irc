@@ -50,6 +50,7 @@ class Server {
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handleWhoQuery(User &user, const std::string& commandParams);
 
 		// Channel Utilities
 		Channel& getChannel(User& targetUser, const std::string& channelName);
@@ -66,13 +67,16 @@ class Server {
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
+		void replyToChannelWho(const User* user, const Channel* channel);
 		void partUserFromChannel(User* user, Channel* channel);
 		void removeChannel(Channel* channel);
 
 		// User Utilities
-		User& getUser(int fd);
+		User& getUserByFd(int fd);
+		User& getUserByNickname(const std::string& nickname);
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
+		void replyToUserWho(const User* askingUser, const User* targetUser);
 		void disconnectUserFromAllChannels(User* user);
 
 		// Message to Clients
@@ -82,6 +86,8 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
+
+		void debugPrintUsersAndChannels() const;
 };
 
 #endif

@@ -79,6 +79,10 @@ std::vector<Channel*>& User::getChannels() {
 	return this->userChannels;
 }
 
+const std::vector<Channel*>& User::getChannels() const {
+	return this->userChannels;
+}
+
 void User::setRealname(std::string realname) {
 	this->realname = realname;
 }

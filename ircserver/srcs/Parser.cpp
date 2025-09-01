@@ -65,6 +65,7 @@ std::string Parser::extractFromSecondParam(const std::string& parameters) {
 CommandType Parser::getCommandType(const std::string& command) {
 	static CommandMap commands;
 	if (commands.empty()) {
+		commands["CAP"] = CAP;
 		commands["PASS"] = CMD_PASS;
 		commands["NICK"] = CMD_NICK;
 		commands["USER"] = CMD_USER;
@@ -76,7 +77,7 @@ CommandType Parser::getCommandType(const std::string& command) {
 		commands["MODE"] = CMD_MODE;
 		commands["PART"] = CMD_PART;
 		commands["QUIT"] = CMD_QUIT;
-		commands["CAP"] = CAP;
+		commands["WHO"] = CMD_WHO;
 	}
 
 	CommandMapConstIterator it = commands.find(command);

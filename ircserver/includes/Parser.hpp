@@ -34,6 +34,7 @@ class Parser {
 		static std::string getTimestamp();
 		static std::string formatTimeStamp(const std::string &timestampStr);
 		static std::string numericReplyToString(NumericReply numericCode);
+		static bool isValidChannelPrefix(char c);
 
 		// DEBUG
 		static void debugPrintUsers(const std::vector<User*>& users);
@@ -49,7 +50,6 @@ class Parser {
 		static bool nicknameIsCommand(const std::string& input);
 
 		// Channel name validation helpers
-		static bool isValidChannelPrefix(char c);
 		static bool isChannelForbiddenChar(char c);
 		static bool containsChannelForbiddenChars(const std::string& input);
 

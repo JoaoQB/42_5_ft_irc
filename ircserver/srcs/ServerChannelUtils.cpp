@@ -4,6 +4,9 @@
 
 #include "../includes/Server.hpp"
 
+/*
+/ This function must be called inside a try block.
+*/
 Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
 	for (
 		ChannelListIterator it = this->channels.begin() ;
@@ -180,6 +183,28 @@ void Server::sendChannelSetAt(const User* user, const Channel* channel) {
 	std::string setAt = channel->getName()
 		+ " " + channel->getCreationTime();
 	sendNumericReply(user, RPL_CREATIONTIME, setAt);
+}
+
+void Server::replyToChannelWho(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string channelUsers;
+	for (
+		UserVectorConstIterator it = channel->getUsers().begin();
+		it != channel->getUsers().end();
+		++it
+	) {
+		const User* targetUser = (*it);
+		std::string userInfo = channel->getName()
+			+ " " + targetUser->getUsername()
+			+ " " + targetUser->getIpAddress()
+			+ " " + this->name + " " + targetUser->getNickname()
+			+ " :0 " + targetUser->getRealname();
+		sendNumericReply(user, RPL_WHOREPLY, userInfo);
+	}
+	std::string endReply = channel->getName() + " :End of WHO list";
+	sendNumericReply(user, RPL_ENDOFWHO, endReply);
 }
 
 /*
