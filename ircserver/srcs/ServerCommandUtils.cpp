@@ -39,7 +39,7 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 
 	// 4 - Adicionar ao user.password
 	user.setPassword(password);
-	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << std::endl;
+	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
 }
 
 // TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
@@ -72,7 +72,7 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 
 	// Adicionar nickname ao user
 	user.setNickname(nickname);
-	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << std::endl;
+	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
 	registerUser(user);
 }
 
@@ -121,7 +121,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 	user.setUsername(username);
 	user.setRealname(realname);
-	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << " " << user.getRealname() << std::endl;
+	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << RESET << " " << user.getRealname() << std::endl;
 	registerUser(user);
 }
 

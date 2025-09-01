@@ -27,7 +27,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 	serverSocketCreate();
 
 	std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
-	std::cout << "Waiting to accept a connection...\n";
+	std::cout << "Waiting to accept a connection...\n" << RESET << std::endl;
 
 	// Run Server until a signal is received
 	while (Server::signal == false) {
@@ -107,12 +107,12 @@ void Server::serverSocketCreate() {
 void Server::closeFds() {
 	// Close all Users
 	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
-		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << std::endl;
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << RESET  << std::endl;
 		close(it->getFd());
 	}
 	// Close server socket
 	if (serverSocketFd != -1) {
-		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << std::endl;
+		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
 		close(serverSocketFd);
 	}
 }
@@ -161,7 +161,7 @@ void Server::acceptNewUser() {
 	users.push_back(newUser);
 	pollFds.push_back(newPoll);
 
-	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << std::endl;
+	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << RESET << std::endl;
 }
 
 void Server::receiveNewData(int fd) {
@@ -175,14 +175,14 @@ void Server::receiveNewData(int fd) {
 
 	// Check if User is disconnected
 	if (bytes <= 0) {
-		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << std::endl;
+		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
 		clearUserFromPoll(fd);
 		close(fd);
 		return;
 	}
 
 	buffer[bytes] = '\0';
-	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer << std::endl;
+	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer << RESET << std::endl;
 	try {
 		handleRawMessage(fd, buffer);
 	} catch (const std::exception& e) {
