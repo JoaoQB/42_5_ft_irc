@@ -7,7 +7,7 @@
 bool Server::signal = false;
 
 Server::Server()
-	: name("ft_irc")
+	: name("irc:chat:42")
 	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
@@ -27,7 +27,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 	serverSocketCreate();
 
 	std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
-	std::cout << "Waiting to accept a connection...\n";
+	std::cout << "Waiting to accept a connection...\n" << RESET << std::endl;
 
 	// Run Server until a signal is received
 	while (Server::signal == false) {
@@ -107,31 +107,14 @@ void Server::serverSocketCreate() {
 void Server::closeFds() {
 	// Close all Users
 	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
-		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << "\n";
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << RESET  << std::endl;
 		close(it->getFd());
 	}
 	// Close server socket
 	if (serverSocketFd != -1) {
-		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << std::endl;
+		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
 		close(serverSocketFd);
 	}
-}
-
-//TODO remove user from channels
-void Server::clearUserFromPoll(int fd) {
-	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
-		if (pIt->fd == fd) {
-			pollFds.erase(pIt);
-			break ;
-		}
-	}
-	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
-		if (cIt->getFd() == fd) {
-			users.erase(cIt);
-			break;
-		}
-	}
-	//TODO check if user is last from channel and if so clear channel
 }
 
 void Server::acceptNewUser() {
@@ -161,7 +144,7 @@ void Server::acceptNewUser() {
 	users.push_back(newUser);
 	pollFds.push_back(newPoll);
 
-	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << std::endl;
+	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << RESET << std::endl;
 }
 
 void Server::receiveNewData(int fd) {
@@ -175,14 +158,13 @@ void Server::receiveNewData(int fd) {
 
 	// Check if User is disconnected
 	if (bytes <= 0) {
-		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << std::endl;
-		clearUserFromPoll(fd);
-		close(fd);
+		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
+		disconnectUser(fd);
 		return;
 	}
 
 	buffer[bytes] = '\0';
-	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer;
+	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer << RESET << std::endl;
 	try {
 		handleRawMessage(fd, buffer);
 	} catch (const std::exception& e) {
@@ -206,8 +188,6 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	}
 
 	switch (cmd) {
-		case CAP:
-			break;
 		case CMD_PASS: {
 			handlePassCommand(user, params);
 			break;
@@ -234,8 +214,13 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 		case CMD_MODE:
 			break;
 		case CMD_PART:
+			handlePartCommand(user, params);
 			break;
 		case CMD_QUIT:
+			handleQuitCommand(user, params);
+			break;
+		case CMD_PING:
+			handlePingQuery(user, params);
 			break;
 		case CMD_WHO:
 			handleWhoQuery(user, params);
@@ -252,11 +237,11 @@ void Server::sendMessage(int userFd, const std::string &message) {
 	// IRC messages must end with CRLF
 	std::string messageToSend = message + "\r\n";
 
-	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), 0);
+	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
 	std::cout << "[DEBUG!] Sending:\n" << messageToSend << "To user: " << userFd << "!\n";
 	if (bytesSent == -1) {
 		std::cerr << "Failed to send message to fd " << userFd << std::endl;
-		// TODO Handle Disconnect???
+		disconnectUser(userFd);
 	}
 }
 
@@ -315,7 +300,7 @@ void Server::debugPrintUsersAndChannels() const {
 	}
 
 	std::cout << BOLD CYAN "\n==== Users ====" RESET "\n";
-	for (std::list<User>::const_iterator uIt = users.begin(); uIt != users.end(); ++uIt) {
+	for (UserListConstIterator uIt = users.begin(); uIt != users.end(); ++uIt) {
 		const User& user = *uIt;
 		std::cout << GREEN "User: " << user.getUserIdentifier() << RESET "\n"
 				<< DIM " | Addr: " << &user

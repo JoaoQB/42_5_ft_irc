@@ -60,7 +60,7 @@ void Server::registerUser(User &user) {
 		user.setRegistered(true); //passa para registrado
 
 		std::cout << "🥳 Client " << user.getNickname()
-			<< " fully registred!" << std::endl;
+			<< " fully registred!" << RESET << std::endl;
 		user.setUserIdentifier();
 
 		std::string welcomeUserMessage =
@@ -107,4 +107,30 @@ void Server::replyToUserWho(const User* askingUser, const User* targetUser) {
 	sendNumericReply(askingUser, RPL_WHOREPLY, userInfo);
 	std::string endReply = targetUser->getNickname() + " :End of WHO list";
 	sendNumericReply(askingUser, RPL_ENDOFWHO, endReply);
+}
+
+void Server::clearUser(int fd) {
+	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
+		if (pIt->fd == fd) {
+			pollFds.erase(pIt);
+			break ;
+		}
+	}
+	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
+		if (cIt->getFd() == fd) {
+			users.erase(cIt);
+			break;
+		}
+	}
+}
+
+void Server::disconnectUser(int fd) {
+	try {
+		User& targetUser = getUserByFd(fd);
+		disconnectUserFromAllChannels(&targetUser, true, ":Disconnected!");
+	} catch (const std::exception& e) {
+		std::cerr << "Disconnect: " << e.what() << std::endl;
+	}
+	clearUser(fd);
+	close(fd);
 }

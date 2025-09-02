@@ -36,6 +36,12 @@ class Parser {
 		static std::string numericReplyToString(NumericReply numericCode);
 		static bool isValidChannelPrefix(char c);
 
+		// Utility helpers
+		static std::list<std::string> splitStringToList(
+			const std::string& values,
+			const std::string& delimiter
+		);
+
 		// DEBUG
 		static void debugPrintUsers(const std::vector<User*>& users);
 		static void debugPrintChannels(const std::vector<Channel*>& channels);
@@ -52,12 +58,6 @@ class Parser {
 		// Channel name validation helpers
 		static bool isChannelForbiddenChar(char c);
 		static bool containsChannelForbiddenChars(const std::string& input);
-
-		// Utility helpers
-		static std::list<std::string> splitStringToList(
-			const std::string& values,
-			const std::string& delimiter
-		);
 };
 
 #endif

@@ -37,7 +37,6 @@ class Server {
 
 		// Lifecycle & Core Setup
 		void serverSocketCreate();
-		void clearUserFromPoll(int fd);
 
 		// Connection Handling
 		void acceptNewUser();
@@ -50,6 +49,9 @@ class Server {
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handlePartCommand(User &user, const std::string& commandParams);
+		void handleQuitCommand(User &user, const std::string& commandParams);
+		void handlePingQuery(User &user, const std::string& commandParams);
 		void handleWhoQuery(User &user, const std::string& commandParams);
 
 		// Channel Utilities
@@ -59,7 +61,7 @@ class Server {
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
 		void sendJoinReplies(const User* user, const Channel* channel);
 		void broadcastCommand(
-			const User* user,
+			const std::string& identifier,
 			const Channel* channel,
 			const std::string& command,
 			const std::string& message
@@ -68,7 +70,16 @@ class Server {
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
 		void replyToChannelWho(const User* user, const Channel* channel);
-		void partUserFromChannel(User* user, Channel* channel);
+		void partUserFromChannel(
+			User* user, Channel* channel,
+			bool quit,
+			const std::string& reason
+		);
+		void disconnectUserFromAllChannels(
+			User* user,
+			bool quit,
+			const std::string& quitReason
+		);
 		void removeChannel(Channel* channel);
 
 		// User Utilities
@@ -77,7 +88,8 @@ class Server {
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
 		void replyToUserWho(const User* askingUser, const User* targetUser);
-		void disconnectUserFromAllChannels(User* user);
+		void clearUser(int fd);
+		void disconnectUser(int fd);
 
 		// Message to Clients
 		void sendMessage(int userFd, const std::string &message);

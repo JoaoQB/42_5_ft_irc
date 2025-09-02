@@ -39,7 +39,7 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 
 	// 4 - Adicionar ao user.password
 	user.setPassword(password);
-	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << std::endl;
+	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
 }
 
 // TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
@@ -72,7 +72,7 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 
 	// Adicionar nickname ao user
 	user.setNickname(nickname);
-	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << std::endl;
+	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
 	registerUser(user);
 }
 
@@ -121,7 +121,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 	user.setUsername(username);
 	user.setRealname(realname);
-	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << " " << user.getRealname() << std::endl;
+	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << RESET << " " << user.getRealname() << std::endl;
 	registerUser(user);
 }
 
@@ -133,7 +133,7 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	}
 	bool isJoin0Command = commandParams == "0";
 	if (isJoin0Command) {
-		disconnectUserFromAllChannels(&user);
+		disconnectUserFromAllChannels(&user, false, "");
 		return;
 	}
 
@@ -202,10 +202,57 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 		} else {
 			targetChannel.setTopic(&user, trimmedCommandTopic);
 		}
-		broadcastCommand(&user, &targetChannel, "TOPIC", ":" + trimmedCommandTopic);
+		std::string topicMessage = targetChannel.getName() + " :" + trimmedCommandTopic;
+		broadcastCommand(user.getUserIdentifier(), &targetChannel, "TOPIC", topicMessage);
 	} catch (const std::exception& e) {
 		std::cerr << "TOPIC: " << e.what() << std::endl;
 	}
+}
+
+void Server::handlePartCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string channelNames = Parser::extractFirstParam(commandParams);
+	std::string reason = Parser::extractFromSecondParam(commandParams);
+	std::list<std::string> channels = Parser::splitStringToList(channelNames, ",");
+	for (
+		std::list<std::string>::iterator chanIt = channels.begin();
+		chanIt != channels.end();
+		++chanIt
+	) {
+		try {
+			Channel& targetChannel = getChannel(user, *chanIt);
+			if (!targetChannel.hasUser(&user)) {
+				sendNumericReply(&user, ERR_NOTONCHANNEL, *chanIt + " :Not on channel");
+				return;
+			}
+			partUserFromChannel(&user, &targetChannel, false, reason);
+		} catch (const std::exception& e) {
+			std::cerr << "PART: " << e.what() << std::endl;
+		}
+	}
+}
+
+void Server::handleQuitCommand(User &user, const std::string& commandParams) {
+	std::cout << commandParams << "\n";
+	disconnectUserFromAllChannels(&user, true, commandParams);
+	int userFd = user.getFd();
+	clearUser(userFd);
+	close(userFd);
+}
+
+void Server::handlePingQuery(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string reference = Parser::extractFirstParam(commandParams);
+	std::string reply = "PONG " + reference;
+	sendMessage(user.getFd(), reply);
 }
 
 void Server::handleWhoQuery(User &user, const std::string& commandParams) {

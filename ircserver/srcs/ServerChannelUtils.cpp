@@ -50,12 +50,15 @@ void Server::createChannel(
 		joinedChannel->setPassword(channelKey);
 	}
 	joinedChannel->addUser(&creator);
-	joinedChannel->addOperator(&creator);
-
 	creator.addChannel(joinedChannel);
 
 	sendJoinReplies(&creator, joinedChannel);
+
+	joinedChannel->addOperator(&creator);
+	std::string modeCommand = channelName + " +o " + creator.getNickname();
+	broadcastCommand(this->name, joinedChannel, "MODE", modeCommand);
 	std::cout << "Channel " << channelName << " created by user " << creator.getFd() << "\n";
+	debugPrintUsersAndChannels();
 }
 
 void Server::addUserToChannel(
@@ -101,24 +104,23 @@ void Server::sendJoinReplies(const User* user, const Channel* channel) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "JOIN", "");
+	broadcastCommand(user->getUserIdentifier(), channel, "JOIN", channel->getName());
 	sendChannelTopic(user, channel);
 	sendChannelUsers(user, channel);
 	sendChannelSetAt(user, channel);
 }
 
 void Server::broadcastCommand(
-	const User* user,
+	const std::string& identifier,
 	const Channel* channel,
 	const std::string& command,
 	const std::string& message
 ) {
-	if (!user || !channel) {
+	if (!channel) {
 		return ;
 	}
-	std::string commandMessage = ":" + user->getUserIdentifier()
-		+ " " + command
-		+ " " + channel->getName();
+	std::string commandMessage = ":" + identifier
+		+ " " + command;
 
 	if (!message.empty()) {
 		commandMessage += " " + message;
@@ -211,30 +213,53 @@ void Server::replyToChannelWho(const User* user, const Channel* channel) {
 // This function can only be called on a copy of a user's <channel*> vector,
 // because it modifies user->userChannels.
 */
-void Server::partUserFromChannel(User* user, Channel* channel) {
+void Server::partUserFromChannel(
+	User* user, Channel* channel,
+	bool quit,
+	const std::string& reason
+) {
 	if (!user || !channel) {
 		return ;
 	}
-	broadcastCommand(user, channel, "PART", "");
+	if (quit) {
+		broadcastCommand(user->getUserIdentifier(), channel, "QUIT", reason);
+	} else {
+		std::string partMessage = !reason.empty()
+			? channel->getName() + " " + reason
+			: channel->getName();
+		broadcastCommand(user->getUserIdentifier(), channel, "PART", partMessage);
+	}
 	channel->removeUser(user);
 	user->removeChannel(channel);
 	if (channel->isEmpty()) {
 		this->removeChannel(channel);
 		return;
 	}
+	if (channel->hasNoOperator()) {
+		User& firstUser = *channel->getUsers().front();
+		channel->addOperator(&firstUser);
+		std::string modeCommand = channel->getName() + " +o " + firstUser.getNickname();
+		broadcastCommand(this->name, channel, "MODE", modeCommand);
+	}
+	// debugPrintUsersAndChannels();
 }
 
-void Server::disconnectUserFromAllChannels(User* user) {
+void Server::disconnectUserFromAllChannels(
+	User* user,
+	bool quit,
+	const std::string& quitReason
+) {
 	if (!user) {
 		return;
 	}
 	std::vector<Channel*> userChannelCopies = user->getChannels();
+	// debugPrintUsersAndChannels();
 	for (
 		ChannelVectorIterator channelIt = userChannelCopies.begin();
 		channelIt != userChannelCopies.end();
 		++channelIt
 	) {
-		partUserFromChannel(user, *channelIt);
+		partUserFromChannel(user, *channelIt, quit, quitReason);
 	}
 	user->getChannels().clear();
 }
