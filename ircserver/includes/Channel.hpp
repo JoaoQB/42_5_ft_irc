@@ -1,14 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Channel.hpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/09 10:46:42 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:21:57 by jqueijo-         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
@@ -28,7 +20,10 @@ class Channel {
 		const std::string& getTopicSetter() const;
 		const std::string& getTopicCreationTime() const;
 		const std::string& getCreationTime() const;
+		int getUsersInChannel() const;
 		const std::vector<User*>& getUsers() const;
+		const std::vector<User*>& getOperators() const;
+		const StringVector& getChannelModes() const;
 
 		// Boolean Accessors
 		bool isFull() const;

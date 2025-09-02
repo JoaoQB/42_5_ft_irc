@@ -1,14 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Channel.cpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/16 09:26:10 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/07/16 17:22:35 by jqueijo-         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #include "../includes/Channel.hpp"
 #include "../includes/ChannelConstants.hpp"
@@ -55,8 +47,20 @@ const std::string& Channel::getCreationTime() const {
 	return this->channelCreationTime;
 }
 
+int Channel::getUsersInChannel() const {
+	return this->usersInChannel;
+}
+
 const std::vector<User*>& Channel::getUsers() const {
 	return this->channelUsers;
+}
+
+const std::vector<User*>& Channel::getOperators() const {
+	return this->channelOperators;
+}
+
+const StringVector& Channel::getChannelModes() const {
+	return this->channelModes;
 }
 
 bool Channel::isFull() const {
@@ -154,7 +158,7 @@ void Channel::addOperator(User* user) {
 void Channel::removeUser(User* user) {
 	if (!user) return;
 
-	std::vector<User*>::iterator it = std::remove(
+	UserVectorIterator it = std::remove(
 		channelUsers.begin(),
 		channelUsers.end(),
 		user

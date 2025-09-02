@@ -1,14 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   User.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: jqueijo- <jqueijo-@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/27 10:58:16 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/06/27 12:48:00 by jqueijo-         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #include "../includes/User.hpp"
 
@@ -84,6 +76,10 @@ bool User::hasChannel(const Channel* channel) const {
 }
 
 std::vector<Channel*>& User::getChannels() {
+	return this->userChannels;
+}
+
+const std::vector<Channel*>& User::getChannels() const {
 	return this->userChannels;
 }
 

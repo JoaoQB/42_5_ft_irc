@@ -1,20 +1,12 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   User.hpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/27 10:58:21 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/29 09:53:39 by dpetrukh         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #ifndef USER_HPP
 # define USER_HPP
 
 # include "./Common.hpp"
-#include "Channel.hpp"
+# include "Channel.hpp"
 
 class User {
 	public:
@@ -30,6 +22,7 @@ class User {
 		bool isRegistered(void) const;
 		bool hasChannel(const Channel* channel) const;
 		std::vector<Channel*>& getChannels();
+		const std::vector<Channel*>& getChannels() const;
 
 		void setFd(int fd);
 		void setIpAddress(const std::string& ipAddr);

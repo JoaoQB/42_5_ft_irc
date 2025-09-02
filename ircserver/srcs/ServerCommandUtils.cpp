@@ -1,0 +1,229 @@
+//
+//
+//
+
+#include "../includes/Server.hpp"
+
+void Server::handlePassCommand(User &user, std::string cmdParameters){
+	// std::cout << "Command parameters: " << cmdParameters << std::endl;
+	// TODO tocar para um erro
+	std::string cmd = "PASS";
+	if (cmdParameters.empty()) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+	}
+
+	// 1 - Se parametros vaziu ou Se Nick ou User já tiverem algo, erro
+	if (!user.getNickname().empty() || !user.getUsername().empty() || !user.getPassword().empty()) {
+		sendNumericReply(&user, ERR_ALREADYREGISTERED, " :You may not reregister");
+		return;
+	}
+
+	// 2 - Se comeca com ":", remover o ":" e aceitar espaços
+	std::string password;
+
+	if (!cmdParameters.empty() && cmdParameters[0] == ':')
+		password = cmdParameters.substr(1);
+	else { // Se NÃO começa ":", substr até primeiro espaço ou fim.
+		size_t spacePos = cmdParameters.find(' ');
+		if (spacePos != std::string::npos)
+			password = cmdParameters.substr(0, spacePos);
+		else
+			password = cmdParameters;
+	}
+
+	// 3 - Verificar se a password coicide com o servidor, se errada 464 ERR_PASSWDMISMATCH.
+	if (password != this->serverPassword) {
+		sendNumericReply(&user, ERR_PASSWDMISMATCH, " :Password incorrect");
+		return ;
+	}
+
+	// 4 - Adicionar ao user.password
+	user.setPassword(password);
+	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << std::endl;
+}
+
+// TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
+void Server::handleNickCommand(User &user, std::string cmdParameters) {
+	//TODO descontectar usuário caso passe nick antes da pass.
+	if (user.getPassword().empty()) {
+		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		return;
+	}
+
+	// Não pode ser vaziu
+	if (cmdParameters.empty()) {
+		sendNumericReply(&user, ERR_PASSWDMISMATCH, " :No nickname given");
+		return ;
+	}
+
+	std::string nickname = Parser::extractFirstParam(cmdParameters);
+
+	// Proteção caracteres especiais && nickname não pode ser outro comando como NICK PASS JOIN...
+	if (!Parser::validateNickname(nickname)) {
+		sendNumericReply(&user, ERR_ERRONEUSNICKNAME, nickname + " :Erroneus nickname");
+		return ;
+	}
+
+	if (nicknameExists(nickname)) {
+		sendNumericReply(&user, ERR_NICKNAMEINUSE, nickname + " :Nickname is already in use");
+		std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
+			return ;
+	}
+
+	// Adicionar nickname ao user
+	user.setNickname(nickname);
+	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << std::endl;
+	registerUser(user);
+}
+
+// USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
+void Server::handleUserCommand(User &user, std::string cmdParameters){
+	//TODO descontectar usuário caso passe user antes da pass.
+	std::string cmd = "USER";
+
+	if (user.getPassword().empty()) {
+		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		return;
+	}
+
+	// Se já é registrado e usar USER novamente, devolve ERR_ALREADYREGISTERED (462)
+	if (user.isRegistered() == true) {
+		sendNumericReply(&user, ERR_ALREADYREGISTERED, " :You may not reregister");
+		return ;
+	}
+
+	// Separar em tokens
+	std::istringstream iss(cmdParameters);
+	std::string username, hostname, servername, realname;
+
+	if (!(iss >> username >> hostname >> servername)) {
+		// Se nem username nem os dois params obrigatórios vierem
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return;
+	}
+
+	std::getline(iss, realname);
+
+	if (!realname.empty() && realname[0] == ' ')
+		realname.erase(0, 1);
+	if (!realname.empty() && realname[0] == ':')
+		realname.erase(0, 1);
+
+	if (username.empty()) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return;
+	}
+
+	if (realname.empty()) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return;
+	}
+
+	user.setUsername(username);
+	user.setRealname(realname);
+	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << " " << user.getRealname() << std::endl;
+	registerUser(user);
+}
+
+void Server::handleJoinCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	bool isJoin0Command = commandParams == "0";
+	if (isJoin0Command) {
+		disconnectUserFromAllChannels(&user);
+		return;
+	}
+
+	std::string channelNames = Parser::extractFirstParam(commandParams);
+	std::string channelKeys = Parser::extractSecondParam(commandParams);
+	StringMap channelsWithKeys = Parser::mapChanneslWithKeys(channelNames, channelKeys);
+
+	for (StringMapConstIterator it = channelsWithKeys.begin();
+		it != channelsWithKeys.end();
+		++it
+	) {
+		const std::string& channelName = it->first;
+		const std::string& key = it->second;
+		if (!Parser::validateChannelName(channelName)) {
+			Parser::ft_error("invalid Channel name");
+			sendNumericReply(&user, ERR_BADCHANMASK, channelName + " :Bad Channel Mask");
+			continue;
+		}
+		try {
+			if (channelExists(channelName)) {
+				addUserToChannel(user, channelName, key);
+			} else {
+				createChannel(user, channelName, key);
+			}
+		} catch (const std::exception& e) {
+			std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
+		}
+	}
+}
+
+void Server::handleTopicCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string channelName = Parser::extractFirstParam(commandParams);
+	try {
+		Channel& targetChannel = getChannel(user, channelName);
+		if (!targetChannel.hasUser(&user)) {
+			sendNumericReply(&user, ERR_NOTONCHANNEL, channelName + " :Not on channel");
+			return;
+		}
+		std::string commandTopic = Parser::extractFromSecondParam(commandParams);
+		std::cout << "Command Topic is: " << "\n";
+		if (commandTopic.empty()) {
+			sendChannelTopic(&user, &targetChannel);
+			return;
+		}
+		if (targetChannel.isTopicProtected() && !targetChannel.isOperator(&user)) {
+			sendNumericReply(
+				&user,
+				ERR_CHANOPRIVSNEEDED,
+				targetChannel.getName() + " :You're not channel operator"
+			);
+			return;
+		}
+		// Trim whitespaces and remove ":" separator
+		std::string trimmedCommandTopic = Parser::trimWhitespace(commandTopic);
+		if (!trimmedCommandTopic.empty() && trimmedCommandTopic[0] == ':') {
+			trimmedCommandTopic = trimmedCommandTopic.substr(1);
+		}
+		// If empty string after ':', delete topic
+		if (trimmedCommandTopic.empty()) {
+			targetChannel.deleteTopic();
+		} else {
+			targetChannel.setTopic(&user, trimmedCommandTopic);
+		}
+		broadcastCommand(&user, &targetChannel, "TOPIC", ":" + trimmedCommandTopic);
+	} catch (const std::exception& e) {
+		std::cerr << "TOPIC: " << e.what() << std::endl;
+	}
+}
+
+void Server::handleWhoQuery(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string mask = Parser::extractFirstParam(commandParams);
+	try {
+		if (Parser::isValidChannelPrefix(*mask.begin())) {
+			Channel& targetChannel = getChannel(user, mask);
+			replyToChannelWho(&user, &targetChannel);\
+			return;
+		}
+		User& targetUser = getUserByNickname(mask);
+		replyToUserWho(&user, &targetUser);
+	} catch (const std::exception& e) {
+		std::cerr << "WHO: " << e.what() << std::endl;
+	}
+}

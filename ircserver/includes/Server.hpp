@@ -1,14 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: dpetrukh <dpetrukh@student.42lisboa.com    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/27 10:58:19 by jqueijo-          #+#    #+#             */
-/*   Updated: 2025/08/29 12:08:11 by dpetrukh         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+//
+//
+//
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
@@ -20,32 +12,15 @@
 
 class Server {
 	public:
-		static const int BUFFER_SIZE = 1024;
-
-		// Constructor
 		Server();
 
-		// Lifecycle & Core Setup
 		void serverInit(const std::string& port, const std::string& password);
-		void serverSocketCreate();
 		static void signalHandler(int signum);
 		void closeFds();
-		void clearUser(int fd);
-
-		// Connection Handling
-		void acceptNewUser();
-		void receiveNewData(int fd);
-
-		void handleRawMessage(int fd, const char* buffer);
-
-		// Command Handlers
-		void handlePassCommand(User &user, std::string cmdParameters);
-		void handleNickCommand(User &user, std::string cmdParameters);
-		void handleUserCommand(User &user, std::string cmdParameters);
-		void handleJoinCommand(User &user, const std::string& commandParams);
-		void handleTopicCommand(User &user, const std::string& commandParams);
 
 	private:
+		static const int BUFFER_SIZE = 1024;
+
 		// Server State
 		std::string name;
 		int serverSocketFd;
@@ -59,6 +34,23 @@ class Server {
 		std::list<User> users;
 		std::vector<struct pollfd> pollFds;
 		std::list<Channel> channels;
+
+		// Lifecycle & Core Setup
+		void serverSocketCreate();
+		void clearUserFromPoll(int fd);
+
+		// Connection Handling
+		void acceptNewUser();
+		void receiveNewData(int fd);
+		void handleRawMessage(int fd, const char* buffer);
+
+		// Command Handlers
+		void handlePassCommand(User &user, std::string cmdParameters);
+		void handleNickCommand(User &user, std::string cmdParameters);
+		void handleUserCommand(User &user, std::string cmdParameters);
+		void handleJoinCommand(User &user, const std::string& commandParams);
+		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handleWhoQuery(User &user, const std::string& commandParams);
 
 		// Channel Utilities
 		Channel& getChannel(User& targetUser, const std::string& channelName);
@@ -75,13 +67,16 @@ class Server {
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
+		void replyToChannelWho(const User* user, const Channel* channel);
 		void partUserFromChannel(User* user, Channel* channel);
 		void removeChannel(Channel* channel);
 
 		// User Utilities
-		User& getUser(int fd);
+		User& getUserByFd(int fd);
+		User& getUserByNickname(const std::string& nickname);
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
+		void replyToUserWho(const User* askingUser, const User* targetUser);
 		void disconnectUserFromAllChannels(User* user);
 
 		// Message to Clients
@@ -91,6 +86,8 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
+
+		void debugPrintUsersAndChannels() const;
 };
 
 #endif
