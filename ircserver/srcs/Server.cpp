@@ -237,11 +237,11 @@ void Server::sendMessage(int userFd, const std::string &message) {
 	// IRC messages must end with CRLF
 	std::string messageToSend = message + "\r\n";
 
-	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), 0);
+	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
 	std::cout << "[DEBUG!] Sending:\n" << messageToSend << "To user: " << userFd << "!\n";
 	if (bytesSent == -1) {
 		std::cerr << "Failed to send message to fd " << userFd << std::endl;
-		// TODO Handle Disconnect???
+		disconnectUser(userFd);
 	}
 }
 
