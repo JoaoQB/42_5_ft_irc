@@ -202,9 +202,37 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 		} else {
 			targetChannel.setTopic(&user, trimmedCommandTopic);
 		}
-		broadcastCommand(&user, &targetChannel, "TOPIC", targetChannel.getName() + " :" + trimmedCommandTopic);
+		std::string topicMessage = targetChannel.getName() + " :" + trimmedCommandTopic;
+		broadcastCommand(user.getUserIdentifier(), &targetChannel, "TOPIC", topicMessage);
 	} catch (const std::exception& e) {
 		std::cerr << "TOPIC: " << e.what() << std::endl;
+	}
+}
+
+void Server::handlePartCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		Parser::ft_error("empty: '" + commandParams + "' command");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		return;
+	}
+	std::string channelNames = Parser::extractFirstParam(commandParams);
+	std::string reason = Parser::extractFromSecondParam(commandParams);
+	std::list<std::string> channels = Parser::splitStringToList(channelNames, ",");
+	for (
+		std::list<std::string>::iterator chanIt = channels.begin();
+		chanIt != channels.end();
+		++chanIt
+	) {
+		try {
+			Channel& targetChannel = getChannel(user, *chanIt);
+			if (!targetChannel.hasUser(&user)) {
+				sendNumericReply(&user, ERR_NOTONCHANNEL, *chanIt + " :Not on channel");
+				return;
+			}
+			partUserFromChannel(&user, &targetChannel, false, reason);
+		} catch (const std::exception& e) {
+			std::cerr << "PART: " << e.what() << std::endl;
+		}
 	}
 }
 

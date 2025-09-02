@@ -33,6 +33,7 @@ class Channel {
 		bool isOperator(const User* user) const;
 		bool hasTopic() const;
 		bool isTopicProtected() const;
+		bool hasNoOperator() const;
 		bool hasUser(const User* user) const;
 
 		// Setters

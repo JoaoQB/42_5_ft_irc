@@ -103,6 +103,10 @@ bool Channel::isTopicProtected() const {
 	return std::find(channelModes.begin(), channelModes.end(), TOPIC_MODE) != channelModes.end();
 }
 
+bool Channel::hasNoOperator() const {
+	return this->channelOperators.empty();
+}
+
 bool Channel::hasUser(const User* user) const {
 	if (!user) return false;
 

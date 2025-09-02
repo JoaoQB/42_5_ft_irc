@@ -49,6 +49,7 @@ class Server {
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handlePartCommand(User &user, const std::string& commandParams);
 		void handleQuitCommand(User &user, const std::string& commandParams);
 		void handlePingQuery(User &user, const std::string& commandParams);
 		void handleWhoQuery(User &user, const std::string& commandParams);
@@ -60,7 +61,7 @@ class Server {
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
 		void sendJoinReplies(const User* user, const Channel* channel);
 		void broadcastCommand(
-			const User* user,
+			const std::string& identifier,
 			const Channel* channel,
 			const std::string& command,
 			const std::string& message
@@ -72,7 +73,7 @@ class Server {
 		void partUserFromChannel(
 			User* user, Channel* channel,
 			bool quit,
-			const std::string& quitReason
+			const std::string& reason
 		);
 		void disconnectUserFromAllChannels(
 			User* user,

@@ -7,7 +7,7 @@
 bool Server::signal = false;
 
 Server::Server()
-	: name("ft_irc")
+	: name("irc:chat:42")
 	, serverSocketFd(-1)
 	, serverPort(-1)
 	, serverPassword()
@@ -214,6 +214,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 		case CMD_MODE:
 			break;
 		case CMD_PART:
+			handlePartCommand(user, params);
 			break;
 		case CMD_QUIT:
 			handleQuitCommand(user, params);
