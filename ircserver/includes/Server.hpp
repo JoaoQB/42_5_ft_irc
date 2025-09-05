@@ -48,6 +48,7 @@ class Server {
 		void handleNickCommand(User &user, std::string cmdParameters);
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
+		void handlePrivMsgCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
 		void handlePartCommand(User &user, const std::string& commandParams);
 		void handleQuitCommand(User &user, const std::string& commandParams);
@@ -98,6 +99,7 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
+		std::vector<std::string> splitTargets(std::string targets);
 
 		void debugPrintUsersAndChannels() const;
 };

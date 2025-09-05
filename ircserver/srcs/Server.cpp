@@ -203,6 +203,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 			handleJoinCommand(user, params);
 			break;
 		case CMD_PRIVMSG:
+			handlePrivMsgCommand(user, params);
 			break;
 		case CMD_KICK:
 			break;
@@ -318,4 +319,16 @@ void Server::debugPrintUsersAndChannels() const {
 		std::cout << "\n";
 	}
 	std::cout << BOLD CYAN "===================" RESET "\n";
+}
+
+std::vector<std::string> splitTargets(std::string targets) {
+	std::vector<std::string> targetsVector;
+	std::string token;
+	std::istringstream ss(targets);
+
+	while(getline(ss, token, ',')) {
+		if (!token.empty())
+			targetsVector.push_back(token);
+	}
+	return targetsVector;
 }

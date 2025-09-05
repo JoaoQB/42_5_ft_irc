@@ -164,6 +164,34 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	}
 }
 
+void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) {
+	// commandParams = dpetrukh,joao :Hey guys
+	//Separar os parâmetros
+	std::istringstream iss(commandParams);
+	std::string targets, message;
+
+	// Validar a existência de parâmetros
+	if (!(iss >> targets)) { //PRIVMSG <sem nada>
+		std::printf("ERR_NORECIPIENT");
+		return ;
+	}
+
+	//	 ERR_NOTEXTTOSEND
+	std::getline(iss, message); // agarramos na mensagem completa com os espacos
+	if (message.empty()) {
+		std::printf("ERR_NOTEXTTSEND");
+	}
+
+	if (message[0] == ' ')
+		message.erase(0,1);
+
+	std::vector<std::string> targetList = splitTargets(targets);
+
+	for (size_t i = 0; i < targetList.size(); ++i) {
+		// processSingleTarget
+	}
+}
+
 void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
 		Parser::ft_error("empty: '" + commandParams + "' command");
