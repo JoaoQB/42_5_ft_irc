@@ -321,7 +321,7 @@ void Server::debugPrintUsersAndChannels() const {
 	std::cout << BOLD CYAN "===================" RESET "\n";
 }
 
-std::vector<std::string> splitTargets(std::string targets) {
+std::vector<std::string> splitTargets(const std::string targets) {
 	std::vector<std::string> targetsVector;
 	std::string token;
 	std::istringstream ss(targets);
@@ -332,3 +332,5 @@ std::vector<std::string> splitTargets(std::string targets) {
 	}
 	return targetsVector;
 }
+
+processSingleTarget

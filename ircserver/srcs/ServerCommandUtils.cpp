@@ -182,13 +182,15 @@ void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) 
 		std::printf("ERR_NOTEXTTSEND");
 	}
 
-	if (message[0] == ' ')
-		message.erase(0,1);
+	if (!message.empty() && message[0] == ' ')
+		message.erase(0, 1);
+	if (!message.empty() && message[0] == ':')
+		message.erase(0, 1);
 
-	std::vector<std::string> targetList = splitTargets(targets);
+	std::vector<std::string> targetsVector = splitTargets(targets);
 
-	for (size_t i = 0; i < targetList.size(); ++i) {
-		// processSingleTarget
+	for (size_t i = 0; i < targetsVector.size(); ++i) {
+		processSingleTarget(&user, targetsVector[i], message);
 	}
 }
 
