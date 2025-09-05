@@ -133,6 +133,7 @@ void Channel::setName(const std::string& channelName) {
 void Channel::setPassword(const std::string& key) {
 	this->password = key;
 	this->hasPassword = true;
+	this->channelModes.push_back(PASSWORD_MODE);
 }
 
 void Channel::setTopic(const User* user, const std::string& message) {
