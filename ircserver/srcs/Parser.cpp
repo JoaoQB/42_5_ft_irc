@@ -279,16 +279,29 @@ std::list<std::string> Parser::splitStringToList(
 	return result;
 }
 
-std::vector<std::string> Parser::splitTargets(const std::string targets) {
+std::vector<std::string> Parser::splitTargets(const std::string targets, bool &hasDuplicates) {
 	std::vector<std::string> targetsVector;
-	std::string token;
+	std::string splittedTarget;
 	std::istringstream ss(targets);
 
-	while(getline(ss, token, ',')) {
-		if (!token.empty())
-			targetsVector.push_back(token);
+	while(getline(ss, splittedTarget, ',')) {
+		if (splittedTarget.empty() || dupInVector(targetsVector, splittedTarget))
+			hasDuplicates = true;
+		else if (!splittedTarget.empty())
+			targetsVector.push_back(splittedTarget);
 	}
 	return targetsVector;
+}
+
+bool Parser::dupInVector(
+	const std::vector<std::string> &targetsVector,
+	const std::string &target
+) {
+	for (size_t i = 0; i < targetsVector.size(); i++) {
+		if (targetsVector[i] == target)
+			return true;
+	}
+	return false;
 }
 
 void Parser::ft_error(const std::string& errorMessage) {

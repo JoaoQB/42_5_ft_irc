@@ -174,21 +174,38 @@ void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) 
 	// Validar a existência de parâmetros
 	if (!(iss >> targets)) { //PRIVMSG <sem nada>
 		sendNumericReply(&user, ERR_NORECIPIENT, ":No recipient given (" + cmd + ")");
-		return ;
+		return;
 	}
 
-	//	 ERR_NOTEXTTOSEND
 	std::getline(iss, message); // agarramos na mensagem completa com os espacos
-	if (message.empty()) {
-		sendNumericReply(&user, ERR_NOTEXTTOSEND, ":No text to send");
-	}
 
 	if (!message.empty() && message[0] == ' ')
 		message.erase(0, 1);
+
+	// Se começa com ':', remove apenas o ':' inicial
 	if (!message.empty() && message[0] == ':')
 		message.erase(0, 1);
+	else {
+		// Se não começa com ':', pega apenas até o primeiro espaço
+		std::istringstream iss(message);
+		std::string firstWord;
+		iss >> firstWord;
+		message = firstWord;
+	}
 
-	std::vector<std::string> targetsVector = Parser::splitTargets(targets);
+	if (message.empty()) { // Empty message!
+		sendNumericReply(&user, ERR_NOTEXTTOSEND, ":No text to send");
+		return;
+	}
+
+	bool hasDuplicate = false;
+	std::vector<std::string> targetsVector = Parser::splitTargets(targets, hasDuplicate);
+
+	if (hasDuplicate) {
+		sendNumericReply(&user, ERR_TOOMANYTARGETS, + "[" + targets +
+			"] :Duplicate or empty recipients. No message delivered");
+		return;
+	}
 
 	for (size_t i = 0; i < targetsVector.size(); ++i) {
 		processSingleTarget(&user, targetsVector[i], message);
