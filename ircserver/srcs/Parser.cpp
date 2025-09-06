@@ -279,6 +279,18 @@ std::list<std::string> Parser::splitStringToList(
 	return result;
 }
 
+std::vector<std::string> Parser::splitTargets(const std::string targets) {
+	std::vector<std::string> targetsVector;
+	std::string token;
+	std::istringstream ss(targets);
+
+	while(getline(ss, token, ',')) {
+		if (!token.empty())
+			targetsVector.push_back(token);
+	}
+	return targetsVector;
+}
+
 void Parser::ft_error(const std::string& errorMessage) {
 	std::cerr << "Error: " << errorMessage << std::endl;
 }

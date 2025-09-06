@@ -99,8 +99,10 @@ class Server {
 			NumericReply numericCode,
 			const std::string& message
 		);
-		std::vector<std::string> splitTargets(const std::string targets);
+
+		// Message to Users / Channels
 		void processSingleTarget(const User *senderUser, const std::string target, std::string message);
+		void sendMessageToUser(const User *senderUser, const std::string targetUsername, const std::string message);
 
 		void debugPrintUsersAndChannels() const;
 };

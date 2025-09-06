@@ -321,16 +321,35 @@ void Server::debugPrintUsersAndChannels() const {
 	std::cout << BOLD CYAN "===================" RESET "\n";
 }
 
-std::vector<std::string> splitTargets(const std::string targets) {
-	std::vector<std::string> targetsVector;
-	std::string token;
-	std::istringstream ss(targets);
 
-	while(getline(ss, token, ',')) {
-		if (!token.empty())
-			targetsVector.push_back(token);
+void Server::processSingleTarget(const User *senderUser, const std::string target, std::string message){
+	//se for um canal
+	if (target[0] == '#' || target[0] == '&') {
+		//sendMessageToChannel(senderUser, target, message);
+		return;
 	}
-	return targetsVector;
+	else { // se for um user
+		sendMessageToUser(senderUser, target, message);
+	}
 }
 
-processSingleTarget
+void Server::sendMessageToUser(const User *senderUser, const std::string targetNickname, const std::string message){
+	try { 	// Find User by Nickname
+		User &targetUser = getUserByNickname(targetNickname);
+
+		// Send message to User
+		std::string privMessage =
+			":" + senderUser->getUserIdentifier() +
+			" PRIVMSG " + targetNickname +
+			" :" + message + "\r\n";
+
+			sendMessage(targetUser.getFd(), privMessage);
+
+	} 	// Check if exists
+	catch (const std::runtime_error& e){
+		std::string errorMsg = targetNickname + " :No such nick";
+		sendNumericReply(senderUser, ERR_NOSUCHNICK, errorMsg);
+	}
+
+}
+
