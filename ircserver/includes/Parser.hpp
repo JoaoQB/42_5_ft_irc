@@ -41,6 +41,11 @@ class Parser {
 			const std::string& values,
 			const std::string& delimiter
 		);
+		static std::vector<std::string> splitTargets(const std::string targets, bool &hasDuplicates);
+		static bool dupInVector(
+			const std::vector<std::string> &targetsVector,
+			const std::string &target
+		);
 
 		// DEBUG
 		static void debugPrintUsers(const std::vector<User*>& users);
