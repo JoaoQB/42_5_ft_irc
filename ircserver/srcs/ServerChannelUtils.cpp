@@ -7,7 +7,7 @@
 /*
 / This function must be called inside a try block.
 */
-Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
+Channel& Server::getChannel(const User& targetUser, const std::string& channelName) {
 	for (
 		ChannelListIterator it = this->channels.begin() ;
 		it != this->channels.end() ;
@@ -17,8 +17,7 @@ Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
 			return *it;
 		}
 	}
-	std::string noSuchChannel = channelName
-		+ " :No such channel";
+	std::string noSuchChannel = channelName + " :No such channel";
 	sendNumericReply(&targetUser, ERR_NOSUCHCHANNEL, noSuchChannel);
 	throw std::runtime_error("Channel not found");
 }
@@ -198,7 +197,7 @@ void Server::replyToChannelWho(const User* user, const Channel* channel) {
 		++it
 	) {
 		const User* targetUser = (*it);
-		std::string userInfo = channel->getName()
+		const std::string userInfo = channel->getName()
 			+ " " + targetUser->getUsername()
 			+ " " + targetUser->getIpAddress()
 			+ " " + this->name + " " + targetUser->getNickname()
@@ -207,6 +206,48 @@ void Server::replyToChannelWho(const User* user, const Channel* channel) {
 	}
 	std::string endReply = channel->getName() + " :End of WHO list";
 	sendNumericReply(user, RPL_ENDOFWHO, endReply);
+}
+
+void Server::replyToChannelMode(const User* user, const Channel* channel) {
+	if (!user || !channel) {
+		return ;
+	}
+	std::string modes;
+	const StringVector& channelModes = channel->getChannelModes();
+	for (
+		StringVector::const_iterator it = channelModes.begin();
+		it != channelModes.end();
+		++it
+	) {
+		modes.insert(0, *it);
+	}
+	std::string replyMessage = channel->getName()
+		+ (!modes.empty() ? " +" + modes : "")
+		+ (channel->hasLimit() ? " " + channel->getChannelLimit() : "");
+	sendNumericReply(user, RPL_CHANNELMODEIS, replyMessage);
+
+	std::string setAt = channel->getName()
+		+ " " + channel->getCreationTime();
+	sendNumericReply(user, RPL_CREATIONTIME, setAt);
+	return;
+}
+
+void Server::setChannelMode(
+	const User* user,
+	const Channel* channel,
+	const std::string& parameters
+) {
+	if (!user || !channel) {
+		return ;
+	}
+	if (!channel->isOperator(user)) {
+		sendNumericReply(
+			user,
+			ERR_CHANOPRIVSNEEDED,
+			channel->getName() + " :You're not channel operator"
+		);
+		return;
+	}
 }
 
 /*

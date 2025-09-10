@@ -23,7 +23,7 @@ User& Server::getUserByFd(int fd) {
 /*
 / This function must be called inside a try block.
 */
-User& Server::getUserByNickname(const std::string& nickname) {
+User& Server::getUserByNickname(const User& targetUser, const std::string& nickname) {
 	for (
 		UserListIterator it = this->users.begin() ;
 		it != this->users.end() ;
@@ -33,6 +33,8 @@ User& Server::getUserByNickname(const std::string& nickname) {
 			return *it;
 		}
 	}
+	std::string errorMsg = nickname + " :No such nick";
+	sendNumericReply(&targetUser, ERR_NOSUCHNICK, errorMsg);
 	throw std::runtime_error("User with nickname '" + nickname + "' not found");
 }
 

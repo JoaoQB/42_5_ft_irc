@@ -213,6 +213,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 			handleTopicCommand(user, params);
 			break;
 		case CMD_MODE:
+			handleModeCommand(user, params);
 			break;
 		case CMD_PART:
 			handlePartCommand(user, params);
@@ -312,7 +313,7 @@ void Server::sendMessageToUser(
 	const std::string& message
 ){
 	try { 	// Find User by Nickname
-		User &targetUser = getUserByNickname(targetNickname);
+		User &targetUser = getUserByNickname(*senderUser, targetNickname);
 
 		// Send message to User
 		std::string privMessage =
@@ -324,8 +325,7 @@ void Server::sendMessageToUser(
 
 	} 	// Check if exists
 	catch (const std::runtime_error& e){
-		std::string errorMsg = targetNickname + " :No such nick";
-		sendNumericReply(senderUser, ERR_NOSUCHNICK, errorMsg);
+		std::cerr << "PRIVMSG: " << e.what() << std::endl;
 	}
 }
 
@@ -358,7 +358,7 @@ void Server::debugPrintUsersAndChannels() const {
 
 		// Print channel modes
 		std::cout << "  " BOLD "Modes: " RESET;
-		const std::vector<std::string>& modes = ch.getChannelModes();
+		const StringVector& modes = ch.getChannelModes();
 		for (size_t i = 0; i < modes.size(); ++i) {
 			std::cout << WHITE << modes[i] << " " RESET;
 		}

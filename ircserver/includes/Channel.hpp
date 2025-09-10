@@ -21,6 +21,7 @@ class Channel {
 		const std::string& getTopicCreationTime() const;
 		const std::string& getCreationTime() const;
 		int getUsersInChannel() const;
+		int getChannelLimit() const;
 		const std::vector<User*>& getUsers() const;
 		const std::vector<User*>& getOperators() const;
 		const StringVector& getChannelModes() const;
@@ -30,11 +31,12 @@ class Channel {
 		bool isEmpty() const;
 		bool requiresPassword() const;
 		bool isInviteOnly() const;
-		bool isOperator(const User* user) const;
 		bool hasTopic() const;
 		bool isTopicProtected() const;
 		bool hasNoOperator() const;
+		bool hasLimit() const;
 		bool hasUser(const User* user) const;
+		bool isOperator(const User* user) const;
 
 		// Setters
 		void setName(const std::string& channelName);
@@ -55,15 +57,12 @@ class Channel {
 		std::string topicSetter;
 		std::string topicCreationTime;
 
-		bool hasPassword;
-		bool full;
-
 		int channelLimit;
 		int usersInChannel;
 
 		std::vector<User*> channelUsers;
 		std::vector<User*> channelOperators;
-		std::vector<std::string> channelModes;
+		StringVector channelModes;
 };
 
 #endif

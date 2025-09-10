@@ -12,8 +12,6 @@ Channel::Channel()
 	, topic()
 	, topicSetter()
 	, topicCreationTime()
-	, hasPassword(false)
-	, full(false)
 	, channelLimit(-1)
 	, usersInChannel(0)
 	, channelUsers()
@@ -51,6 +49,10 @@ int Channel::getUsersInChannel() const {
 	return this->usersInChannel;
 }
 
+int Channel::getChannelLimit() const {
+	return this->channelLimit;
+}
+
 const std::vector<User*>& Channel::getUsers() const {
 	return this->channelUsers;
 }
@@ -64,7 +66,7 @@ const StringVector& Channel::getChannelModes() const {
 }
 
 bool Channel::isFull() const {
-	return this->full;
+	return channelLimit == usersInChannel;
 }
 
 bool Channel::isEmpty() const {
@@ -72,27 +74,11 @@ bool Channel::isEmpty() const {
 }
 
 bool Channel::requiresPassword() const {
-	return this->hasPassword;
+	return std::find(channelModes.begin(), channelModes.end(), PASSWORD_MODE) != channelModes.end();
 }
 
 bool Channel::isInviteOnly() const {
 	return std::find(channelModes.begin(), channelModes.end(), INVITE_MODE) != channelModes.end();
-}
-
-bool Channel::isOperator(const User* user) const {
-	if (!user) return false;
-
-	bool isOperator = std::find(
-		channelOperators.begin(),
-		channelOperators.end(), user) != channelOperators.end();
-
-		// std::cout << "[Debug] Checking operator for: "
-		// 	<< user->getUserIdentifier()
-		// 	<< " @ " << user << std::endl;
-		// Parser::debugPrintUsers(channelOperators);
-		// std::cout << "[Debug] is " << isOperator << "\n";
-
-		return isOperator;
 }
 
 bool Channel::hasTopic() const {
@@ -107,6 +93,10 @@ bool Channel::hasNoOperator() const {
 	return this->channelOperators.empty();
 }
 
+bool Channel::hasLimit() const {
+	return this->channelLimit != -1;
+}
+
 bool Channel::hasUser(const User* user) const {
 	if (!user) return false;
 
@@ -116,14 +106,19 @@ bool Channel::hasUser(const User* user) const {
 		user
 	) != channelUsers.end();
 
-	// std::cout << "[Debug] Checking if has user for: "
-	// 	<< user->getUserIdentifier()
-	// 	<< " @ " << user << std::endl;
-
-	// Parser::debugPrintUsers(channelUsers);
-	// std::cout << "[Debug] is " << hasUser << "\n";
-
 	return hasUser;
+}
+
+bool Channel::isOperator(const User* user) const {
+	if (!user) return false;
+
+	bool isOperator = std::find(
+		channelOperators.begin(),
+		channelOperators.end(),
+		user
+	) != channelOperators.end();
+
+	return isOperator;
 }
 
 void Channel::setName(const std::string& channelName) {
@@ -132,7 +127,6 @@ void Channel::setName(const std::string& channelName) {
 
 void Channel::setPassword(const std::string& key) {
 	this->password = key;
-	this->hasPassword = true;
 	this->channelModes.push_back(PASSWORD_MODE);
 }
 
@@ -148,9 +142,6 @@ void Channel::addUser(User* user) {
 	}
 	this->channelUsers.push_back(user);
 	this->usersInChannel++;
-	if (channelLimit == usersInChannel) {
-		this->full = true;
-	}
 }
 
 void Channel::addOperator(User* user) {

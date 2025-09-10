@@ -50,13 +50,14 @@ class Server {
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handlePrivMsgCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handleModeCommand(User &user, const std::string& commandParams);
 		void handlePartCommand(User &user, const std::string& commandParams);
 		void handleQuitCommand(User &user, const std::string& commandParams);
 		void handlePingQuery(User &user, const std::string& commandParams);
 		void handleWhoQuery(User &user, const std::string& commandParams);
 
 		// Channel Utilities
-		Channel& getChannel(User& targetUser, const std::string& channelName);
+		Channel& getChannel(const User& targetUser, const std::string& channelName);
 		bool channelExists(const std::string& channelName) const;
 		void createChannel(User& creator, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
@@ -71,6 +72,12 @@ class Server {
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
 		void replyToChannelWho(const User* user, const Channel* channel);
+		void replyToChannelMode(const User* user, const Channel* channel);
+		void setChannelMode(
+			const User* user,
+			const Channel* channel,
+			const std::string& parameters
+		);
 		void partUserFromChannel(
 			User* user, Channel* channel,
 			bool quit,
@@ -85,7 +92,7 @@ class Server {
 
 		// User Utilities
 		User& getUserByFd(int fd);
-		User& getUserByNickname(const std::string& nickname);
+		User& getUserByNickname(const User& targetUser, const std::string& nickname);
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
 		void replyToUserWho(const User* askingUser, const User* targetUser);

@@ -127,8 +127,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
-		Parser::ft_error("empty: '" + commandParams + "' command");
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "JOIN :Not enough parameters");
 		return;
 	}
 	bool isJoin0Command = commandParams == "0";
@@ -207,8 +206,7 @@ void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) 
 
 void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
-		Parser::ft_error("empty: '" + commandParams + "' command");
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		return;
 	}
 	std::string channelName = Parser::extractFirstParam(commandParams);
@@ -219,7 +217,7 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 			return;
 		}
 		std::string commandTopic = Parser::extractFromSecondParam(commandParams);
-		std::cout << "Command Topic is: " << "\n";
+		std::cout << "[DEBUG] Command Topic is: " << "\n";
 		if (commandTopic.empty()) {
 			sendChannelTopic(&user, &targetChannel);
 			return;
@@ -250,10 +248,39 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 	}
 }
 
+void Server::handleModeCommand(User &user, const std::string& commandParams) {
+	if (commandParams.empty()) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "MODE :Not enough parameters");
+		return;
+	}
+	const std::string mask = Parser::extractFirstParam(commandParams);
+	const std::string parameters = Parser::extractFromSecondParam(commandParams);
+	try {
+		if (Parser::isValidChannelPrefix(*mask.begin())) {
+			Channel& targetChannel = getChannel(user, mask);
+			if (!targetChannel.hasUser(&user)) {
+				sendNumericReply(&user, ERR_NOTONCHANNEL, mask + " :Not on channel");
+				return;
+			}
+			// If "MODE <channel>" reply with active channel modes
+			if (parameters.empty()) {
+				replyToChannelMode(&user, &targetChannel);
+				return;
+			}
+			// Else if "MODE <channel> <params>" set params
+			setChannelMode(&user, &targetChannel, parameters);
+			return;
+		}
+		//TODO handle user mode
+		// User& targetUser = getUserByNickname(user, mask);
+	} catch (const std::exception& e) {
+		std::cerr << "MODE: " << e.what() << std::endl;
+	}
+}
+
 void Server::handlePartCommand(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
-		Parser::ft_error("empty: '" + commandParams + "' command");
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "PART :Not enough parameters");
 		return;
 	}
 	std::string channelNames = Parser::extractFirstParam(commandParams);
@@ -287,8 +314,7 @@ void Server::handleQuitCommand(User &user, const std::string& commandParams) {
 
 void Server::handlePingQuery(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
-		Parser::ft_error("empty: '" + commandParams + "' command");
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "PING :Not enough parameters");
 		return;
 	}
 	std::string reference = Parser::extractFirstParam(commandParams);
@@ -298,22 +324,19 @@ void Server::handlePingQuery(User &user, const std::string& commandParams) {
 
 void Server::handleWhoQuery(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
-		Parser::ft_error("empty: '" + commandParams + "' command");
-		sendNumericReply(&user, ERR_NEEDMOREPARAMS, commandParams + " :Not enough parameters");
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "WHO :Not enough parameters");
 		return;
 	}
 	std::string mask = Parser::extractFirstParam(commandParams);
 	try {
 		if (Parser::isValidChannelPrefix(*mask.begin())) {
 			Channel& targetChannel = getChannel(user, mask);
-			replyToChannelWho(&user, &targetChannel);\
+			replyToChannelWho(&user, &targetChannel);
 			return;
 		}
-		User& targetUser = getUserByNickname(mask);
+		User& targetUser = getUserByNickname(user, mask);
 		replyToUserWho(&user, &targetUser);
 	} catch (const std::exception& e) {
 		std::cerr << "WHO: " << e.what() << std::endl;
-		std::string errorMsg = mask + " :No such nick";
-		sendNumericReply(&user, ERR_NOSUCHNICK, errorMsg);
 	}
 }
