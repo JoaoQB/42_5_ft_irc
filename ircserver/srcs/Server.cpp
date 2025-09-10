@@ -48,6 +48,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 				}
 			}
 		}
+		processPendingDisconnects();
 	}
 	closeFds();
 }
@@ -232,18 +233,53 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	}
 }
 
+void Server::processPendingDisconnects() {
+	std::vector<int> fdsToRemove;
+	for (UserListIterator it = users.begin(); it != users.end(); ++it) {
+		if (it->isPendingDisconnect()) {
+			fdsToRemove.push_back(it->getFd());
+		}
+	}
+
+	for (size_t i = 0; i < fdsToRemove.size(); ++i) {
+		int fd = fdsToRemove[i];
+		try {
+			User& user = getUserByFd(fd);
+			disconnectUserFromAllChannels(&user, true, ":Disconnected!");
+		} catch (const std::exception &e) {
+		}
+		clearUser(fd);
+		close(fd);
+	}
+	debugPrintUsersAndChannels();
+}
+
 void Server::sendMessage(int userFd, const std::string &message) {
-	if (userFd < 0)
-	return;
+	if (userFd < 0 || !userExists(userFd)) {
+		return;
+	}
 
-	// IRC messages must end with CRLF
-	std::string messageToSend = message + "\r\n";
+	try {
+		User& user = getUserByFd(userFd);
+		if (user.isPendingDisconnect()) {
+			return;
+		}
 
-	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
-	std::cout << "[DEBUG!] Sending:\n" << messageToSend << "To user: " << userFd << "!\n";
-	if (bytesSent == -1) {
-		std::cerr << "Failed to send message to fd " << userFd << std::endl;
-		disconnectUser(userFd);
+		// IRC messages must end with CRLF
+		std::string messageToSend = message + "\r\n";
+		ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
+
+		std::cout << "[DEBUG] Sending:\n" << messageToSend
+				<< "To user: " << userFd << "\n";
+
+		if (bytesSent == -1) {
+			std::cerr << "SEND failed on fd " << userFd
+					<< ": " << strerror(errno) << "\n";
+			user.setPendingDisconnect(true);
+		}
+
+	} catch (const std::exception& e) {
+		std::cerr << "sendMessage exception: " << e.what() << std::endl;
 	}
 }
 

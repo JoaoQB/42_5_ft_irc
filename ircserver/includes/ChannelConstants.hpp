@@ -21,6 +21,6 @@ const std::string CHANNEL_MODES[] = {
 	PASSWORD_MODE
 };
 
-const size_t CHANNEL_MODE_SIZE = sizeof(CHANNEL_MODES) / sizeof(CHANNEL_MODES[0]);
+const size_t CHANNEL_MODES_SIZE = sizeof(CHANNEL_MODES) / sizeof(CHANNEL_MODES[0]);
 
 #endif

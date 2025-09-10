@@ -256,6 +256,15 @@ std::string Parser::trimWhitespace(const std::string &string) {
 	return string.substr(0, end);
 }
 
+bool Parser::isValidChannelMode(char mode) {
+	for (unsigned int i = 0; i < CHANNEL_MODES_SIZE; ++i) {
+		if (mode == CHANNEL_MODES[i][0]) {
+			return true;
+		}
+	}
+	return false;
+}
+
 std::list<std::string> Parser::splitStringToList(
 	const std::string& values,
 	const std::string& delimiter

@@ -35,6 +35,7 @@ class Parser {
 		static std::string formatTimeStamp(const std::string &timestampStr);
 		static std::string numericReplyToString(NumericReply numericCode);
 		static bool isValidChannelPrefix(char c);
+		static bool isValidChannelMode(char mode);
 
 		// Utility helpers
 		static std::list<std::string> splitStringToList(

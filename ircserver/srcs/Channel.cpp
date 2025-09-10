@@ -3,7 +3,6 @@
 //
 
 #include "../includes/Channel.hpp"
-#include "../includes/ChannelConstants.hpp"
 
 Channel::Channel()
 	: name()

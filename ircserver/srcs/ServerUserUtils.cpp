@@ -38,6 +38,19 @@ User& Server::getUserByNickname(const User& targetUser, const std::string& nickn
 	throw std::runtime_error("User with nickname '" + nickname + "' not found");
 }
 
+bool Server::userExists(int fd) const {
+	for (
+		UserListConstIterator it = this->users.begin();
+		it != this->users.end() ;
+		++it
+	) {
+		if (it->getFd() == fd) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool Server::nicknameExists(const std::string& nickname) const {
 	for (
 		UserListConstIterator it = this->users.begin();
@@ -129,10 +142,8 @@ void Server::clearUser(int fd) {
 void Server::disconnectUser(int fd) {
 	try {
 		User& targetUser = getUserByFd(fd);
-		disconnectUserFromAllChannels(&targetUser, true, ":Disconnected!");
-		clearUser(fd);
+		targetUser.setPendingDisconnect(true);
 	} catch (const std::exception& e) {
 		std::cerr << "Disconnect: " << e.what() << std::endl;
 	}
-	close(fd);
 }

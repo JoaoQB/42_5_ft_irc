@@ -13,6 +13,7 @@ User::User()
 	, password()
 	, userIdentifier()
 	, registered(false)
+	, pendingDisconnect(false)
 	, userChannels() {
 }
 
@@ -54,6 +55,10 @@ const std::string& User::getUserIdentifier() const {
 
 bool User::isRegistered(void) const {
 	return this->registered;
+}
+
+bool User::isPendingDisconnect(void) const {
+	return this->pendingDisconnect;
 }
 
 bool User::hasChannel(const Channel* channel) const {
@@ -105,6 +110,10 @@ void User::setRegistered(bool registered) {
 
 void User::setUserIdentifier() {
 	this->userIdentifier = nickname + "!" + username + "@" + ipAddress;
+}
+
+void User::setPendingDisconnect(bool disconnected) {
+	this->pendingDisconnect = disconnected;
 }
 
 void User::addChannel(Channel* channel) {

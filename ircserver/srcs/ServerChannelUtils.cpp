@@ -234,7 +234,7 @@ void Server::replyToChannelMode(const User* user, const Channel* channel) {
 
 void Server::setChannelMode(
 	const User* user,
-	const Channel* channel,
+	Channel* channel,
 	const std::string& parameters
 ) {
 	if (!user || !channel) {
@@ -247,6 +247,29 @@ void Server::setChannelMode(
 			channel->getName() + " :You're not channel operator"
 		);
 		return;
+	}
+	const std::string firstParam = Parser::extractFirstParam(parameters);
+	// Protection check, should never be true
+	if (firstParam.empty()) {
+		return;
+	}
+	char sign = *firstParam.begin();
+	std::string validFlags, invalidFlags;
+	for (unsigned int i = 1; i < firstParam.size(); ++i) {
+		const char mode = firstParam[i];
+		if (Parser::isValidChannelMode(mode)) {
+			validFlags.push_back(mode);
+		} else {
+			invalidFlags.push_back(mode);
+		}
+	}
+	if (!validFlags.empty()) {
+		std::cout << "Known flags: " << sign << validFlags << std::endl;
+		// Apply them to the channel + broadcast MODE message
+	}
+	if (!invalidFlags.empty()) {
+		std::cout << "Unknown flags: " << invalidFlags << std::endl;
+		// Send ERR_UMODEUNKNOWNFLAG back to user for each
 	}
 }
 

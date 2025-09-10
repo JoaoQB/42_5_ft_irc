@@ -30,6 +30,7 @@ class Channel;
 # include <cstdlib> // atoi
 # include <sstream> //isstringstream
 # include <ctime> // getDayAndTime()
+# include <cerrno>
 
 #define RESET   "\033[0m"
 #define RED "\033[1;31m"

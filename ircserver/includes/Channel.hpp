@@ -5,6 +5,7 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
+#include "../includes/ChannelConstants.hpp"
 # include "./Common.hpp"
 # include "./User.hpp"
 # include "./Parser.hpp"

@@ -42,6 +42,7 @@ class Server {
 		void acceptNewUser();
 		void receiveNewData(int fd);
 		void handleRawMessage(int fd, const char* buffer);
+		void processPendingDisconnects();
 
 		// Command Handlers
 		void handlePassCommand(User &user, std::string cmdParameters);
@@ -75,7 +76,7 @@ class Server {
 		void replyToChannelMode(const User* user, const Channel* channel);
 		void setChannelMode(
 			const User* user,
-			const Channel* channel,
+			Channel* channel,
 			const std::string& parameters
 		);
 		void partUserFromChannel(
@@ -93,6 +94,7 @@ class Server {
 		// User Utilities
 		User& getUserByFd(int fd);
 		User& getUserByNickname(const User& targetUser, const std::string& nickname);
+		bool userExists(int fd) const;
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
 		void replyToUserWho(const User* askingUser, const User* targetUser);
