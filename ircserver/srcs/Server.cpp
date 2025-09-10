@@ -264,6 +264,71 @@ void Server::sendNumericReply(
 	sendMessage(user->getFd(), reply);
 }
 
+void Server::processSingleTargetMessage(
+	const User *senderUser,
+	const std::string& target,
+	const std::string& message
+){
+	// Se for um canal
+	if (Parser::isValidChannelPrefix(*target.begin())) {
+		try {
+			Channel& channel = getChannel(*const_cast<User*>(senderUser), target);
+			sendMessageToChannel(senderUser, channel, message);
+		} catch (const std::runtime_error& e) {
+			std::cerr << "PRIVMSG: " << e.what() << std::endl;
+		}
+		return;
+	}
+	// Se for um user
+	sendMessageToUser(senderUser, target, message);
+}
+
+// Possible TODO channel with modes não tem todas as permissões de enviar privmsg
+void Server::sendMessageToChannel(
+	const User* senderUser,
+	const Channel& targetChannel,
+	const std::string& message
+) {
+	// User NÃO está no channel que envia privmsg
+	if (!targetChannel.hasUser(senderUser)) {
+		sendNumericReply(senderUser, ERR_CANNOTSENDTOCHAN,
+			targetChannel.getName() + " :Cannot send to channel");
+		return ;
+	}
+
+	for (
+		UserVectorConstIterator it = targetChannel.getUsers().begin();
+		it != targetChannel.getUsers().end();
+		++it
+	) {
+		if (*it != senderUser)
+			sendMessageToUser(senderUser, (*it)->getNickname(), message);
+	}
+}
+
+void Server::sendMessageToUser(
+	const User *senderUser,
+	const std::string& targetNickname,
+	const std::string& message
+){
+	try { 	// Find User by Nickname
+		User &targetUser = getUserByNickname(targetNickname);
+
+		// Send message to User
+		std::string privMessage =
+			":" + senderUser->getUserIdentifier() +
+			" PRIVMSG " + targetNickname +
+			" :" + message + "\r\n";
+
+		sendMessage(targetUser.getFd(), privMessage);
+
+	} 	// Check if exists
+	catch (const std::runtime_error& e){
+		std::string errorMsg = targetNickname + " :No such nick";
+		sendNumericReply(senderUser, ERR_NOSUCHNICK, errorMsg);
+	}
+}
+
 void Server::debugPrintUsersAndChannels() const {
 	std::cout << "\n" BOLD CYAN "==== Channels ====" RESET "\n";
 	for (ChannelListConstIterator cIt = channels.begin(); cIt != channels.end(); ++cIt) {
@@ -320,65 +385,3 @@ void Server::debugPrintUsersAndChannels() const {
 	}
 	std::cout << BOLD CYAN "===================" RESET "\n";
 }
-
-void Server::processSingleTarget(const User *senderUser, const std::string target, std::string message){
-	// Se for um canal
-	if (target[0] == '#' || target[0] == '&') {
-		try {
-			Channel& channel = getChannel(*const_cast<User*>(senderUser), target);
-			sendMessageToChannel(senderUser, channel, message);
-		} catch (const std::runtime_error&) {
-			return;
-		}
-	}
-	else { // Se for um user
-		sendMessageToUser(senderUser, target, message);
-	}
-}
-
-// Possible TODO channel with modes não tem todas as permissões de enviar privmsg
-void Server::sendMessageToChannel(
-	const User* senderUser,
-	const Channel& targetChannel,
-	std::string message
-) {
-	// User NÃO está no channel que envia privmsg
-	if (!targetChannel.hasUser(senderUser)) {
-		sendNumericReply(senderUser, ERR_CANNOTSENDTOCHAN,
-			targetChannel.getName() + " :Cannot send to channel");
-		return ;
-	}
-
-	for (
-		UserVectorConstIterator it = targetChannel.getUsers().begin();
-		it != targetChannel.getUsers().end();
-		++it
-	) {
-		if (*it != senderUser)
-			sendMessageToUser(senderUser, (*it)->getNickname(), message);
-	}
-}
-
-void Server::sendMessageToUser(
-	const User *senderUser,
-	const std::string targetNickname,
-	const std::string message
-){
-	try { 	// Find User by Nickname
-		User &targetUser = getUserByNickname(targetNickname);
-
-		// Send message to User
-		std::string privMessage =
-			":" + senderUser->getUserIdentifier() +
-			" PRIVMSG " + targetNickname +
-			" :" + message + "\r\n";
-
-			sendMessage(targetUser.getFd(), privMessage);
-
-	} 	// Check if exists
-	catch (const std::runtime_error& e){
-		std::string errorMsg = targetNickname + " :No such nick";
-		sendNumericReply(senderUser, ERR_NOSUCHNICK, errorMsg);
-	}
-}
-

@@ -198,17 +198,10 @@ void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) 
 		return;
 	}
 
-	bool hasDuplicate = false;
-	std::vector<std::string> targetsVector = Parser::splitTargets(targets, hasDuplicate);
+	std::set<std::string> targetsSet = Parser::splitStringToSet(targets);
 
-	if (hasDuplicate) {
-		sendNumericReply(&user, ERR_TOOMANYTARGETS, + "[" + targets +
-			"] :Duplicate or empty recipients. No message delivered");
-		return;
-	}
-
-	for (size_t i = 0; i < targetsVector.size(); ++i) {
-		processSingleTarget(&user, targetsVector[i], message);
+	for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it) {
+		processSingleTargetMessage(&user, *it, message);
 	}
 }
 
@@ -320,5 +313,7 @@ void Server::handleWhoQuery(User &user, const std::string& commandParams) {
 		replyToUserWho(&user, &targetUser);
 	} catch (const std::exception& e) {
 		std::cerr << "WHO: " << e.what() << std::endl;
+		std::string errorMsg = mask + " :No such nick";
+		sendNumericReply(&user, ERR_NOSUCHNICK, errorMsg);
 	}
 }
