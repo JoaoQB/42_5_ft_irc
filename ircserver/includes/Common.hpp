@@ -17,6 +17,7 @@ class Channel;
 # include <algorithm>
 # include <vector>
 # include <map>
+# include <set>
 # include <list>
 # include <sys/socket.h> // socket()
 # include <sys/types.h> // socket type definitions

@@ -101,9 +101,21 @@ class Server {
 		);
 
 		// Message to Users / Channels
-		void processSingleTarget(const User *senderUser, const std::string target, std::string message);
-		void sendMessageToChannel(const User* senderUser, const Channel &targetChannel, std::string message);
-		void sendMessageToUser(const User *senderUser, const std::string targetUsername, const std::string message);
+		void processSingleTargetMessage(
+			const User *senderUser,
+			const std::string& target,
+			const std::string& message
+		);
+		void sendMessageToChannel(
+			const User* senderUser,
+			const Channel &targetChannel,
+			const std::string& message
+		);
+		void sendMessageToUser(
+			const User *senderUser,
+			const std::string& targetUsername,
+			const std::string& message
+		);
 
 		void debugPrintUsersAndChannels() const;
 };
