@@ -41,6 +41,7 @@ class Parser {
 			const std::string& values,
 			const std::string& delimiter
 		);
+		static std::set<std::string> splitStringToSet(const std::string& targets);
 
 		// DEBUG
 		static void debugPrintUsers(const std::vector<User*>& users);

@@ -279,6 +279,17 @@ std::list<std::string> Parser::splitStringToList(
 	return result;
 }
 
+std::set<std::string> Parser::splitStringToSet(const std::string& targets) {
+	std::set<std::string> targetsSet;
+	std::string splittedTarget;
+	std::istringstream ss(targets);
+
+	while(getline(ss, splittedTarget, ',')) {
+		targetsSet.insert(splittedTarget);
+	}
+	return targetsSet;
+}
+
 void Parser::ft_error(const std::string& errorMessage) {
 	std::cerr << "Error: " << errorMessage << std::endl;
 }

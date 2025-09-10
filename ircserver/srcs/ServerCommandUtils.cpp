@@ -39,14 +39,14 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 
 	// 4 - Adicionar ao user.password
 	user.setPassword(password);
-	std::cout << "✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
+	std::cout << "[DEBUG]✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
 }
 
 // TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
 void Server::handleNickCommand(User &user, std::string cmdParameters) {
 	//TODO descontectar usuário caso passe nick antes da pass.
 	if (user.getPassword().empty()) {
-		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		sendNumericReply(&user, ERR_NOTREGISTERED, ":You have not registered");
 		return;
 	}
 
@@ -65,14 +65,14 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 	}
 
 	if (nicknameExists(nickname)) {
+		std::cout << "[DEBUG] nickname:" + nickname << std::endl;
 		sendNumericReply(&user, ERR_NICKNAMEINUSE, nickname + " :Nickname is already in use");
-		std::cout << "ERR_NICKNAMEINUSE (433)" << std::endl;
 			return ;
 	}
 
 	// Adicionar nickname ao user
 	user.setNickname(nickname);
-	std::cout << "✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
+	std::cout << "[DEBUG]✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
 	registerUser(user);
 }
 
@@ -82,7 +82,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 	std::string cmd = "USER";
 
 	if (user.getPassword().empty()) {
-		std::cout << "Tens de ter a PASS primeiro antes de passar o user" << std::endl;
+		sendNumericReply(&user, ERR_NOTREGISTERED, ":You have not registered");
 		return;
 	}
 
@@ -121,7 +121,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 	user.setUsername(username);
 	user.setRealname(realname);
-	std::cout << "✅ User Username + Realname Registered Successfully: " << user.getUsername() << RESET << " " << user.getRealname() << std::endl;
+	std::cout << "[DEBUG]✅ User Username + Realname Registered Successfully: " << user.getUsername() << RESET << " " << user.getRealname() << std::endl;
 	registerUser(user);
 }
 
@@ -161,6 +161,47 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 		} catch (const std::exception& e) {
 			std::cerr << "Failed to add user to channel: " << e.what() << std::endl;
 		}
+	}
+}
+
+void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) {
+	// commandParams = dpetrukh,joao :Hey guys
+	//Separar os parâmetros
+	std::string cmd = "PRIVMSG";
+	std::istringstream iss(commandParams);
+	std::string targets, message;
+
+	// Validar a existência de parâmetros
+	if (!(iss >> targets)) { //PRIVMSG <sem nada>
+		sendNumericReply(&user, ERR_NORECIPIENT, ":No recipient given (" + cmd + ")");
+		return;
+	}
+
+	std::getline(iss, message); // agarramos na mensagem completa com os espacos
+
+	if (!message.empty() && message[0] == ' ')
+		message.erase(0, 1);
+
+	// Se começa com ':', remove apenas o ':' inicial
+	if (!message.empty() && message[0] == ':')
+		message.erase(0, 1);
+	else {
+		// Se não começa com ':', pega apenas até o primeiro espaço
+		std::istringstream iss(message);
+		std::string firstWord;
+		iss >> firstWord;
+		message = firstWord;
+	}
+
+	if (message.empty()) { // Empty message!
+		sendNumericReply(&user, ERR_NOTEXTTOSEND, ":No text to send");
+		return;
+	}
+
+	std::set<std::string> targetsSet = Parser::splitStringToSet(targets);
+
+	for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it) {
+		processSingleTargetMessage(&user, *it, message);
 	}
 }
 
@@ -272,5 +313,7 @@ void Server::handleWhoQuery(User &user, const std::string& commandParams) {
 		replyToUserWho(&user, &targetUser);
 	} catch (const std::exception& e) {
 		std::cerr << "WHO: " << e.what() << std::endl;
+		std::string errorMsg = mask + " :No such nick";
+		sendNumericReply(&user, ERR_NOSUCHNICK, errorMsg);
 	}
 }
