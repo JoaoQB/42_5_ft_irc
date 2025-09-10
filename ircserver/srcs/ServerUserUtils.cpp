@@ -128,9 +128,9 @@ void Server::disconnectUser(int fd) {
 	try {
 		User& targetUser = getUserByFd(fd);
 		disconnectUserFromAllChannels(&targetUser, true, ":Disconnected!");
+		clearUser(fd);
 	} catch (const std::exception& e) {
 		std::cerr << "Disconnect: " << e.what() << std::endl;
 	}
-	clearUser(fd);
 	close(fd);
 }
