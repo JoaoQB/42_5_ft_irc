@@ -117,12 +117,12 @@ bool Parser::validateChannelName(const std::string& channelName) {
 	return true;
 }
 
-bool Parser::isValidChannelPrefix(char c) {
+bool Parser::isValidChannelPrefix(const char c) {
 	const std::string valid = "#&";
 	return valid.find(c) != std::string::npos;
 }
 
-bool Parser::isChannelForbiddenChar(char c) {
+bool Parser::isChannelForbiddenChar(const char c) {
 	const std::string forbidden = " ^G,";
 	return forbidden.find(c) != std::string::npos;
 }
@@ -140,8 +140,20 @@ bool Parser::containsChannelForbiddenChars(const std::string& input) {
 // Se nickname "PASSagem"
 // Return false
 bool Parser::nicknameIsCommand(const std::string& nickname) {
-	std::string commands[] = {"PASS", "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PART", "QUIT"};
-	const int numCommands = sizeof(commands) / sizeof(commands[0]);
+	static const std::string commands[] = {
+		"PASS",
+		"NICK",
+		"USER",
+		"JOIN",
+		"PRIVMSG",
+		"KICK",
+		"INVITE",
+		"TOPIC",
+		"MODE",
+		"PART",
+		"QUIT"
+	};
+	static const int numCommands = sizeof(commands) / sizeof(commands[0]);
 
 	for (int i = 0; i < numCommands; ++i) {
 		std::size_t pos = nickname.find(commands[i]);
@@ -190,12 +202,12 @@ bool Parser::validateNickname(const std::string& nickname) {
 	return true;
 }
 
-bool Parser::isNicknameForbiddenChar(char c) {
+bool Parser::isNicknameForbiddenChar(const char c) {
 	const std::string forbidden = " ,*?!@.\n\r";
 	return forbidden.find(c) != std::string::npos;
 }
 
-bool Parser::isNicknameForbiddenFirstChar(char c) {
+bool Parser::isNicknameForbiddenFirstChar(const char c) {
 	const std::string forbidden = "0123456789$:#&~%+";
 	return forbidden.find(c) != std::string::npos;
 }
@@ -237,6 +249,29 @@ StringMap Parser::mapChanneslWithKeys(
 	return channelKeyMap;
 }
 
+StringMap Parser::mapModesWithParams(
+	const StringVector& modeString,
+	const std::string& modeParams
+) {
+	StringMap result;
+	std::istringstream iss(modeParams);
+	std::string nextParam;
+	for (
+		StringVector::const_iterator it = modeString.begin();
+		it != modeString.end();
+		++it
+	) {
+		const std::string& currentFlag = *it;
+		if (modeNeedsParam(currentFlag)) {
+			result[currentFlag] = iss >> nextParam
+				? nextParam : "";
+		} else {
+			result[currentFlag] = "";
+		}
+	}
+	return result;
+}
+
 // Remove \r\n from string end
 std::string Parser::trimCRLF(const std::string &s) {
 	size_t end = s.size();
@@ -256,9 +291,42 @@ std::string Parser::trimWhitespace(const std::string &string) {
 	return string.substr(0, end);
 }
 
-bool Parser::isValidChannelMode(char mode) {
+bool Parser::isValidChannelMode(const char mode) {
 	for (unsigned int i = 0; i < CHANNEL_MODES_SIZE; ++i) {
 		if (mode == CHANNEL_MODES[i][0]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Parser::isTypeAMode(const std::string& modeParameter) {
+	static const std::string typeAModes[] = {
+		"+b", "+e", "+I"
+	};
+	static const size_t typeAModeSize = sizeof(typeAModes) / sizeof(typeAModes[0]);
+	for (size_t i = 0; i < typeAModeSize; ++i) {
+		if (modeParameter == typeAModes[i]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Parser::isValidModeSign(const char sign) {
+	return sign == '-' || sign == '+';
+}
+
+bool Parser::modeNeedsParam(const std::string& mode) {
+	static const std::string needsParam[] = {
+		"-o",
+		"+o",
+		"+l",
+		"+k"
+	};
+	static const size_t needsParamSize = sizeof(needsParam) / sizeof(needsParam[0]);
+	for (size_t i = 0; i < needsParamSize; ++i) {
+		if (mode == needsParam[i]) {
 			return true;
 		}
 	}
@@ -299,6 +367,12 @@ std::set<std::string> Parser::splitStringToSet(const std::string& targets) {
 	return targetsSet;
 }
 
+bool Parser::stringToInt(const std::string& str, int& result) {
+	std::stringstream ss(str);
+	ss >> result;
+	return !ss.fail() && ss.eof();
+}
+
 void Parser::ft_error(const std::string& errorMessage) {
 	std::cerr << "Error: " << errorMessage << std::endl;
 }
@@ -334,6 +408,13 @@ std::string Parser::numericReplyToString(NumericReply numericCode) {
 	std::string code = oss.str();
 
 	return code;
+}
+
+void Parser::debugPrintVector(const StringVector& vector) {
+	std::cout << "[Debug] Vector (" << vector.size() << "):" << std::endl;
+	for (std::size_t i = 0; i < vector.size(); ++i) {
+		std::cout << "  [" << i << "] " << vector[i] << std::endl;
+	}
 }
 
 void Parser::debugPrintUsers(const std::vector<User*>& users) {

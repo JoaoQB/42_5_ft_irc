@@ -81,6 +81,7 @@ enum NumericReply {
 	ERR_TOOMANYTARGETS = 407,
 	ERR_NORECIPIENT = 411,
 	ERR_NOTEXTTOSEND = 412,
+	ERR_UNKNOWNCOMMAND = 421,
 	ERR_NONICKNAMEGIVEN = 431,
 	ERR_ERRONEUSNICKNAME = 432,
 	ERR_NICKNAMEINUSE = 433,
@@ -90,10 +91,12 @@ enum NumericReply {
 	ERR_ALREADYREGISTERED = 462,
 	ERR_PASSWDMISMATCH = 464,
 	ERR_CHANNELISFULL = 471,
+	ERR_UNKNOWNMODE = 472,
 	ERR_INVITEONLYCHAN = 473,
 	ERR_BADCHANNELKEY = 475,
 	ERR_BADCHANMASK = 476,
-	ERR_CHANOPRIVSNEEDED = 482
+	ERR_CHANOPRIVSNEEDED = 482,
+	ERR_UMODEUNKNOWNFLAG = 501
 };
 
 typedef std::vector<struct pollfd>::iterator PollIterator;
@@ -107,6 +110,7 @@ typedef std::map<std::string, CommandType> CommandMap;
 typedef CommandMap::const_iterator CommandMapConstIterator;
 
 typedef std::vector<std::string> StringVector;
+typedef std::set<std::string> StringSet;
 typedef std::map<std::string, std::string> StringMap;
 typedef StringMap::const_iterator StringMapConstIterator;
 

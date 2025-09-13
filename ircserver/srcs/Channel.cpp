@@ -3,6 +3,7 @@
 //
 
 #include "../includes/Channel.hpp"
+#include "../includes/Server.hpp"
 
 Channel::Channel()
 	: name()
@@ -17,7 +18,7 @@ Channel::Channel()
 	, channelOperators()
 	, channelModes() {
 	channelCreationTime = Parser::getTimestamp();
-	channelModes.push_back(TOPIC_MODE);
+	channelModes.insert(TOPIC_MODE);
 }
 
 const std::string& Channel::getName() const {
@@ -60,7 +61,11 @@ const std::vector<User*>& Channel::getOperators() const {
 	return this->channelOperators;
 }
 
-const StringVector& Channel::getChannelModes() const {
+const StringSet& Channel::getChannelModes() const {
+	return this->channelModes;
+}
+
+StringSet& Channel::getChannelModes() {
 	return this->channelModes;
 }
 
@@ -88,8 +93,8 @@ bool Channel::isTopicProtected() const {
 	return std::find(channelModes.begin(), channelModes.end(), TOPIC_MODE) != channelModes.end();
 }
 
-bool Channel::hasNoOperator() const {
-	return this->channelOperators.empty();
+bool Channel::hasOperator() const {
+	return !this->channelOperators.empty();
 }
 
 bool Channel::hasLimit() const {
@@ -126,13 +131,18 @@ void Channel::setName(const std::string& channelName) {
 
 void Channel::setPassword(const std::string& key) {
 	this->password = key;
-	this->channelModes.push_back(PASSWORD_MODE);
+	this->channelModes.insert(PASSWORD_MODE);
 }
 
 void Channel::setTopic(const User* user, const std::string& message) {
 	this->topic = message;
 	this->topicSetter = user->getNickname();
 	this->topicCreationTime = Parser::getTimestamp();
+}
+
+void Channel::setLimit(int limit) {
+	this->channelLimit = limit;
+	channelModes.insert(LIMIT_MODE);
 }
 
 void Channel::addUser(User* user) {
@@ -147,11 +157,15 @@ void Channel::addOperator(User* user) {
 	if (!user) {
 		return;
 	}
-	this->channelOperators.push_back(user);
+	if (!isOperator(user)) {
+		this->channelOperators.push_back(user);
+	}
 }
 
-void Channel::removeUser(User* user) {
-	if (!user) return;
+void Channel::removeUser(Server& server, User* user) {
+	if (!user) {
+		return;
+	}
 
 	UserVectorIterator it = std::remove(
 		channelUsers.begin(),
@@ -162,7 +176,17 @@ void Channel::removeUser(User* user) {
 		channelUsers.erase(it, channelUsers.end());
 		this->usersInChannel--;
 	}
-	it = std::remove(
+	if (isOperator(user)) {
+		removeOperator(server, user);
+	}
+}
+
+void Channel::removeOperator(Server& server, User* user) {
+	if (!user) {
+		return;
+	}
+
+	UserVectorIterator it = std::remove(
 		channelOperators.begin(),
 		channelOperators.end(),
 		user
@@ -170,11 +194,36 @@ void Channel::removeUser(User* user) {
 	if (it != channelOperators.end()) {
 		channelOperators.erase(it, channelOperators.end());
 	}
+	if (hasOperator()) {
+		return;
+	}
+	for (
+		UserVectorIterator it = channelUsers.begin();
+		it != channelUsers.end();
+		++it
+	) {
+		User* targetOperator = *it;
+		if (!isOperator(targetOperator)) {
+			addOperator(targetOperator);
+			std::string modeCommand = getName() + " +o " + targetOperator->getNickname();
+			server.broadcastCommand(server.name, this, "MODE", modeCommand);
+			return;
+		}
+	}
 }
 
-void Channel::deleteTopic() {
+void Channel::removeTopic() {
 	this->topic = "";
 	this->topicCreationTime = "";
 	this->topicSetter = "";
 }
 
+void Channel::removePassword() {
+	this->password = "";
+	channelModes.erase(PASSWORD_MODE);
+}
+
+void Channel::removeLimit() {
+	this->channelLimit = -1;
+	channelModes.erase(LIMIT_MODE);
+}

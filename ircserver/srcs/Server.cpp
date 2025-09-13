@@ -179,8 +179,8 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	std::string rawMessage(buffer); // rawMessage = "PASS mypassword"
 	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
 	std::string command = Parser::extractFirstParam(trimmedMessage); // command = "PASS"
-	std::string params = Parser::extractFromSecondParam(trimmedMessage); // params = "mypassword"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
+	std::string params = Parser::extractFromSecondParam(trimmedMessage); // params = "mypassword"
 
 	// Usuário está retrito a fazer outros comandos enquanto que não está autenticado no servidor
 	if (!Parser::isAuthentication(user, cmd)) {
@@ -394,9 +394,13 @@ void Server::debugPrintUsersAndChannels() const {
 
 		// Print channel modes
 		std::cout << "  " BOLD "Modes: " RESET;
-		const StringVector& modes = ch.getChannelModes();
-		for (size_t i = 0; i < modes.size(); ++i) {
-			std::cout << WHITE << modes[i] << " " RESET;
+		const StringSet& modes = ch.getChannelModes();
+		for (
+			StringSet::const_iterator it = modes.begin();
+			it != modes.end();
+			++it
+		) {
+			std::cout << WHITE << *it << " " RESET;
 		}
 		std::cout << "\n\n";
 	}

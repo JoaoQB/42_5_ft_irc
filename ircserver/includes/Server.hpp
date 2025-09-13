@@ -12,17 +12,24 @@
 
 class Server {
 	public:
+		std::string name;
 		Server();
 
 		void serverInit(const std::string& port, const std::string& password);
 		static void signalHandler(int signum);
 		void closeFds();
 
+		void broadcastCommand(
+			const std::string& identifier,
+			const Channel* channel,
+			const std::string& command,
+			const std::string& message
+		);
+
 	private:
 		static const int BUFFER_SIZE = 1024;
 
 		// Server State
-		std::string name;
 		int serverSocketFd;
 		int serverPort;
 		std::string serverPassword;
@@ -63,22 +70,10 @@ class Server {
 		void createChannel(User& creator, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
 		void sendJoinReplies(const User* user, const Channel* channel);
-		void broadcastCommand(
-			const std::string& identifier,
-			const Channel* channel,
-			const std::string& command,
-			const std::string& message
-		);
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
 		void replyToChannelWho(const User* user, const Channel* channel);
-		void replyToChannelMode(const User* user, const Channel* channel);
-		void setChannelMode(
-			const User* user,
-			Channel* channel,
-			const std::string& parameters
-		);
 		void partUserFromChannel(
 			User* user, Channel* channel,
 			bool quit,
@@ -90,6 +85,31 @@ class Server {
 			const std::string& quitReason
 		);
 		void removeChannel(Channel* channel);
+
+		// Channel Mode Utilities
+		void replyToChannelMode(const User* user, const Channel* channel);
+		void setChannelMode(
+			const User* user,
+			Channel* channel,
+			const std::string& parameters
+		);
+		void setAndBroadcastModes(
+			const User* user,
+			Channel* channel,
+			const StringMap& modesWithParams
+		);
+		bool setMode(
+			const User* user,
+			Channel* channel,
+			const std::string& mode,
+			const std::string& param
+		);
+		bool handleOperatorMode(
+			const User* user,
+			Channel* channel,
+			const char& sign,
+			const std::string& param
+		);
 
 		// User Utilities
 		User& getUserByFd(int fd);

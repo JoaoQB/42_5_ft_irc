@@ -208,71 +208,6 @@ void Server::replyToChannelWho(const User* user, const Channel* channel) {
 	sendNumericReply(user, RPL_ENDOFWHO, endReply);
 }
 
-void Server::replyToChannelMode(const User* user, const Channel* channel) {
-	if (!user || !channel) {
-		return ;
-	}
-	std::string modes;
-	const StringVector& channelModes = channel->getChannelModes();
-	for (
-		StringVector::const_iterator it = channelModes.begin();
-		it != channelModes.end();
-		++it
-	) {
-		modes.insert(0, *it);
-	}
-	std::string replyMessage = channel->getName()
-		+ (!modes.empty() ? " +" + modes : "")
-		+ (channel->hasLimit() ? " " + channel->getChannelLimit() : "");
-	sendNumericReply(user, RPL_CHANNELMODEIS, replyMessage);
-
-	std::string setAt = channel->getName()
-		+ " " + channel->getCreationTime();
-	sendNumericReply(user, RPL_CREATIONTIME, setAt);
-	return;
-}
-
-void Server::setChannelMode(
-	const User* user,
-	Channel* channel,
-	const std::string& parameters
-) {
-	if (!user || !channel) {
-		return ;
-	}
-	if (!channel->isOperator(user)) {
-		sendNumericReply(
-			user,
-			ERR_CHANOPRIVSNEEDED,
-			channel->getName() + " :You're not channel operator"
-		);
-		return;
-	}
-	const std::string firstParam = Parser::extractFirstParam(parameters);
-	// Protection check, should never be true
-	if (firstParam.empty()) {
-		return;
-	}
-	char sign = *firstParam.begin();
-	std::string validFlags, invalidFlags;
-	for (unsigned int i = 1; i < firstParam.size(); ++i) {
-		const char mode = firstParam[i];
-		if (Parser::isValidChannelMode(mode)) {
-			validFlags.push_back(mode);
-		} else {
-			invalidFlags.push_back(mode);
-		}
-	}
-	if (!validFlags.empty()) {
-		std::cout << "Known flags: " << sign << validFlags << std::endl;
-		// Apply them to the channel + broadcast MODE message
-	}
-	if (!invalidFlags.empty()) {
-		std::cout << "Unknown flags: " << invalidFlags << std::endl;
-		// Send ERR_UMODEUNKNOWNFLAG back to user for each
-	}
-}
-
 /*
 // This function can only be called on a copy of a user's <channel*> vector,
 // because it modifies user->userChannels.
@@ -293,17 +228,11 @@ void Server::partUserFromChannel(
 			: channel->getName();
 		broadcastCommand(user->getUserIdentifier(), channel, "PART", partMessage);
 	}
-	channel->removeUser(user);
+	channel->removeUser(*this, user);
 	user->removeChannel(channel);
 	if (channel->isEmpty()) {
 		this->removeChannel(channel);
 		return;
-	}
-	if (channel->hasNoOperator()) {
-		User& firstUser = *channel->getUsers().front();
-		channel->addOperator(&firstUser);
-		std::string modeCommand = channel->getName() + " +o " + firstUser.getNickname();
-		broadcastCommand(this->name, channel, "MODE", modeCommand);
 	}
 	// debugPrintUsersAndChannels();
 }

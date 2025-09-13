@@ -237,7 +237,7 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 		}
 		// If empty string after ':', delete topic
 		if (trimmedCommandTopic.empty()) {
-			targetChannel.deleteTopic();
+			targetChannel.removeTopic();
 		} else {
 			targetChannel.setTopic(&user, trimmedCommandTopic);
 		}
@@ -265,6 +265,16 @@ void Server::handleModeCommand(User &user, const std::string& commandParams) {
 			// If "MODE <channel>" reply with active channel modes
 			if (parameters.empty()) {
 				replyToChannelMode(&user, &targetChannel);
+				return;
+			}
+			// Else if "Mode <channel> <listable_mode>" reply with not supported or ignore?
+			if (Parser::isTypeAMode(parameters)) {
+				// const std::string unsupportedMode = parameters.substr(1);
+				// sendNumericReply(
+				// 	&user,
+				// 	ERR_UNKNOWNMODE,
+				// 	unsupportedMode + " :is unknown mode char to me"
+				// );
 				return;
 			}
 			// Else if "MODE <channel> <params>" set params
