@@ -12,17 +12,24 @@
 
 class Server {
 	public:
+		std::string name;
 		Server();
 
 		void serverInit(const std::string& port, const std::string& password);
 		static void signalHandler(int signum);
 		void closeFds();
 
+		void broadcastCommand(
+			const std::string& identifier,
+			const Channel* channel,
+			const std::string& command,
+			const std::string& message
+		);
+
 	private:
 		static const int BUFFER_SIZE = 1024;
 
 		// Server State
-		std::string name;
 		int serverSocketFd;
 		int serverPort;
 		std::string serverPassword;
@@ -42,6 +49,7 @@ class Server {
 		void acceptNewUser();
 		void receiveNewData(int fd);
 		void handleRawMessage(int fd, const char* buffer);
+		void processPendingDisconnects();
 
 		// Command Handlers
 		void handlePassCommand(User &user, std::string cmdParameters);
@@ -50,23 +58,18 @@ class Server {
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handlePrivMsgCommand(User &user, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
+		void handleModeCommand(User &user, const std::string& commandParams);
 		void handlePartCommand(User &user, const std::string& commandParams);
 		void handleQuitCommand(User &user, const std::string& commandParams);
 		void handlePingQuery(User &user, const std::string& commandParams);
 		void handleWhoQuery(User &user, const std::string& commandParams);
 
 		// Channel Utilities
-		Channel& getChannel(User& targetUser, const std::string& channelName);
+		Channel& getChannel(const User& targetUser, const std::string& channelName);
 		bool channelExists(const std::string& channelName) const;
 		void createChannel(User& creator, const std::string& channelName, const std::string& channelKey);
 		void addUserToChannel(User& targetUser, const std::string& channelName, const std::string& channelKey);
 		void sendJoinReplies(const User* user, const Channel* channel);
-		void broadcastCommand(
-			const std::string& identifier,
-			const Channel* channel,
-			const std::string& command,
-			const std::string& message
-		);
 		void sendChannelTopic(const User* user, const Channel* channel);
 		void sendChannelUsers(const User* user, const Channel* channel);
 		void sendChannelSetAt(const User* user, const Channel* channel);
@@ -83,9 +86,35 @@ class Server {
 		);
 		void removeChannel(Channel* channel);
 
+		// Channel Mode Utilities
+		void replyToChannelMode(const User* user, const Channel* channel);
+		void setChannelMode(
+			const User* user,
+			Channel* channel,
+			const std::string& parameters
+		);
+		void setAndBroadcastModes(
+			const User* user,
+			Channel* channel,
+			const StringMap& modesWithParams
+		);
+		bool setMode(
+			const User* user,
+			Channel* channel,
+			const std::string& mode,
+			const std::string& param
+		);
+		bool handleOperatorMode(
+			const User* user,
+			Channel* channel,
+			const char& sign,
+			const std::string& param
+		);
+
 		// User Utilities
 		User& getUserByFd(int fd);
-		User& getUserByNickname(const std::string& nickname);
+		User& getUserByNickname(const User& targetUser, const std::string& nickname);
+		bool userExists(int fd) const;
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
 		void replyToUserWho(const User* askingUser, const User* targetUser);

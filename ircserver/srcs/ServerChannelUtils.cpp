@@ -7,7 +7,7 @@
 /*
 / This function must be called inside a try block.
 */
-Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
+Channel& Server::getChannel(const User& targetUser, const std::string& channelName) {
 	for (
 		ChannelListIterator it = this->channels.begin() ;
 		it != this->channels.end() ;
@@ -17,8 +17,7 @@ Channel& Server::getChannel(User& targetUser, const std::string& channelName) {
 			return *it;
 		}
 	}
-	std::string noSuchChannel = channelName
-		+ " :No such channel";
+	std::string noSuchChannel = channelName + " :No such channel";
 	sendNumericReply(&targetUser, ERR_NOSUCHCHANNEL, noSuchChannel);
 	throw std::runtime_error("Channel not found");
 }
@@ -198,7 +197,7 @@ void Server::replyToChannelWho(const User* user, const Channel* channel) {
 		++it
 	) {
 		const User* targetUser = (*it);
-		std::string userInfo = channel->getName()
+		const std::string userInfo = channel->getName()
 			+ " " + targetUser->getUsername()
 			+ " " + targetUser->getIpAddress()
 			+ " " + this->name + " " + targetUser->getNickname()
@@ -229,17 +228,11 @@ void Server::partUserFromChannel(
 			: channel->getName();
 		broadcastCommand(user->getUserIdentifier(), channel, "PART", partMessage);
 	}
-	channel->removeUser(user);
+	channel->removeUser(*this, user);
 	user->removeChannel(channel);
 	if (channel->isEmpty()) {
 		this->removeChannel(channel);
 		return;
-	}
-	if (channel->hasNoOperator()) {
-		User& firstUser = *channel->getUsers().front();
-		channel->addOperator(&firstUser);
-		std::string modeCommand = channel->getName() + " +o " + firstUser.getNickname();
-		broadcastCommand(this->name, channel, "MODE", modeCommand);
 	}
 	// debugPrintUsersAndChannels();
 }
