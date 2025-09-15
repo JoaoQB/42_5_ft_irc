@@ -27,6 +27,10 @@ class Parser {
 			const std::string& channelNames,
 			const std::string& channelKeys
 		);
+		static StringMap mapModesWithParams(
+			const StringVector& modeString,
+			const std::string& modeParams
+		);
 
 		static std::string trimCRLF(const std::string &s);
 		static std::string trimWhitespace(const std::string &string);
@@ -34,7 +38,13 @@ class Parser {
 		static std::string getTimestamp();
 		static std::string formatTimeStamp(const std::string &timestampStr);
 		static std::string numericReplyToString(NumericReply numericCode);
-		static bool isValidChannelPrefix(char c);
+		static bool isValidChannelPrefix(const char c);
+
+		// Channel Modes Utilities
+		static bool isValidChannelMode(const char mode);
+		static bool isTypeAMode(const std::string& modeParameter);
+		static bool isValidModeSign(const char sign);
+		static bool modeNeedsParam(const std::string& mode);
 
 		// Utility helpers
 		static std::list<std::string> splitStringToList(
@@ -42,8 +52,10 @@ class Parser {
 			const std::string& delimiter
 		);
 		static std::set<std::string> splitStringToSet(const std::string& targets);
+		static bool stringToInt(const std::string& str, int& result);
 
 		// DEBUG
+		static void debugPrintVector(const StringVector& vector);
 		static void debugPrintUsers(const std::vector<User*>& users);
 		static void debugPrintChannels(const std::vector<Channel*>& channels);
 
@@ -51,13 +63,13 @@ class Parser {
 		Parser();
 
 		// Nickname validation helpers
-		static bool isNicknameForbiddenFirstChar(char c);
-		static bool isNicknameForbiddenChar(char c);
+		static bool isNicknameForbiddenFirstChar(const char c);
+		static bool isNicknameForbiddenChar(const char c);
 		static bool containsNicknameForbiddenChars(const std::string& input);
 		static bool nicknameIsCommand(const std::string& input);
 
 		// Channel name validation helpers
-		static bool isChannelForbiddenChar(char c);
+		static bool isChannelForbiddenChar(const char c);
 		static bool containsChannelForbiddenChars(const std::string& input);
 };
 

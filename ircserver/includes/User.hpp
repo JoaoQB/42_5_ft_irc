@@ -20,6 +20,7 @@ class User {
 		const std::string& getPassword() const;
 		const std::string& getUserIdentifier() const;
 		bool isRegistered(void) const;
+		bool isPendingDisconnect(void) const;
 		bool hasChannel(const Channel* channel) const;
 		std::vector<Channel*>& getChannels();
 		const std::vector<Channel*>& getChannels() const;
@@ -32,6 +33,7 @@ class User {
 		void setPassword(std::string password);
 		void setRegistered(bool registered);
 		void setUserIdentifier();
+		void setPendingDisconnect(bool disconnected);
 
 		void addChannel(Channel* channel);
 		void removeChannel(Channel* channel);
@@ -45,6 +47,7 @@ class User {
 		std::string password;
 		std::string userIdentifier;
 		bool registered;
+		bool pendingDisconnect;
 
 		std::vector<Channel*> userChannels;
 };

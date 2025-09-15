@@ -48,6 +48,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 				}
 			}
 		}
+		processPendingDisconnects();
 	}
 	closeFds();
 }
@@ -178,8 +179,8 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	std::string rawMessage(buffer); // rawMessage = "PASS mypassword"
 	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
 	std::string command = Parser::extractFirstParam(trimmedMessage); // command = "PASS"
-	std::string params = Parser::extractFromSecondParam(trimmedMessage); // params = "mypassword"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
+	std::string params = Parser::extractFromSecondParam(trimmedMessage); // params = "mypassword"
 
 	// Usuário está retrito a fazer outros comandos enquanto que não está autenticado no servidor
 	if (!Parser::isAuthentication(user, cmd)) {
@@ -213,6 +214,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 			handleTopicCommand(user, params);
 			break;
 		case CMD_MODE:
+			handleModeCommand(user, params);
 			break;
 		case CMD_PART:
 			handlePartCommand(user, params);
@@ -231,18 +233,53 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 	}
 }
 
+void Server::processPendingDisconnects() {
+	std::vector<int> fdsToRemove;
+	for (UserListIterator it = users.begin(); it != users.end(); ++it) {
+		if (it->isPendingDisconnect()) {
+			fdsToRemove.push_back(it->getFd());
+		}
+	}
+
+	for (size_t i = 0; i < fdsToRemove.size(); ++i) {
+		int fd = fdsToRemove[i];
+		try {
+			User& user = getUserByFd(fd);
+			disconnectUserFromAllChannels(&user, true, ":Disconnected!");
+		} catch (const std::exception &e) {
+		}
+		clearUser(fd);
+		close(fd);
+	}
+	debugPrintUsersAndChannels();
+}
+
 void Server::sendMessage(int userFd, const std::string &message) {
-	if (userFd < 0)
-	return;
+	if (userFd < 0 || !userExists(userFd)) {
+		return;
+	}
 
-	// IRC messages must end with CRLF
-	std::string messageToSend = message + "\r\n";
+	try {
+		User& user = getUserByFd(userFd);
+		if (user.isPendingDisconnect()) {
+			return;
+		}
 
-	ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
-	std::cout << "[DEBUG!] Sending:\n" << messageToSend << "To user: " << userFd << "!\n";
-	if (bytesSent == -1) {
-		std::cerr << "Failed to send message to fd " << userFd << std::endl;
-		disconnectUser(userFd);
+		// IRC messages must end with CRLF
+		std::string messageToSend = message + "\r\n";
+		ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
+
+		std::cout << "[DEBUG] Sending:\n" << messageToSend
+				<< "To user: " << userFd << "\n";
+
+		if (bytesSent == -1) {
+			std::cerr << "SEND failed on fd " << userFd
+					<< ": " << strerror(errno) << "\n";
+			user.setPendingDisconnect(true);
+		}
+
+	} catch (const std::exception& e) {
+		std::cerr << "sendMessage exception: " << e.what() << std::endl;
 	}
 }
 
@@ -312,7 +349,7 @@ void Server::sendMessageToUser(
 	const std::string& message
 ){
 	try { 	// Find User by Nickname
-		User &targetUser = getUserByNickname(targetNickname);
+		User &targetUser = getUserByNickname(*senderUser, targetNickname);
 
 		// Send message to User
 		std::string privMessage =
@@ -324,8 +361,7 @@ void Server::sendMessageToUser(
 
 	} 	// Check if exists
 	catch (const std::runtime_error& e){
-		std::string errorMsg = targetNickname + " :No such nick";
-		sendNumericReply(senderUser, ERR_NOSUCHNICK, errorMsg);
+		std::cerr << "PRIVMSG: " << e.what() << std::endl;
 	}
 }
 
@@ -358,9 +394,13 @@ void Server::debugPrintUsersAndChannels() const {
 
 		// Print channel modes
 		std::cout << "  " BOLD "Modes: " RESET;
-		const std::vector<std::string>& modes = ch.getChannelModes();
-		for (size_t i = 0; i < modes.size(); ++i) {
-			std::cout << WHITE << modes[i] << " " RESET;
+		const StringSet& modes = ch.getChannelModes();
+		for (
+			StringSet::const_iterator it = modes.begin();
+			it != modes.end();
+			++it
+		) {
+			std::cout << WHITE << *it << " " RESET;
 		}
 		std::cout << "\n\n";
 	}

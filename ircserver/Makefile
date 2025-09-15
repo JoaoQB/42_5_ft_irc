@@ -12,6 +12,7 @@ SRCS = $(SRC_DIR)/main.cpp \
 	$(SRC_DIR)/ServerCommandUtils.cpp \
 	$(SRC_DIR)/ServerChannelUtils.cpp \
 	$(SRC_DIR)/ServerUserUtils.cpp \
+	$(SRC_DIR)/ServerModeUtils.cpp \
 	$(SRC_DIR)/User.cpp \
 	$(SRC_DIR)/Parser.cpp \
 	$(SRC_DIR)/Channel.cpp
