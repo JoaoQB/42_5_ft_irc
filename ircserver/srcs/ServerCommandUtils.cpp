@@ -181,43 +181,55 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 
 	if (!(iss >> channelName >> userNames)) {
 		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
-		return;
+		return ;
 	}
+
+	std::getline(iss, reason); // agarramos no resto da string;
+
+	//TODO CRIAR PROTECOES DO REASON.
 
 	// Procurar canal → se não existir → ERR_NOSUCHCHANNEL (403)
 	if (!Server::channelExists(channelName)){
 		sendNumericReply(&user, ERR_NOSUCHCHANNEL , channelName + " :No such channel");
-		return;
+		return ;
 	}
 
 	try {
 		Channel targetChannel = Server::getChannel(user, channelName);
 
+		// Autor está no canal? → se não → ERR_NOTONCHANNEL (442)
+		if (!targetChannel.hasUser(&user)) {
+			sendNumericReply(&user, ERR_NOTONCHANNEL , channelName + " :You're not on that channel");
+			return ;
+		}
+
+		// Autor é operador? → se não → ERR_CHANOPRIVSNEEDED (482)
+		if (!targetChannel.isOperator(&user)) {
+			sendNumericReply(&user, ERR_CHANOPRIVSNEEDED , channelName + " :You're not channel operator");
+			return ;
+		}
 
 		std::set<std::string> targetsSet = Parser::splitStringToSet(userNames);
 
 		for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it )
 		{
-			
+			continue;
 		}
 
-		// Autor está no canal? → se não → ERR_NOTONCHANNEL (442)
+		// Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
+
+		// TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
+
+		// Remover targetUser do canal (atualizar estrutura).
+
+		// Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
+
+		// Se canal ficou vazio, opcionalmente apagar.
 
 	}
-
-	// Autor é operador? → se não → ERR_CHANOPRIVSNEEDED (482)
-
-	// Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
-
-	// TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
-
-	// Remover targetUser do canal (atualizar estrutura).
-
-	// Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
-
-	// Se canal ficou vazio, opcionalmente apagar.
-
-
+	catch (const std::exception& e) {
+		std::cerr << "KICK: " << e.what() << std::endl;
+	}
 }
 
 void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) {
