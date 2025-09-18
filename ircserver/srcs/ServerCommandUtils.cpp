@@ -163,6 +163,63 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	}
 }
 
+void Server::handleKickCommand(User &user, const std::string& commandParams) {
+
+	// KICK #channel joao,dinis :spam in the chat
+
+	std::string cmd = "KICK";
+
+	// Verificar se foram passados parâmetros.
+	if (commandParams.empty()) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return;
+	}
+
+	// 	Validar parâmetros → se faltam <channel> ou <user> → ERR_NEEDMOREPARAMS (461)
+	std::istringstream iss(commandParams);
+	std::string channelName, userNames, reason;
+
+	if (!(iss >> channelName >> userNames)) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return;
+	}
+
+	// Procurar canal → se não existir → ERR_NOSUCHCHANNEL (403)
+	if (!Server::channelExists(channelName)){
+		sendNumericReply(&user, ERR_NOSUCHCHANNEL , channelName + " :No such channel");
+		return;
+	}
+
+	try {
+		Channel targetChannel = Server::getChannel(user, channelName);
+
+
+		std::set<std::string> targetsSet = Parser::splitStringToSet(userNames);
+
+		for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it )
+		{
+			
+		}
+
+		// Autor está no canal? → se não → ERR_NOTONCHANNEL (442)
+
+	}
+
+	// Autor é operador? → se não → ERR_CHANOPRIVSNEEDED (482)
+
+	// Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
+
+	// TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
+
+	// Remover targetUser do canal (atualizar estrutura).
+
+	// Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
+
+	// Se canal ficou vazio, opcionalmente apagar.
+
+
+}
+
 void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) {
 	// commandParams = dpetrukh,joao :Hey guys
 	//Separar os parâmetros

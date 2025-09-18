@@ -207,6 +207,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 			handlePrivMsgCommand(user, params);
 			break;
 		case CMD_KICK:
+			handleKickCommand(user, params);
 			break;
 		case CMD_INVITE:
 			break;
@@ -364,6 +365,7 @@ void Server::sendMessageToUser(
 		std::cerr << "PRIVMSG: " << e.what() << std::endl;
 	}
 }
+
 
 void Server::debugPrintUsersAndChannels() const {
 	std::cout << "\n" BOLD CYAN "==== Channels ====" RESET "\n";
