@@ -232,8 +232,10 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 			Server::broadcastCommand(user.getUserIdentifier(), &targetChannel, "KICK", reason);
 
 			// Se canal ficou vazio, opcionalmente apagar. !!!!CONFIRMAR COM O JOÃO!!!!
-			if (targetChannel.getUsers().empty())
+			if (targetChannel.isEmpty()) {
 				this->removeChannel(&targetChannel);
+				return ;
+			}
 		}
 
 	}
