@@ -321,6 +321,39 @@ void Server::processSingleTargetMessage(
 	sendMessageToUser(senderUser, target, message);
 }
 
+void Server::processSingleTargetKick(
+	const User *user, Channel &targetChannel,
+	const std::string &it,
+	const std::string &reason
+	) {
+
+	// Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
+	User& targetUser = Server::getUserByNickname(*user, it);
+
+	std::string channelName = targetChannel.getName();
+
+	// TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
+	if (!targetChannel.hasUser(&targetUser)) {
+		sendNumericReply(user, ERR_USERNOTINCHANNEL ,
+			targetUser.getNickname() +
+			" " + channelName +
+			" :You're not channel operator");
+		return ;
+	}
+
+	// Remover targetUser do canal (atualizar estrutura).
+	targetChannel.removeUser(*this, &targetUser);
+
+	// Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
+	Server::broadcastCommand(user->getUserIdentifier(), &targetChannel, "KICK", reason);
+
+	// Se canal ficou vazio, opcionalmente apagar. !!!!CONFIRMAR COM O JOÃO!!!!
+	if (targetChannel.isEmpty()) {
+		this->removeChannel(&targetChannel);
+		return ;
+	}
+}
+
 // Possible TODO channel with modes não tem todas as permissões de enviar privmsg
 void Server::sendMessageToChannel(
 	const User* senderUser,

@@ -210,7 +210,7 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 	}
 
 	try {
-		Channel targetChannel = Server::getChannel(user, channelName);
+		Channel &targetChannel = Server::getChannel(user, channelName);
 
 		// Autor está no canal? → se não → ERR_NOTONCHANNEL (442)
 		if (!targetChannel.hasUser(&user)) {
@@ -228,29 +228,30 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 
 		for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it )
 		{
-			// Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
-			User targetUser = Server::getUserByNickname(user, *it);
+			// // Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
+			// User targetUser = Server::getUserByNickname(user, *it);
 
-			// TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
-			if (targetChannel.hasUser(&targetUser)) {
-				sendNumericReply(&user, ERR_USERNOTINCHANNEL ,
-					targetUser.getNickname() +
-					" " + channelName +
-					" :You're not channel operator");
-				return ;
-			}
+			// // TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
+			// if (!targetChannel.hasUser(&targetUser)) {
+			// 	sendNumericReply(&user, ERR_USERNOTINCHANNEL ,
+			// 		targetUser.getNickname() +
+			// 		" " + channelName +
+			// 		" :User not in channel");
+			// 	return ;
+			// }
 
-			// Remover targetUser do canal (atualizar estrutura).
-			targetChannel.removeUser(*this, &targetUser);
+			// // Remover targetUser do canal (atualizar estrutura).
+			// targetChannel.removeUser(*this, &targetUser);
 
-			// Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
-			Server::broadcastCommand(user.getUserIdentifier(), &targetChannel, "KICK", reason);
+			// // Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
+			// Server::broadcastCommand(user.getUserIdentifier(), &targetChannel, "KICK", reason);
 
-			// Se canal ficou vazio, opcionalmente apagar. !!!!CONFIRMAR COM O JOÃO!!!!
-			if (targetChannel.isEmpty()) {
-				this->removeChannel(&targetChannel);
-				return ;
-			}
+			// // Se canal ficou vazio, opcionalmente apagar. !!!!CONFIRMAR COM O JOÃO!!!!
+			// if (targetChannel.isEmpty()) {
+			// 	this->removeChannel(&targetChannel);
+			// 	return ;
+			// }
+			processSingleTargetKick(&user, targetChannel, *it, reason);
 		}
 
 	}
