@@ -186,7 +186,22 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 
 	std::getline(iss, reason); // agarramos no resto da string;
 
-	//TODO CRIAR PROTECOES DO REASON.
+	//Limpar o espaço inicial se houver
+	if (!reason.empty() && reason[0] == ' ')
+		reason.erase(0);
+
+	// Se reason é vazia, configurar um default reason
+	if (reason.empty())
+		reason = "User kicked with no explanation";
+	else if (reason[0] == ':')
+		reason.erase(0);
+	else {
+		// Se não começa com ':', pega apenas até o primeiro espaço
+		std::istringstream iss(reason);
+		std::string firstWord;
+		iss >> firstWord;
+		reason = firstWord;
+	}
 
 	// Procurar canal → se não existir → ERR_NOSUCHCHANNEL (403)
 	if (!Server::channelExists(channelName)){
