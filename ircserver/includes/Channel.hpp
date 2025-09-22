@@ -39,6 +39,7 @@ class Channel {
 		bool hasLimit() const;
 		bool hasUser(const User* user) const;
 		bool isOperator(const User* user) const;
+		bool isInvited(const User* user) const;
 
 		// Setters
 		void setName(const std::string& channelName);
@@ -49,11 +50,13 @@ class Channel {
 		// Actions
 		void addUser(User* user);
 		void addOperator(User* user);
+		void addInvitedUser(const User* User);
 		void removeUser(Server& server, User* user);
 		void removeOperator(Server& server, User* user);
 		void removeTopic();
 		void removePassword();
 		void removeLimit();
+		void removeInviteOnly();
 
 	private:
 		std::string name;
@@ -69,6 +72,7 @@ class Channel {
 		std::vector<User*> channelUsers;
 		std::vector<User*> channelOperators;
 		StringSet channelModes;
+		StringSet invitedUsers;
 };
 
 #endif

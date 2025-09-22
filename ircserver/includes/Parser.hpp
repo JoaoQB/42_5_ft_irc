@@ -32,7 +32,7 @@ class Parser {
 			const std::string& modeParams
 		);
 
-		static std::string trimCRLF(const std::string &s);
+		static std::string trimCRLF(const std::string &string);
 		static std::string trimWhitespace(const std::string &string);
 		static void ft_error(const std::string& errorMessage);
 		static std::string getTimestamp();

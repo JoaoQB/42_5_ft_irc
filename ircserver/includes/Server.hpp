@@ -57,6 +57,7 @@ class Server {
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
 		void handlePrivMsgCommand(User &user, const std::string& commandParams);
+		void handleInviteCommand(User &invitingUser, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
 		void handleModeCommand(User &user, const std::string& commandParams);
 		void handlePartCommand(User &user, const std::string& commandParams);

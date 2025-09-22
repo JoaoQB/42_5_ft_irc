@@ -204,6 +204,52 @@ void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) 
 	}
 }
 
+void Server::handleInviteCommand(User &invitingUser, const std::string& commandParams) {
+	std::string command = "INVITE";
+	std::string username = Parser::extractFirstParam(commandParams);
+	std::string channelName = Parser::extractSecondParam(commandParams);
+	if (username.empty() || channelName.empty()) {
+		sendNumericReply(&invitingUser, ERR_NEEDMOREPARAMS, command + " :Not enough parameters");
+		return;
+	}
+	try {
+		User& targetUser = getUserByNickname(invitingUser, username);
+		Channel& targetChannel = getChannel(invitingUser, channelName);
+		if (!targetChannel.hasUser(&invitingUser)) {
+			sendNumericReply(&invitingUser, ERR_NOTONCHANNEL, channelName + " :You're not on that channel");
+			return;
+		}
+		if (targetChannel.isInviteOnly() && !targetChannel.isOperator(&invitingUser)) {
+			sendNumericReply(
+				&invitingUser,
+				ERR_CHANOPRIVSNEEDED,
+				targetChannel.getName() + " :You're not channel operator"
+			);
+			return;
+		}
+		if (targetChannel.hasUser(&targetUser)) {
+			std::string replyMessage = targetUser.getNickname()
+				+ " " + channelName
+				+ " :is already on channel";
+			sendNumericReply(&invitingUser, ERR_USERONCHANNEL, replyMessage);
+			return;
+		}
+
+		std::string validInviteReply = targetUser.getNickname() + " " + channelName;
+		sendNumericReply(&invitingUser, RPL_INVITING, validInviteReply);
+
+		std::string inviteMessage = ":" + invitingUser.getUserIdentifier()
+			+ " " + command
+			+ " " + targetUser.getNickname()
+			+ " " + channelName;
+		sendMessage(targetUser.getFd(), inviteMessage);
+
+		targetChannel.addInvitedUser(&targetUser);
+	} catch (const std::exception& e) {
+		std::cerr << command << ": " << e.what() << std::endl;
+	}
+}
+
 void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 	if (commandParams.empty()) {
 		sendNumericReply(&user, ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");

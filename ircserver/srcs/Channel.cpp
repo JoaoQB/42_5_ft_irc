@@ -16,7 +16,8 @@ Channel::Channel()
 	, usersInChannel(0)
 	, channelUsers()
 	, channelOperators()
-	, channelModes() {
+	, channelModes()
+	, invitedUsers() {
 	channelCreationTime = Parser::getTimestamp();
 	channelModes.insert(TOPIC_MODE);
 }
@@ -125,6 +126,18 @@ bool Channel::isOperator(const User* user) const {
 	return isOperator;
 }
 
+bool Channel::isInvited(const User* user) const {
+	if (!user) return false;
+
+	bool isInvited = std::find(
+		invitedUsers.begin(),
+		invitedUsers.end(),
+		user->getNickname()
+	) != invitedUsers.end();
+
+	return isInvited;
+}
+
 void Channel::setName(const std::string& channelName) {
 	this->name = channelName;
 }
@@ -160,6 +173,13 @@ void Channel::addOperator(User* user) {
 	if (!isOperator(user)) {
 		this->channelOperators.push_back(user);
 	}
+}
+
+void Channel::addInvitedUser(const User* user) {
+	if (!user) {
+		return;
+	}
+	this->invitedUsers.insert(invitedUsers.end(), user->getNickname());
 }
 
 void Channel::removeUser(Server& server, User* user) {
@@ -226,4 +246,9 @@ void Channel::removePassword() {
 void Channel::removeLimit() {
 	this->channelLimit = -1;
 	channelModes.erase(LIMIT_MODE);
+}
+
+void Channel::removeInviteOnly() {
+	invitedUsers.clear();
+	channelModes.erase(INVITE_MODE);
 }

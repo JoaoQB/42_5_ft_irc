@@ -209,6 +209,7 @@ void Server::handleRawMessage(int fd, const char *buffer) {
 		case CMD_KICK:
 			break;
 		case CMD_INVITE:
+			handleInviteCommand(user, params);
 			break;
 		case CMD_TOPIC:
 			handleTopicCommand(user, params);
