@@ -313,22 +313,14 @@ void Server::handleModeCommand(User &user, const std::string& commandParams) {
 				replyToChannelMode(&user, &targetChannel);
 				return;
 			}
-			// Else if "Mode <channel> <listable_mode>" reply with not supported or ignore?
+			// Else if "Mode <channel> <listable_mode>" ignore (not supported by server)
 			if (Parser::isTypeAMode(parameters)) {
-				// const std::string unsupportedMode = parameters.substr(1);
-				// sendNumericReply(
-				// 	&user,
-				// 	ERR_UNKNOWNMODE,
-				// 	unsupportedMode + " :is unknown mode char to me"
-				// );
 				return;
 			}
 			// Else if "MODE <channel> <params>" set params
 			setChannelMode(&user, &targetChannel, parameters);
 			return;
 		}
-		//TODO handle user mode
-		// User& targetUser = getUserByNickname(user, mask);
 	} catch (const std::exception& e) {
 		std::cerr << "MODE: " << e.what() << std::endl;
 	}

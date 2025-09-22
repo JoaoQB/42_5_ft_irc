@@ -50,7 +50,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 		}
 		processPendingDisconnects();
 	}
-	closeFds();
+	handleServerShutdown();
 }
 
 void Server::signalHandler(int signum) {
@@ -116,6 +116,22 @@ void Server::closeFds() {
 		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
 		close(serverSocketFd);
 	}
+}
+
+void Server::handleServerShutdown() {
+	const static std::string errorMessageBeguin = "ERROR :Closing Link: ";
+	const static std::string errorMessageEnd = " (Server Shutdown)";
+	for (
+		UserListIterator it = users.begin();
+		it != users.end();
+		++it
+	) {
+		const std::string userInfo = it->getNickname() + "[" + it->getIpAddress() + "]";
+		const std::string shutdownMessage = errorMessageBeguin
+			+ userInfo + errorMessageEnd;
+		sendMessage(it->getFd(), shutdownMessage);
+	}
+	closeFds();
 }
 
 void Server::acceptNewUser() {

@@ -26,6 +26,8 @@ class Server {
 			const std::string& message
 		);
 
+		void handleServerShutdown();
+
 	private:
 		static const int BUFFER_SIZE = 1024;
 

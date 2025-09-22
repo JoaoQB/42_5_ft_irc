@@ -21,10 +21,11 @@ int main(int argc, char **argv) {
 	try {
 		signal(SIGINT, Server::signalHandler);
 		signal(SIGQUIT, Server::signalHandler);
+		signal(SIGHUP, Server::signalHandler);
 		server.serverInit(port, password);
 	}
 	catch(const std::exception& e) {
-		server.closeFds();
+		server.handleServerShutdown();
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
 	std::cout << "The Server Closed!" << std::endl;

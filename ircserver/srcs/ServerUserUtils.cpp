@@ -93,12 +93,11 @@ void Server::registerUser(User &user) {
 			":This server was created " + formattedServerCreationTime;
 		sendNumericReply(&user, RPL_CREATED, serverCreatedMessage);
 
-		// TODO Aqui devem estar os diferentes modes disponíveis do server
-		std::string serverInfoMessage =
-			"⚠️" + this->name + " " + this->version +
-			" " + "<available user modes>" +
-			" " + "<available channel modes>" +
-			" " + "[<channel modes with a parameter>]";
+		std::string userModes = REGISTRATION_MODE;
+		std::string channelModes = INVITE_MODE + TOPIC_MODE + PASSWORD_MODE + OPERATOR_MODE + LIMIT_MODE;
+		std::string serverInfoMessage = this->name + " " + this->version +
+			" " + userModes +
+			" " + channelModes;
 		sendNumericReply(&user, RPL_MYINFO, serverInfoMessage);
 	}
 }
