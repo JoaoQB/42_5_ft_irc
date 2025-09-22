@@ -273,14 +273,24 @@ StringMap Parser::mapModesWithParams(
 }
 
 // Remove \r\n from string end
-std::string Parser::trimCRLF(const std::string &s) {
-	size_t end = s.size();
-	if (!s.empty() && s[end-1] == '\n')
+std::string Parser::trimCRLF(const std::string &string) {
+	std::cout << "[DEBUG]\n";
+	for (size_t i = 0; i < string.size(); ++i) {
+		char c = string[i];
+		if (c == '\r') std::cout << "\\r";
+		else if (c == '\n') std::cout << "\\n";
+		else if (c < 32 || c > 126) std::cout << "\\x" << std::hex << (int)c;
+		else std::cout << c;
+	}
+	std::cout << std::endl;
+
+	size_t end = string.size();
+	if (!string.empty() && string[end-1] == '\n')
 		end--;
-	if (!s.empty() && s[end-1] == '\r')
+	if (!string.empty() && string[end-1] == '\r')
 		end--;
 
-	return s.substr(0, end);
+	return string.substr(0, end);
 }
 
 std::string Parser::trimWhitespace(const std::string &string) {

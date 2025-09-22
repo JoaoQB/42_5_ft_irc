@@ -176,7 +176,11 @@ bool Server::setMode(
 		}
 		return true;
 	}
-	if (sign == '-' && (flag == INVITE_MODE || flag == TOPIC_MODE)) {
+	if (sign == '-' && flag == INVITE_MODE) {
+		channel->removeInviteOnly();
+		return true;
+	}
+	if (sign == '-' && flag == TOPIC_MODE) {
 		channelModes.erase(flag);
 		return true;
 	}

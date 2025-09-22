@@ -77,7 +77,7 @@ void Server::addUserToChannel(
 		sendNumericReply(&targetUser, ERR_CHANNELISFULL, channelIsFull);
 		return ;
 	}
-	if (targetChannel.isInviteOnly()) {
+	if (targetChannel.isInviteOnly() && !targetChannel.isInvited(&targetUser)) {
 		Parser::ft_error("channel is invite only");
 		std::string inviteOnly = targetChannel.getName()
 			+ " :Cannot join channel (+i)";
