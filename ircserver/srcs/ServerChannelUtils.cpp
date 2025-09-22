@@ -49,11 +49,11 @@ void Server::createChannel(
 		joinedChannel->setPassword(channelKey);
 	}
 	joinedChannel->addUser(&creator);
+	joinedChannel->addOperator(&creator);
 	creator.addChannel(joinedChannel);
 
 	sendJoinReplies(&creator, joinedChannel);
 
-	joinedChannel->addOperator(&creator);
 	std::string modeCommand = channelName + " +o " + creator.getNickname();
 	broadcastCommand(this->name, joinedChannel, "MODE", modeCommand);
 	std::cout << "Channel " << channelName << " created by user " << creator.getFd() << "\n";
@@ -104,9 +104,9 @@ void Server::sendJoinReplies(const User* user, const Channel* channel) {
 		return ;
 	}
 	broadcastCommand(user->getUserIdentifier(), channel, "JOIN", channel->getName());
+	sendChannelSetAt(user, channel);
 	sendChannelTopic(user, channel);
 	sendChannelUsers(user, channel);
-	sendChannelSetAt(user, channel);
 }
 
 void Server::broadcastCommand(

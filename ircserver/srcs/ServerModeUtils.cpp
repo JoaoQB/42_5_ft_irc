@@ -17,9 +17,20 @@ void Server::replyToChannelMode(const User* user, const Channel* channel) {
 	) {
 		modes.insert(0, *it);
 	}
+
+	std::ostringstream oss;
+	if (channel->hasLimit()) {
+		oss << " " << channel->getChannelLimit();
+	} else {
+		oss << "";
+	}
+	std::string modeStr = !modes.empty() ? (" +" + modes) : "";
+	std::string channelLimit = oss.str();
+
 	std::string replyMessage = channel->getName()
-		+ (!modes.empty() ? " +" + modes : "")
-		+ (channel->hasLimit() ? " " + channel->getChannelLimit() : "");
+		+ modeStr
+		+ channelLimit;
+
 	sendNumericReply(user, RPL_CHANNELMODEIS, replyMessage);
 
 	std::string setAt = channel->getName()
