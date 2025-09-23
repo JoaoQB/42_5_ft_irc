@@ -102,6 +102,19 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 		return;
 	}
 
+	// Verifica se hostname é um único dígito
+	if (hostname.length() != 1 || !isdigit(hostname[0])) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Invalid hostname");
+		return;
+	}
+
+	// Verifica se servername é exatamente um '*'
+	if (servername != "*") {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Invalid servername");
+		return;
+	}
+
+
 	std::getline(iss, realname);
 
 	if (!realname.empty() && realname[0] == ' ')

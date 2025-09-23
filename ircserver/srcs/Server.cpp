@@ -238,7 +238,7 @@ void Server::handleRawMessage(int fd, const std::string& rawMessage) {
 
 	// Usuário está retrito a fazer outros comandos enquanto que não está autenticado no servidor
 	if (!Parser::isAuthentication(user, cmd)) {
-		std::cout << "ERR_NOTREGISTERED (451)" << std::endl;
+		sendNumericReply(&user, ERR_NOTREGISTERED, ":You have not registered");
 		return;
 	}
 
