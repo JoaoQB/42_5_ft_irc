@@ -115,6 +115,9 @@ typedef std::vector<std::string> StringVector;
 typedef std::set<std::string> StringSet;
 typedef std::map<std::string, std::string> StringMap;
 typedef StringMap::const_iterator StringMapConstIterator;
+typedef std::map<int, std::string> BufferMap;
+typedef BufferMap::iterator BufferMapIterator;
+typedef BufferMap::const_iterator BufferMapConstIterator;
 
 typedef std::list<Channel>::iterator ChannelListIterator;
 typedef std::list<Channel>::const_iterator ChannelListConstIterator;

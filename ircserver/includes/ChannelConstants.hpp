@@ -7,6 +7,7 @@
 
 #include <string>
 
+const std::string REGISTRATION_MODE = "r";
 const std::string OPERATOR_MODE = "o";
 const std::string TOPIC_MODE = "t";
 const std::string INVITE_MODE = "i";

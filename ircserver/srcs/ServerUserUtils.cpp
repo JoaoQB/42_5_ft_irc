@@ -93,12 +93,11 @@ void Server::registerUser(User &user) {
 			":This server was created " + formattedServerCreationTime;
 		sendNumericReply(&user, RPL_CREATED, serverCreatedMessage);
 
-		// TODO Aqui devem estar os diferentes modes disponíveis do server
-		std::string serverInfoMessage =
-			"⚠️" + this->name + " " + this->version +
-			" " + "<available user modes>" +
-			" " + "<available channel modes>" +
-			" " + "[<channel modes with a parameter>]";
+		std::string userModes = REGISTRATION_MODE;
+		std::string channelModes = INVITE_MODE + TOPIC_MODE + PASSWORD_MODE + OPERATOR_MODE + LIMIT_MODE;
+		std::string serverInfoMessage = this->name + " " + this->version +
+			" " + userModes +
+			" " + channelModes;
 		sendNumericReply(&user, RPL_MYINFO, serverInfoMessage);
 	}
 }
@@ -125,15 +124,21 @@ void Server::replyToUserWho(const User* askingUser, const User* targetUser) {
 }
 
 void Server::clearUser(int fd) {
-	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
+	for (PollIterator pIt = pollFds.begin(); pIt != pollFds.end(); ++pIt) {
 		if (pIt->fd == fd) {
 			pollFds.erase(pIt);
 			break ;
 		}
 	}
-	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
+	for (UserListIterator cIt = users.begin(); cIt != users.end(); ++cIt) {
 		if (cIt->getFd() == fd) {
 			users.erase(cIt);
+			break;
+		}
+	}
+	for (BufferMapIterator bIt = rawMessageBuffers.begin(); bIt != rawMessageBuffers.end(); ++bIt) {
+		if (bIt->first == fd) {
+			rawMessageBuffers.erase(bIt);
 			break;
 		}
 	}
