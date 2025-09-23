@@ -32,7 +32,10 @@ class Parser {
 			const std::string& modeParams
 		);
 
+		// Raw Message helpers
+		static bool isSingleFullCommand(const std::string& receivedMessage);
 		static std::string trimCRLF(const std::string &string);
+
 		static std::string trimWhitespace(const std::string &string);
 		static void ft_error(const std::string& errorMessage);
 		static std::string getTimestamp();

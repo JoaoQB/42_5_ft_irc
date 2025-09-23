@@ -124,15 +124,21 @@ void Server::replyToUserWho(const User* askingUser, const User* targetUser) {
 }
 
 void Server::clearUser(int fd) {
-	for (PollIterator pIt = pollFds.begin() ; pIt != pollFds.end() ; ++pIt) {
+	for (PollIterator pIt = pollFds.begin(); pIt != pollFds.end(); ++pIt) {
 		if (pIt->fd == fd) {
 			pollFds.erase(pIt);
 			break ;
 		}
 	}
-	for (UserListIterator cIt = users.begin() ; cIt != users.end() ; ++cIt) {
+	for (UserListIterator cIt = users.begin(); cIt != users.end(); ++cIt) {
 		if (cIt->getFd() == fd) {
 			users.erase(cIt);
+			break;
+		}
+	}
+	for (BufferMapIterator bIt = rawMessageBuffers.begin(); bIt != rawMessageBuffers.end(); ++bIt) {
+		if (bIt->first == fd) {
+			rawMessageBuffers.erase(bIt);
 			break;
 		}
 	}

@@ -167,33 +167,71 @@ void Server::acceptNewUser() {
 void Server::receiveNewData(int fd) {
 	// Buffer for incoming data
 	char buffer[BUFFER_SIZE];
-	// Clear buffer
-	memset(buffer, 0, sizeof(buffer));
 
 	// Read N bytes into BUF from socket FD, i.e. receive data
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 
 	// Check if User is disconnected
 	if (bytes <= 0) {
+		// No data available now, try later
+		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			std::cout << YELLOW << "User <" << fd << "> No data available, continuing" << WHITE << RESET << std::endl;
+			return;
+		}
 		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
 		disconnectUser(fd);
 		return;
 	}
 
+	std::string receivedMessage(buffer, bytes);
+
+	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << receivedMessage << RESET << std::endl;
+
+
+	std::cout << "[DEBUG]\n";
 	buffer[bytes] = '\0';
-	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << buffer << RESET << std::endl;
+	for (size_t i = 0; buffer[i]; ++i) {
+		char c = buffer[i];
+		if (c == '\r') std::cout << "\\r";
+		else if (c == '\n') std::cout << "\\n";
+		else if (c < 32 || c > 126) std::cout << "\\x" << std::hex << (int)c;
+		else std::cout << c;
+	}
+	std::cout << std::endl;
+
+
+	if (hasMessageInBuffer(fd) || !Parser::isSingleFullCommand(receivedMessage)) {
+		processPendingMessages(fd, receivedMessage);
+		return;
+	}
 	try {
-		handleRawMessage(fd, buffer);
+		handleRawMessage(fd, receivedMessage);
 	} catch (const std::exception& e) {
 		std::cerr << "handleRawMessage: " << e.what() << std::endl;
 	}
 }
 
-//TODO Command Handlers
-void Server::handleRawMessage(int fd, const char *buffer) {
+bool Server::hasMessageInBuffer(int targetFd) const {
+	return rawMessageBuffers.find(targetFd) != rawMessageBuffers.end();
+}
+
+void Server::processPendingMessages(int fd, const std::string& receivedMessage) {
+	std::cout << "buffer had:\n" << rawMessageBuffers[fd] << std::endl;
+	rawMessageBuffers[fd].append(receivedMessage);
+	StringSizeT crlfSize = 2;
+	StringSizeT crlfIndex;
+	while ((crlfIndex = rawMessageBuffers[fd].find("\r\n")) != std::string::npos) {
+		std::string firstMessage = rawMessageBuffers[fd].substr(0, crlfIndex + crlfSize);
+		rawMessageBuffers[fd].erase(0, crlfIndex + crlfSize);
+		handleRawMessage(fd, firstMessage);
+	}
+	std::cout << "Remaining buffer:\n" << rawMessageBuffers[fd] << std::endl;
+}
+
+void Server::handleRawMessage(int fd, const std::string& rawMessage) {
 	User &user = getUserByFd(fd);
-	std::string rawMessage(buffer); // rawMessage = "PASS mypassword"
 	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
+	std::cout << "[DEBUG] handle raw message:\n" << rawMessage << std::endl;
 	std::string command = Parser::extractFirstParam(trimmedMessage); // command = "PASS"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
 	std::string params = Parser::extractFromSecondParam(trimmedMessage); // params = "mypassword"

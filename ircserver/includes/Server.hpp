@@ -40,6 +40,7 @@ class Server {
 		std::string version;
 
 		// Data Containers
+		BufferMap rawMessageBuffers;
 		std::list<User> users;
 		std::vector<struct pollfd> pollFds;
 		std::list<Channel> channels;
@@ -50,8 +51,12 @@ class Server {
 		// Connection Handling
 		void acceptNewUser();
 		void receiveNewData(int fd);
-		void handleRawMessage(int fd, const char* buffer);
 		void processPendingDisconnects();
+
+		// Raw Message Handling
+		bool hasMessageInBuffer(int targetFd) const;
+		void processPendingMessages(int fd, const std::string& receivedMessage);
+		void handleRawMessage(int fd, const std::string& rawMessage);
 
 		// Command Handlers
 		void handlePassCommand(User &user, std::string cmdParameters);
