@@ -198,12 +198,6 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 
 	std::cout << "[DEBUG] End: [" << reason << "]" << std::endl;
 
-	// Procurar canal → se não existir → ERR_NOSUCHCHANNEL (403)
-	if (!Server::channelExists(channelName)){
-		sendNumericReply(&user, ERR_NOSUCHCHANNEL , channelName + " :No such channel");
-		return ;
-	}
-
 	try {
 		Channel &targetChannel = Server::getChannel(user, channelName);
 
