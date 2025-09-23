@@ -26,8 +26,8 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 
 	serverSocketCreate();
 
-	std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
-	std::cout << "Waiting to accept a connection...\n" << RESET << std::endl;
+	// std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
+	// std::cout << "Waiting to accept a connection...\n" << RESET << std::endl;
 
 	// Run Server until a signal is received
 	while (Server::signal == false) {
@@ -55,7 +55,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 
 void Server::signalHandler(int signum) {
 	(void)signum;
-	std::cout << std::endl << "Signal Received!" << std::endl;
+	// std::cout << std::endl << "Signal Received!" << std::endl;
 	Server::signal = true;
 }
 
@@ -108,12 +108,12 @@ void Server::serverSocketCreate() {
 void Server::closeFds() {
 	// Close all Users
 	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
-		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << RESET  << std::endl;
+		// std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << RESET  << std::endl;
 		close(it->getFd());
 	}
 	// Close server socket
 	if (serverSocketFd != -1) {
-		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
+		// std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
 		close(serverSocketFd);
 	}
 }
@@ -161,7 +161,7 @@ void Server::acceptNewUser() {
 	users.push_back(newUser);
 	pollFds.push_back(newPoll);
 
-	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << RESET << std::endl;
+	// std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << RESET << std::endl;
 }
 
 void Server::receiveNewData(int fd) {
@@ -175,29 +175,29 @@ void Server::receiveNewData(int fd) {
 	if (bytes <= 0) {
 		// No data available now, try later
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			std::cout << YELLOW << "User <" << fd << "> No data available, continuing" << WHITE << RESET << std::endl;
+			// std::cout << YELLOW << "User <" << fd << "> No data available, continuing" << WHITE << RESET << std::endl;
 			return;
 		}
-		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
+		// std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
 		disconnectUser(fd);
 		return;
 	}
 
 	std::string receivedMessage(buffer, bytes);
 
-	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << receivedMessage << RESET << std::endl;
+	// std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << receivedMessage << RESET << std::endl;
 
 
-	std::cout << "[DEBUG]\n";
-	buffer[bytes] = '\0';
-	for (size_t i = 0; buffer[i]; ++i) {
-		char c = buffer[i];
-		if (c == '\r') std::cout << "\\r";
-		else if (c == '\n') std::cout << "\\n";
-		else if (c < 32 || c > 126) std::cout << "\\x" << std::hex << (int)c;
-		else std::cout << c;
-	}
-	std::cout << std::endl;
+	// std::cout << "[DEBUG]\n";
+	// buffer[bytes] = '\0';
+	// for (size_t i = 0; buffer[i]; ++i) {
+	// 	char c = buffer[i];
+	// 	if (c == '\r') std::cout << "\\r";
+	// 	else if (c == '\n') std::cout << "\\n";
+	// 	else if (c < 32 || c > 126) std::cout << "\\x" << std::hex << (int)c;
+	// 	else std::cout << c;
+	// }
+	// std::cout << std::endl;
 
 
 	if (hasMessageInBuffer(fd) || !Parser::isSingleFullCommand(receivedMessage)) {
@@ -216,7 +216,7 @@ bool Server::hasMessageInBuffer(int targetFd) const {
 }
 
 void Server::processPendingMessages(int fd, const std::string& receivedMessage) {
-	std::cout << "buffer had:\n" << rawMessageBuffers[fd] << std::endl;
+	// std::cout << "Buffer had:\n" << rawMessageBuffers[fd] << std::endl;
 	rawMessageBuffers[fd].append(receivedMessage);
 	StringSizeT newLineSize = 1;
 	StringSizeT newLineIndex;
@@ -225,13 +225,13 @@ void Server::processPendingMessages(int fd, const std::string& receivedMessage) 
 		rawMessageBuffers[fd].erase(0, newLineIndex + newLineSize);
 		handleRawMessage(fd, firstMessage);
 	}
-	std::cout << "Remaining buffer:\n" << rawMessageBuffers[fd] << std::endl;
+	// std::cout << "Remaining buffer:\n" << rawMessageBuffers[fd] << std::endl;
 }
 
 void Server::handleRawMessage(int fd, const std::string& rawMessage) {
 	User &user = getUserByFd(fd);
 	std::string trimmedMessage = Parser::trimCRLF(rawMessage);
-	std::cout << "[DEBUG] handle raw message:\n" << rawMessage << std::endl;
+	// std::cout << "[DEBUG] handle raw message:\n" << rawMessage << std::endl;
 	std::string command = Parser::extractFirstParam(trimmedMessage); // command = "PASS"
 	CommandType cmd = Parser::getCommandType(command); // cmd = CMD_PASS
 	std::string params = Parser::extractFromSecondParam(trimmedMessage); // params = "mypassword"
@@ -307,7 +307,7 @@ void Server::processPendingDisconnects() {
 		clearUser(fd);
 		close(fd);
 	}
-	debugPrintUsersAndChannels();
+	// debugPrintUsersAndChannels();
 }
 
 void Server::sendMessage(int userFd, const std::string &message) {
@@ -325,8 +325,8 @@ void Server::sendMessage(int userFd, const std::string &message) {
 		std::string messageToSend = message + "\r\n";
 		ssize_t bytesSent = send(userFd, messageToSend.c_str(), messageToSend.size(), MSG_NOSIGNAL);
 
-		std::cout << "[DEBUG] Sending:\n" << messageToSend
-				<< "To user: " << userFd << "\n";
+		// std::cout << "[DEBUG] Sending:\n" << messageToSend
+		// 		<< "To user: " << userFd << "\n";
 
 		if (bytesSent == -1) {
 			std::cerr << "SEND failed on fd " << userFd

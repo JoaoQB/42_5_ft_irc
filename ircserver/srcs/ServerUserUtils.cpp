@@ -74,8 +74,8 @@ void Server::registerUser(User &user) {
 	if (!user.isRegistered()) {
 		user.setRegistered(true); //passa para registrado
 
-		std::cout << "🥳 Client " << user.getNickname()
-			<< " fully registred!" << RESET << std::endl;
+		// std::cout << "🥳 Client " << user.getNickname()
+		// 	<< " fully registred!" << RESET << std::endl;
 		user.setUserIdentifier();
 
 		std::string welcomeUserMessage =

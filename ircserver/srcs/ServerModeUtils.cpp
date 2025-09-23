@@ -57,8 +57,8 @@ void Server::setChannelMode(
 	}
 	const std::string modeString = Parser::extractFirstParam(parameters);
 	const std::string modeArguments = Parser::extractFromSecondParam(parameters);
-	std::cout << "[DEBUG] modeString: " << modeString << std::endl;
-	std::cout << "[DEBUG] modeArguments: " << modeArguments << std::endl;
+	// std::cout << "[DEBUG] modeString: " << modeString << std::endl;
+	// std::cout << "[DEBUG] modeArguments: " << modeArguments << std::endl;
 	// Protection check, should never be true
 	if (modeString.empty()) {
 		return;
@@ -85,16 +85,16 @@ void Server::setChannelMode(
 			invalidFlags.push_back(flag);
 		}
 	}
-	if (!validFlags.empty()) {
-		Parser::debugPrintVector(validFlags);
-	}
+	// if (!validFlags.empty()) {
+	// 	// Parser::debugPrintVector(validFlags);
+	// }
 	StringMap modesWithParams = Parser::mapModesWithParams(
 		validFlags,
 		modeArguments
 	);
 	setAndBroadcastModes(user, channel, modesWithParams);
 	if (!invalidFlags.empty()) {
-		std::cout << "[DEBUG] Unknown flags: " << invalidFlags << std::endl;
+		// std::cout << "[DEBUG] Unknown flags: " << invalidFlags << std::endl;
 		sendNumericReply(
 			user,
 			ERR_UNKNOWNMODE,
@@ -167,7 +167,7 @@ bool Server::setMode(
 	StringSet& channelModes = channel->getChannelModes();
 
 	if (flag == OPERATOR_MODE) {
-		std::cout << "debug1\n";
+		// std::cout << "debug1\n";
 		return handleOperatorMode(user, channel, sign, param);
 	}
 	if (sign == '+' && (flag == INVITE_MODE || flag == TOPIC_MODE)) {
@@ -217,14 +217,14 @@ bool Server::handleOperatorMode(
 		!Parser::isValidModeSign(sign) ||
 		param.empty()
 	) {
-		std::cout << sign << "\n";
-		std::cout << param << "\n";
-		std::cout << "debug false\n";
+		// std::cout << sign << "\n";
+		// std::cout << param << "\n";
+		// std::cout << "debug false\n";
 		return false;
 	}
-	std::cout << "debug2\n";
+	// std::cout << "debug2\n";
 	try {
-		std::cout << "debug3\n";
+		// std::cout << "debug3\n";
 		User& targetUser = getUserByNickname(*user, param);
 		if (sign == '-') {
 			if (channel->isOperator(&targetUser)) {

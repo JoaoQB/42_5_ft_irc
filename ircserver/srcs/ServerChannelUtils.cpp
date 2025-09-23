@@ -56,8 +56,8 @@ void Server::createChannel(
 
 	std::string modeCommand = channelName + " +o " + creator.getNickname();
 	broadcastCommand(this->name, joinedChannel, "MODE", modeCommand);
-	std::cout << "Channel " << channelName << " created by user " << creator.getFd() << "\n";
-	debugPrintUsersAndChannels();
+	// std::cout << "Channel " << channelName << " created by user " << creator.getFd() << "\n";
+	// debugPrintUsersAndChannels();
 }
 
 void Server::addUserToChannel(
@@ -96,7 +96,7 @@ void Server::addUserToChannel(
 	targetChannel.addUser(&targetUser);
 	targetUser.addChannel(&targetChannel);
 	sendJoinReplies(&targetUser, &targetChannel);
-	std::cout << "User " << targetUser.getFd() << " added to channel " << channelName << std::endl;
+	// std::cout << "User " << targetUser.getFd() << " added to channel " << channelName << std::endl;
 }
 
 void Server::sendJoinReplies(const User* user, const Channel* channel) {
@@ -265,7 +265,7 @@ void Server::removeChannel(Channel* channel) {
 
 	for (std::list<Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
 		if (&(*it) == channel) {
-			std::cout << "Removing empty channel: " << it->getName() << std::endl;
+			// std::cout << "Removing empty channel: " << it->getName() << std::endl;
 			channels.erase(it);
 			return;
 		}

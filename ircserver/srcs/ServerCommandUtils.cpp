@@ -39,7 +39,7 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 
 	// 4 - Adicionar ao user.password
 	user.setPassword(password);
-	std::cout << "[DEBUG]✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
+	// std::cout << "[DEBUG]✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
 }
 
 // TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
@@ -65,14 +65,14 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 	}
 
 	if (nicknameExists(nickname)) {
-		std::cout << "[DEBUG] nickname:" + nickname << std::endl;
+		// std::cout << "[DEBUG] nickname:" + nickname << std::endl;
 		sendNumericReply(&user, ERR_NICKNAMEINUSE, nickname + " :Nickname is already in use");
 			return ;
 	}
 
 	// Adicionar nickname ao user
 	user.setNickname(nickname);
-	std::cout << "[DEBUG]✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
+	// std::cout << "[DEBUG]✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
 	registerUser(user);
 }
 
@@ -134,7 +134,7 @@ void Server::handleUserCommand(User &user, std::string cmdParameters){
 
 	user.setUsername(username);
 	user.setRealname(realname);
-	std::cout << "[DEBUG]✅ User Username + Realname Registered Successfully: " << user.getUsername() << RESET << " " << user.getRealname() << std::endl;
+	// std::cout << "[DEBUG]✅ User Username + Realname Registered Successfully: " << user.getUsername() << RESET << " " << user.getRealname() << std::endl;
 	registerUser(user);
 }
 
@@ -199,7 +199,7 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 
 	std::getline(iss, reason); // agarramos no resto da string;
 
-	std::cout << "[DEBUG] Start: [" << reason << "]" << std::endl;
+	// std::cout << "[DEBUG] Start: [" << reason << "]" << std::endl;
 
 	// 1. Remover espaço inicial, se houver
 	if (!reason.empty() && reason[0] == ' ')
@@ -209,7 +209,7 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 	if (reason.empty())
 		reason = ":Kicked with no specified reason";
 
-	std::cout << "[DEBUG] End: [" << reason << "]" << std::endl;
+	// std::cout << "[DEBUG] End: [" << reason << "]" << std::endl;
 
 	try {
 		Channel &targetChannel = Server::getChannel(user, channelName);
@@ -336,7 +336,7 @@ void Server::handleTopicCommand(User &user, const std::string& commandParams) {
 			return;
 		}
 		std::string commandTopic = Parser::extractFromSecondParam(commandParams);
-		std::cout << "[DEBUG] Command Topic is: " << "\n";
+		// std::cout << "[DEBUG] Command Topic is: " << "\n";
 		if (commandTopic.empty()) {
 			sendChannelTopic(&user, &targetChannel);
 			return;
@@ -426,7 +426,7 @@ void Server::handlePartCommand(User &user, const std::string& commandParams) {
 }
 
 void Server::handleQuitCommand(User &user, const std::string& commandParams) {
-	std::cout << commandParams << "\n";
+	// std::cout << commandParams << "\n";
 	disconnectUserFromAllChannels(&user, true, commandParams);
 	int userFd = user.getFd();
 	clearUser(userFd);

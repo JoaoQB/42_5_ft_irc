@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 	const std::string& port = argv[1];
 	const std::string& password = argv[2];
 
-	std::cout << "---- SERVER ----" << std::endl;
+	// std::cout << "---- SERVER ----" << std::endl;
 	try {
 		signal(SIGINT, Server::signalHandler);
 		signal(SIGQUIT, Server::signalHandler);
@@ -28,5 +28,5 @@ int main(int argc, char **argv) {
 		server.handleServerShutdown();
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
-	std::cout << "The Server Closed!" << std::endl;
+	// std::cout << "The Server Closed!" << std::endl;
 }
