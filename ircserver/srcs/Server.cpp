@@ -322,7 +322,8 @@ void Server::processSingleTargetMessage(
 }
 
 void Server::processSingleTargetKick(
-	const User *user, Channel &targetChannel,
+	const User *user,
+	Channel &targetChannel,
 	const std::string &it,
 	const std::string &reason
 	) {
@@ -341,11 +342,14 @@ void Server::processSingleTargetKick(
 		return ;
 	}
 
-	// Remover targetUser do canal (atualizar estrutura).
-	targetChannel.removeUser(*this, &targetUser);
+	const std::string username = targetUser.getNickname();
+	const std::string broadcastMessage = channelName + " " + username + " " + reason;
 
 	// Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
-	Server::broadcastCommand(user->getUserIdentifier(), &targetChannel, "KICK", reason);
+	Server::broadcastCommand(user->getUserIdentifier(), &targetChannel, "KICK", broadcastMessage);
+
+	// Remover targetUser do canal (atualizar estrutura).
+	targetChannel.removeUser(*this, &targetUser);
 
 	// Se canal ficou vazio, opcionalmente apagar. !!!!CONFIRMAR COM O JOÃO!!!!
 	if (targetChannel.isEmpty()) {

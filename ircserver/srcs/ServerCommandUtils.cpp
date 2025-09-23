@@ -186,22 +186,17 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 
 	std::getline(iss, reason); // agarramos no resto da string;
 
-	//Limpar o espaço inicial se houver
-	if (!reason.empty() && reason[0] == ' ')
-		reason.erase(0);
+	std::cout << "[DEBUG] Start: [" << reason << "]" << std::endl;
 
-	// Se reason é vazia, configurar um default reason
+	// 1. Remover espaço inicial, se houver
+	if (!reason.empty() && reason[0] == ' ')
+		reason.erase(0, 1);
+
+	// 2. Se continua vazia, definir default
 	if (reason.empty())
-		reason = "User kicked with no explanation";
-	else if (reason[0] == ':')
-		reason.erase(0);
-	else {
-		// Se não começa com ':', pega apenas até o primeiro espaço
-		std::istringstream iss(reason);
-		std::string firstWord;
-		iss >> firstWord;
-		reason = firstWord;
-	}
+		reason = ":Kicked with no specified reason";
+
+	std::cout << "[DEBUG] End: [" << reason << "]" << std::endl;
 
 	// Procurar canal → se não existir → ERR_NOSUCHCHANNEL (403)
 	if (!Server::channelExists(channelName)){
@@ -227,33 +222,7 @@ void Server::handleKickCommand(User &user, const std::string& commandParams) {
 		std::set<std::string> targetsSet = Parser::splitStringToSet(userNames);
 
 		for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it )
-		{
-			// // Procurar targetUser → se não existir → ERR_NOSUCHNICK (401)
-			// User targetUser = Server::getUserByNickname(user, *it);
-
-			// // TargetUser está no canal? → se não → ERR_USERNOTINCHANNEL (441)
-			// if (!targetChannel.hasUser(&targetUser)) {
-			// 	sendNumericReply(&user, ERR_USERNOTINCHANNEL ,
-			// 		targetUser.getNickname() +
-			// 		" " + channelName +
-			// 		" :User not in channel");
-			// 	return ;
-			// }
-
-			// // Remover targetUser do canal (atualizar estrutura).
-			// targetChannel.removeUser(*this, &targetUser);
-
-			// // Enviar broadcast → :<sender> KICK <channel> <target> :<reason> para todos no canal.
-			// Server::broadcastCommand(user.getUserIdentifier(), &targetChannel, "KICK", reason);
-
-			// // Se canal ficou vazio, opcionalmente apagar. !!!!CONFIRMAR COM O JOÃO!!!!
-			// if (targetChannel.isEmpty()) {
-			// 	this->removeChannel(&targetChannel);
-			// 	return ;
-			// }
 			processSingleTargetKick(&user, targetChannel, *it, reason);
-		}
-
 	}
 	catch (const std::exception& e) {
 		std::cerr << "KICK: " << e.what() << std::endl;

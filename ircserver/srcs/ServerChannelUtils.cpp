@@ -118,6 +118,7 @@ void Server::broadcastCommand(
 	if (!channel) {
 		return ;
 	}
+
 	std::string commandMessage = ":" + identifier
 		+ " " + command;
 

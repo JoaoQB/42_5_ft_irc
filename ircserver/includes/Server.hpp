@@ -136,7 +136,12 @@ class Server {
 			const std::string& target,
 			const std::string& message
 		);
-		void Server::processSingleTargetKick(const User *user, Channel &targetChannel, const std::string &it, const std::string &reason);
+		void processSingleTargetKick(
+			const User *user,
+			Channel &targetChannel,
+			const std::string &it,
+			const std::string &reason
+		);
 		void sendMessageToChannel(
 			const User* senderUser,
 			const Channel &targetChannel,
