@@ -218,11 +218,11 @@ bool Server::hasMessageInBuffer(int targetFd) const {
 void Server::processPendingMessages(int fd, const std::string& receivedMessage) {
 	std::cout << "buffer had:\n" << rawMessageBuffers[fd] << std::endl;
 	rawMessageBuffers[fd].append(receivedMessage);
-	StringSizeT crlfSize = 2;
-	StringSizeT crlfIndex;
-	while ((crlfIndex = rawMessageBuffers[fd].find("\r\n")) != std::string::npos) {
-		std::string firstMessage = rawMessageBuffers[fd].substr(0, crlfIndex + crlfSize);
-		rawMessageBuffers[fd].erase(0, crlfIndex + crlfSize);
+	StringSizeT newLineSize = 1;
+	StringSizeT newLineIndex;
+	while ((newLineIndex = rawMessageBuffers[fd].find("\n")) != std::string::npos) {
+		std::string firstMessage = rawMessageBuffers[fd].substr(0, newLineIndex + newLineSize);
+		rawMessageBuffers[fd].erase(0, newLineIndex + newLineSize);
 		handleRawMessage(fd, firstMessage);
 	}
 	std::cout << "Remaining buffer:\n" << rawMessageBuffers[fd] << std::endl;

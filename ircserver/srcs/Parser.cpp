@@ -275,13 +275,21 @@ StringMap Parser::mapModesWithParams(
 bool Parser::isSingleFullCommand(const std::string& receivedMessage) {
 	StringSizeT size = receivedMessage.size();
 
-	unsigned int crlfSize = 2;
-	if (size <= crlfSize) {
+	static unsigned int newLineSize = 1;
+	static unsigned int crlfSize = 2;
+
+	StringSizeT firstLineBreak = receivedMessage.find("\n");
+	if (receivedMessage[firstLineBreak - 1] == '\r') {
+		if (size <= crlfSize) {
+			return false;
+		}
+		firstLineBreak--;
+		return firstLineBreak == size - crlfSize;
+	}
+	if (size <= newLineSize) {
 		return false;
 	}
-
-	StringSizeT firstCRLF = receivedMessage.find("\r\n");
-	bool singleCommand = (firstCRLF == size - crlfSize);
+	bool singleCommand = (firstLineBreak == size - newLineSize);
 	return singleCommand;
 }
 
