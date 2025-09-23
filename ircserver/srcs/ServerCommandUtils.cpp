@@ -163,6 +163,72 @@ void Server::handleJoinCommand(User &user, const std::string& commandParams) {
 	}
 }
 
+void Server::handleKickCommand(User &user, const std::string& commandParams) {
+
+	// KICK #channel joao,dinis :spam in the chat
+
+	std::string cmd = "KICK";
+
+	// Verificar se foram passados parâmetros.
+	if (commandParams.empty()) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return;
+	}
+
+	// 	Validar parâmetros → se faltam <channel> ou <user> → ERR_NEEDMOREPARAMS (461)
+	std::istringstream iss(commandParams);
+	std::string channelName, userNames, reason;
+
+	if (!(iss >> channelName >> userNames)) {
+		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
+		return ;
+	}
+
+	std::getline(iss, reason); // agarramos no resto da string;
+
+	std::cout << "[DEBUG] Start: [" << reason << "]" << std::endl;
+
+	// 1. Remover espaço inicial, se houver
+	if (!reason.empty() && reason[0] == ' ')
+		reason.erase(0, 1);
+
+	// 2. Se continua vazia, definir default
+	if (reason.empty())
+		reason = ":Kicked with no specified reason";
+
+	std::cout << "[DEBUG] End: [" << reason << "]" << std::endl;
+
+	// Procurar canal → se não existir → ERR_NOSUCHCHANNEL (403)
+	if (!Server::channelExists(channelName)){
+		sendNumericReply(&user, ERR_NOSUCHCHANNEL , channelName + " :No such channel");
+		return ;
+	}
+
+	try {
+		Channel &targetChannel = Server::getChannel(user, channelName);
+
+		// Autor está no canal? → se não → ERR_NOTONCHANNEL (442)
+		if (!targetChannel.hasUser(&user)) {
+			sendNumericReply(&user, ERR_NOTONCHANNEL , channelName + " :You're not on that channel");
+			return ;
+		}
+
+		// Autor é operador? → se não → ERR_CHANOPRIVSNEEDED (482)
+		if (!targetChannel.isOperator(&user)) {
+			sendNumericReply(&user, ERR_CHANOPRIVSNEEDED , channelName + " :You're not channel operator");
+			return ;
+		}
+
+		std::set<std::string> targetsSet = Parser::splitStringToSet(userNames);
+
+		for (std::set<std::string>::iterator it = targetsSet.begin(); it != targetsSet.end(); ++it )
+			processSingleTargetKick(&user, targetChannel, *it, reason);
+	}
+	catch (const std::exception& e) {
+		std::cerr << "KICK: " << e.what() << std::endl;
+	}
+}
+
 void Server::handlePrivMsgCommand(User &user, const std::string& commandParams) {
 	// commandParams = dpetrukh,joao :Hey guys
 	//Separar os parâmetros

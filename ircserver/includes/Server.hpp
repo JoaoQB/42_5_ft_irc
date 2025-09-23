@@ -63,6 +63,7 @@ class Server {
 		void handleNickCommand(User &user, std::string cmdParameters);
 		void handleUserCommand(User &user, std::string cmdParameters);
 		void handleJoinCommand(User &user, const std::string& commandParams);
+		void handleKickCommand(User &user, const std::string& commandParams);
 		void handlePrivMsgCommand(User &user, const std::string& commandParams);
 		void handleInviteCommand(User &invitingUser, const std::string& commandParams);
 		void handleTopicCommand(User &user, const std::string& commandParams);
@@ -142,6 +143,12 @@ class Server {
 			const User *senderUser,
 			const std::string& target,
 			const std::string& message
+		);
+		void processSingleTargetKick(
+			const User *user,
+			Channel &targetChannel,
+			const std::string &it,
+			const std::string &reason
 		);
 		void sendMessageToChannel(
 			const User* senderUser,

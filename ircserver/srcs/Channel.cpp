@@ -199,6 +199,7 @@ void Channel::removeUser(Server& server, User* user) {
 	if (isOperator(user)) {
 		removeOperator(server, user);
 	}
+	getUsers();
 }
 
 void Channel::removeOperator(Server& server, User* user) {
