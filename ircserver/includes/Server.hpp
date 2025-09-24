@@ -46,6 +46,7 @@ class Server {
 		std::list<Channel> channels;
 
 		// Lifecycle & Core Setup
+		bool parseInput(const std::string& port, const std::string& password);
 		void serverSocketCreate();
 
 		// Connection Handling

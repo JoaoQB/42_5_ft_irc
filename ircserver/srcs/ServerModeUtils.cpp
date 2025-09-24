@@ -148,7 +148,6 @@ void Server::setAndBroadcastModes(
 	broadcastCommand(user->getUserIdentifier(), channel, "MODE", broadcastMessage.str());
 }
 
-// TODO refactor?
 bool Server::setMode(
 	const User* user,
 	Channel* channel,
@@ -167,7 +166,6 @@ bool Server::setMode(
 	StringSet& channelModes = channel->getChannelModes();
 
 	if (flag == OPERATOR_MODE) {
-		// std::cout << "debug1\n";
 		return handleOperatorMode(user, channel, sign, param);
 	}
 	if (sign == '+' && (flag == INVITE_MODE || flag == TOPIC_MODE)) {

@@ -6,7 +6,6 @@
 
 void Server::handlePassCommand(User &user, std::string cmdParameters){
 	// std::cout << "Command parameters: " << cmdParameters << std::endl;
-	// TODO tocar para um erro
 	std::string cmd = "PASS";
 	if (cmdParameters.empty()) {
 		sendNumericReply(&user, ERR_NEEDMOREPARAMS, cmd + " :Not enough parameters");
@@ -42,9 +41,7 @@ void Server::handlePassCommand(User &user, std::string cmdParameters){
 	// std::cout << "[DEBUG]✅ User Password Registered Successfully: " << user.getPassword() << RESET << std::endl;
 }
 
-// TODO Verificar se forem múltiplos parâmetros, aceitar só o primeiro
 void Server::handleNickCommand(User &user, std::string cmdParameters) {
-	//TODO descontectar usuário caso passe nick antes da pass.
 	if (user.getPassword().empty()) {
 		sendNumericReply(&user, ERR_NOTREGISTERED, ":You have not registered");
 		return;
@@ -78,7 +75,6 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 
 // USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>
 void Server::handleUserCommand(User &user, std::string cmdParameters){
-	//TODO descontectar usuário caso passe user antes da pass.
 	std::string cmd = "USER";
 
 	if (user.getPassword().empty()) {

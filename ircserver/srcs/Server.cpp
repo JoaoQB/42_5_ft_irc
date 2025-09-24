@@ -18,8 +18,51 @@ Server::Server()
 	serverCreationTime = Parser::getTimestamp();
 }
 
+bool Server::parseInput(const std::string& port, const std::string& password) {
+	if (port.empty() || password.empty()) {
+		return false;
+	}
+	if (port.size() != 4 && port.size() != 5) {
+		return false;
+	}
+	for (
+		std::string::const_iterator it = port.begin();
+		it != port.end();
+		++it
+	) {
+		if (!std::isdigit(*it)) {
+			return false;
+		}
+	}
+	const int serverPort = std::atoi(port.c_str());
+	if (serverPort < 1024 || serverPort > 65535) {
+		return false;
+	}
+	if (password.size() > 25) {
+		return false;
+	}
+	static const std::string whitespace = " \f\v\t\b\a\n\r";
+	for (
+		std::string::const_iterator it = password.begin();
+		it != password.end();
+		++it
+	) {
+		if (std::find(whitespace.begin(), whitespace.end(), *it) != whitespace.end()) {
+			return false;
+		}
+	}
+	return true;
+}
+
 void Server::serverInit(const std::string& port, const std::string& password) {
-	//TODO parse input
+	if (!parseInput(port, password)) {
+		std::cerr << "Error: invalid input, "
+			<< "please provide a port between 1024 and 65535.\n"
+			<< "Password max length = 25 chars and without whitespaces\n"
+			<< "Usage: './ircserv <port> <password>'\n"
+			<< "Example: './ircserv 6667 mypassword'" << std::endl;
+		throw std::invalid_argument("Invalid input");
+	}
 	const int serverPort = std::atoi(port.c_str());
 	this->serverPort = serverPort;
 	serverPassword = password;
@@ -414,7 +457,6 @@ void Server::processSingleTargetKick(
 	}
 }
 
-// Possible TODO channel with modes não tem todas as permissões de enviar privmsg
 void Server::sendMessageToChannel(
 	const User* senderUser,
 	const Channel& targetChannel,
