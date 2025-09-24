@@ -216,11 +216,6 @@ void Server::receiveNewData(int fd) {
 
 	// Check if User is disconnected
 	if (bytes <= 0) {
-		// No data available now, try later
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			std::cout << YELLOW << "User <" << fd << "> No data available, continuing" << WHITE << RESET << std::endl;
-			return;
-		}
 		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
 		disconnectUser(fd);
 		return;

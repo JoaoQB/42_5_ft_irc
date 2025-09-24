@@ -278,16 +278,19 @@ bool Parser::isSingleFullCommand(const std::string& receivedMessage) {
 	static unsigned int newLineSize = 1;
 	static unsigned int crlfSize = 2;
 
+	if (size <= newLineSize) {
+		return false;
+	}
 	StringSizeT firstLineBreak = receivedMessage.find("\n");
+	if (firstLineBreak == std::string::npos || firstLineBreak == 0) {
+		return false;
+	}
 	if (receivedMessage[firstLineBreak - 1] == '\r') {
 		if (size <= crlfSize) {
 			return false;
 		}
 		firstLineBreak--;
 		return firstLineBreak == size - crlfSize;
-	}
-	if (size <= newLineSize) {
-		return false;
 	}
 	bool singleCommand = (firstLineBreak == size - newLineSize);
 	return singleCommand;
