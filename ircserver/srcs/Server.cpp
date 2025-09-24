@@ -26,8 +26,8 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 
 	serverSocketCreate();
 
-	// std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
-	// std::cout << "Waiting to accept a connection...\n" << RESET << std::endl;
+	std::cout << GREEN << "Server <" << serverSocketFd << "> Connected" << WHITE << std::endl;
+	std::cout << "Waiting to accept a connection...\n" << RESET << std::endl;
 
 	// Run Server until a signal is received
 	while (Server::signal == false) {
@@ -55,7 +55,7 @@ void Server::serverInit(const std::string& port, const std::string& password) {
 
 void Server::signalHandler(int signum) {
 	(void)signum;
-	// std::cout << std::endl << "Signal Received!" << std::endl;
+	std::cout << std::endl << "Signal Received!" << std::endl;
 	Server::signal = true;
 }
 
@@ -108,12 +108,12 @@ void Server::serverSocketCreate() {
 void Server::closeFds() {
 	// Close all Users
 	for (UserListIterator it = users.begin() ; it != users.end() ; ++it) {
-		// std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << RESET  << std::endl;
+		std::cout << RED << "User <" << it->getFd() << "> Disconnected" << WHITE << RESET  << std::endl;
 		close(it->getFd());
 	}
 	// Close server socket
 	if (serverSocketFd != -1) {
-		// std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
+		std::cout << RED << "Server <" << serverSocketFd << "> Disconnected" << WHITE << RESET << std::endl;
 		close(serverSocketFd);
 	}
 }
@@ -161,7 +161,7 @@ void Server::acceptNewUser() {
 	users.push_back(newUser);
 	pollFds.push_back(newPoll);
 
-	// std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << RESET << std::endl;
+	std::cout << GREEN << "User <" << incomingFd << "> Connected" << WHITE << RESET << std::endl;
 }
 
 void Server::receiveNewData(int fd) {
@@ -175,19 +175,20 @@ void Server::receiveNewData(int fd) {
 	if (bytes <= 0) {
 		// No data available now, try later
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			// std::cout << YELLOW << "User <" << fd << "> No data available, continuing" << WHITE << RESET << std::endl;
+			std::cout << YELLOW << "User <" << fd << "> No data available, continuing" << WHITE << RESET << std::endl;
 			return;
 		}
-		// std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
+		std::cout << RED << "User <" << fd << "> Disconnected" << WHITE << RESET << std::endl;
 		disconnectUser(fd);
 		return;
 	}
 
 	std::string receivedMessage(buffer, bytes);
 
-	// std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << receivedMessage << RESET << std::endl;
+	std::cout << YELLOW << "User <" << fd << "> Data: " << WHITE << receivedMessage << RESET << std::endl;
 
 
+	// // DEBUG incoming chars
 	// std::cout << "[DEBUG]\n";
 	// buffer[bytes] = '\0';
 	// for (size_t i = 0; buffer[i]; ++i) {
@@ -329,8 +330,8 @@ void Server::sendMessage(int userFd, const std::string &message) {
 		// 		<< "To user: " << userFd << "\n";
 
 		if (bytesSent == -1) {
-			std::cerr << "SEND failed on fd " << userFd
-					<< ": " << strerror(errno) << "\n";
+			// std::cerr << "SEND failed on fd " << userFd
+			// 		<< ": " << strerror(errno) << "\n";
 			user.setPendingDisconnect(true);
 		}
 
