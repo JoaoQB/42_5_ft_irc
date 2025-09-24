@@ -102,6 +102,39 @@ void Server::registerUser(User &user) {
 	}
 }
 
+void Server::broadcastNickname(User* targetUser, const std::string& nickname) {
+	if (!targetUser) {
+		return;
+	}
+	// debugPrintUsersAndChannels();
+	std::set<int> fdsToNotify;
+	fdsToNotify.insert(targetUser->getFd());
+	const std::vector<Channel*>& userChannels = targetUser->getChannels();
+	for (
+		ChannelVectorConstIterator channelIt = userChannels.begin();
+		channelIt != userChannels.end();
+		++channelIt
+	) {
+		const std::vector<User*>& usersInChannel = (*channelIt)->getUsers();
+		for (
+			UserVectorConstIterator userIt = usersInChannel.begin();
+			userIt != usersInChannel.end();
+			++userIt
+		) {
+			fdsToNotify.insert((*userIt)->getFd());
+		}
+	}
+	const std::string nicknameMessage = ":" + targetUser->getUserIdentifier()
+		+ " NICK " + nickname;
+	for (
+		std::set<int>::iterator fdsIt = fdsToNotify.begin();
+		fdsIt != fdsToNotify.end();
+		++fdsIt
+	) {
+		sendMessage(*fdsIt, nicknameMessage);
+	}
+}
+
 void Server::replyToUserWho(const User* askingUser, const User* targetUser) {
 	if (!askingUser || !targetUser) {
 		return ;

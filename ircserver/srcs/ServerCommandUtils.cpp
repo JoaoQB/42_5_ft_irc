@@ -67,10 +67,14 @@ void Server::handleNickCommand(User &user, std::string cmdParameters) {
 			return ;
 	}
 
-	// Adicionar nickname ao user
-	user.setNickname(nickname);
+	if (!user.isRegistered()) {
+		user.setNickname(nickname);
+		registerUser(user);
+	} else {
+		broadcastNickname(&user, nickname);
+		user.setNickname(nickname);
+	}
 	// std::cout << "[DEBUG]✅ User Nickname Registered Successfully: " << user.getNickname() << RESET << std::endl;
-	registerUser(user);
 }
 
 // USER dpetrukh 8 * :Dinis Petrukha : USER <username> <hostname> <servername> :<realname>

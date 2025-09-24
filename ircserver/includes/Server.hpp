@@ -127,6 +127,7 @@ class Server {
 		bool userExists(int fd) const;
 		bool nicknameExists(const std::string& nickname) const;
 		void registerUser(User &user);
+		void broadcastNickname(User* targetUser, const std::string& nickname);
 		void replyToUserWho(const User* askingUser, const User* targetUser);
 		void clearUser(int fd);
 		void disconnectUser(int fd);
